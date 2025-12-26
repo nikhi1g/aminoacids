@@ -34,6 +34,7 @@
                             <a href="index.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Show</a>
                             <a href="learn.html" class="nav-link active py-5 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Learn</a>
                             <a href="recall.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Recall</a>
+                            <a href="draw.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Draw</a>
                             <a href="progress.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Progress</a>
                         </nav>
 
@@ -124,6 +125,20 @@
             </div>
         </div>
     </main>
+
+    <footer class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-xs text-slate-500 flex items-center justify-between">
+            <span>Amino Acid Explorer</span>
+            <span>Deployed Commit: <span id="commit-hash">loading...</span></span>
+        </div>
+    </footer>
+
+    <div id="update-banner" class="hidden fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
+        <div class="bg-slate-900 text-white rounded-2xl shadow-2xl px-5 py-3 flex flex-col sm:flex-row items-center gap-3">
+            <span class="text-sm font-semibold">New version available (<span data-commit></span>). Refresh to update.</span>
+            <button id="refresh-site-btn" class="px-3 py-1.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition-colors">Refresh</button>
+        </div>
+    </div>
 
     <script src="script.js"></script>
     <script>

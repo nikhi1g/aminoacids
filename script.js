@@ -29,6 +29,7 @@ const INITIAL_SMILES = aminoAcids.map(aa => aa.smiles);
 let isDarkMode = false;
 const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, bondLength: 18, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false, compactDrawing: false };
 const PROGRESS_STORAGE_KEY = 'aa_progress_v1';
+const COMMIT_JSON_PATH = 'commit.json';
 const DEFAULT_PROGRESS_ITEM = {
     correctStreak: 0,
     totalCorrect: 0,
@@ -58,6 +59,8 @@ const colorMap = {
     'hydroxyl': '#2dd4bf', // teal-400
     'sulfur': '#facc15'  // yellow-400
 };
+
+let currentCommitHash = null;
 
 // --- Shared Functions ---
 
@@ -145,6 +148,60 @@ function getFilteredAminoAcids() {
         : aminoAcids.filter(aa => aa.tags && aa.tags.includes(currentFilter));
 }
 
+async function fetchCommitHash() {
+    try {
+        const response = await fetch(`${COMMIT_JSON_PATH}?t=${Date.now()}`, { cache: 'no-store' });
+        if (!response.ok) return null;
+        const data = await response.json();
+        if (!data || typeof data.commit !== 'string') return null;
+        return data.commit;
+    } catch (err) {
+        return null;
+    }
+}
+
+function updateFooterCommit(hash) {
+    const el = document.getElementById('commit-hash');
+    if (!el) return;
+    el.textContent = hash ? hash.slice(0, 7) : 'unknown';
+}
+
+function showUpdateBanner(newHash) {
+    const banner = document.getElementById('update-banner');
+    if (!banner) return;
+    const hashEl = banner.querySelector('[data-commit]');
+    if (hashEl) {
+        hashEl.textContent = newHash ? newHash.slice(0, 7) : '';
+    }
+    banner.classList.remove('hidden');
+}
+
+async function checkForCommitUpdate() {
+    const latestHash = await fetchCommitHash();
+    if (!latestHash) return;
+    if (!currentCommitHash) {
+        currentCommitHash = latestHash;
+        updateFooterCommit(currentCommitHash);
+        return;
+    }
+    if (latestHash !== currentCommitHash) {
+        updateFooterCommit(latestHash);
+        showUpdateBanner(latestHash);
+        currentCommitHash = latestHash;
+    }
+}
+
+function initCommitWatcher() {
+    const refreshBtn = document.getElementById('refresh-site-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            window.location.reload();
+        });
+    }
+    checkForCommitUpdate();
+    setInterval(checkForCommitUpdate, 30000);
+}
+
 function loadProgress() {
     try {
         const raw = localStorage.getItem(PROGRESS_STORAGE_KEY);
@@ -175,4 +232,5 @@ function getProgressItem(progress, abbr3) {
 window.addEventListener('load', () => {
     initializeTheme();
     updateFilterUI();
+    initCommitWatcher();
 });
