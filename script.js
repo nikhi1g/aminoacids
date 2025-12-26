@@ -61,6 +61,56 @@ const colorMap = {
 };
 
 let currentCommitHash = null;
+const DEFAULT_HEADER_HTML = `
+<header class="bg-white dark:bg-slate-900 border-b dark:border-slate-800 sticky top-0 z-20 shadow-sm transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col space-y-4 py-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex flex-col">
+                    <span class="text-xs font-semibold uppercase tracking-widest text-slate-400">Amino Acid Explorer</span>
+                    <span class="text-[10px] text-slate-500">Deployed Commit: <span id="commit-hash">loading...</span></span>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <nav class="flex space-x-8">
+                        <a href="index.html" data-page="show" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Show</a>
+                        <a href="learn.html" data-page="learn" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Learn</a>
+                        <a href="recall.html" data-page="recall" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Recall</a>
+                        <a href="draw.html" data-page="draw" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Draw</a>
+                        <a href="progress.html" data-page="progress" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Progress</a>
+                    </nav>
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0" title="Toggle Dark/Light Mode">
+                        <svg id="sun-icon" class="hidden dark:block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 0 000-8z"></path>
+                        </svg>
+                        <svg id="moon-icon" class="block dark:hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="filter-bar" class="flex flex-wrap gap-2 justify-center pb-2">
+                <button onclick="applyFilter('all')" class="filter-btn active px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:opacity-80">All</button>
+                <button onclick="applyFilter('nonpolar')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-gray-400 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900/30">Non-polar</button>
+                <button onclick="applyFilter('polar')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-cyan-400 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30">Polar</button>
+                <button onclick="applyFilter('aliphatic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-amber-400 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30">Aliphatic</button>
+                <button onclick="applyFilter('aromatic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-purple-400 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30">Aromatic</button>
+                <button onclick="applyFilter('acidic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30">Acidic</button>
+                <button onclick="applyFilter('basic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-blue-400 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30">Basic</button>
+                <button onclick="applyFilter('hydroxyl')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-teal-400 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30">Hydroxyl</button>
+                <button onclick="applyFilter('sulfur')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-yellow-400 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/30">Sulfur</button>
+            </div>
+        </div>
+    </div>
+</header>
+`;
+const DEFAULT_FOOTER_HTML = `
+<div id="update-banner" class="hidden fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
+    <div class="bg-slate-900 text-white rounded-2xl shadow-2xl px-5 py-3 flex flex-col sm:flex-row items-center gap-3">
+        <span class="text-sm font-semibold">New version available (<span data-commit></span>). Refresh to update.</span>
+        <button id="refresh-site-btn" class="px-3 py-1.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition-colors">Refresh</button>
+    </div>
+</div>
+`;
 
 // --- Shared Functions ---
 
@@ -86,9 +136,11 @@ async function loadShell() {
             const res = await fetch(`partials/header.html?t=${Date.now()}`, { cache: 'no-store' });
             if (res.ok) {
                 headerHost.innerHTML = await res.text();
+            } else {
+                headerHost.innerHTML = DEFAULT_HEADER_HTML;
             }
         } catch (err) {
-            // Header is optional; fail quietly.
+            headerHost.innerHTML = DEFAULT_HEADER_HTML;
         }
     }
     if (footerHost) {
@@ -96,9 +148,11 @@ async function loadShell() {
             const res = await fetch(`partials/footer.html?t=${Date.now()}`, { cache: 'no-store' });
             if (res.ok) {
                 footerHost.innerHTML = await res.text();
+            } else {
+                footerHost.innerHTML = DEFAULT_FOOTER_HTML;
             }
         } catch (err) {
-            // Footer is optional; fail quietly.
+            footerHost.innerHTML = DEFAULT_FOOTER_HTML;
         }
     }
 
