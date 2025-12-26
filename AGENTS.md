@@ -12,3 +12,13 @@ Help users memorize all amino acids through repeated exposure and recall practic
 - Keep UI changes accessible: readable contrast, keyboard-friendly controls, and clear feedback.
 - Add brief comments only when logic is non-obvious.
 - Maintain ASCII-only edits unless a file already uses Unicode.
+
+# Deployment Versioning
+- The header displays the latest GitHub commit hash and commit date (no "Commit:" label).
+- Commit data is fetched directly from `https://api.github.com/repos/nikhi1g/aminoacids/commits?per_page=1`.
+- Do not add custom headers to the GitHub API fetch; it triggers CORS preflight and fails on GitHub Pages.
+- Poll for updates every 5 minutes to avoid hitting GitHub's unauthenticated rate limits.
+- A "New" indicator appears in the header when the hash changes, with a Refresh button.
+
+# Known Bugs
+- Draw mode answer validation is unreliable; SMILES comparison is not robust.

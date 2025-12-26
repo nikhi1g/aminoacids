@@ -4,7 +4,7 @@
 
 const aminoAcids = [
     { name: "Alanine", abbr3: "Ala", abbr1: "A", pka1: 2.34, pka2: 9.69, pkaR: null, smiles: "CC([NH2])C(=O)[O][H]", tags: ["nonpolar", "aliphatic"] },
-    { name: "Arginine", abbr3: "Arg", abbr1: "R", pka1: 2.17, pka2: 9.04, pkaR: 12.48, smiles: "[H][N]=C([NH2])[NH]CCCNC([NH2])C(=O)[O][H]", tags: ["polar", "basic"] },
+    { name: "Arginine", abbr3: "Arg", abbr1: "R", pka1: 2.17, pka2: 9.04, pkaR: 12.48, smiles: "[H][N]=C([NH2])[NH]CCCC([NH2])C(=O)[O][H]", tags: ["polar", "basic"] },
     { name: "Asparagine", abbr3: "Asn", abbr1: "N", pka1: 2.02, pka2: 8.80, pkaR: null, smiles: "[NH2]C(CC(=O)[NH2])C(=O)[O][H]", tags: ["polar"] },
     { name: "Aspartic Acid", abbr3: "Asp", abbr1: "D", pka1: 1.88, pka2: 9.60, pkaR: 3.65, smiles: "[NH2]C(CC(=O)[O][H])C(=O)[O][H]", tags: ["polar", "acidic"] },
     { name: "Cysteine", abbr3: "Cys", abbr1: "C", pka1: 1.96, pka2: 10.28, pkaR: 8.18, smiles: "[NH2]C(C[SH])C(=O)[O][H]", tags: ["polar", "sulfur"] },
