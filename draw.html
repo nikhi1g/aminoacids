@@ -21,7 +21,7 @@
         }
     </script>
     <script src="https://unpkg.com/jsme-editor@latest/jsme.nocache.js"></script>
-    <script src="https://unpkg.com/openchemlib@9.18.2/dist/openchemlib.js"></script>
+    <script src="openchemlib.js"></script>
     <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -130,7 +130,62 @@
     <script>
         let jsmeApplet = null;
         let drawTarget = null;
+        let chemistryReady = false;
+        let aminoAcidIndex = null;
+        let aminoAcidIndexNoStereo = null;
         const DRAW_TEMPLATE_SMILES = 'NCC(=O)O';
+
+        function isOCLReady() {
+            return !!(window.OCL && OCL.Molecule && typeof OCL.Molecule.fromMolfile === 'function');
+        }
+
+        function setChemistryReady(ready) {
+            chemistryReady = ready;
+            const btn = document.getElementById('check-answer-btn');
+            if (!btn) return;
+            btn.disabled = !ready;
+            btn.setAttribute('aria-disabled', String(!ready));
+            if (ready) {
+                btn.classList.remove('opacity-60', 'cursor-not-allowed');
+                btn.removeAttribute('title');
+            } else {
+                btn.classList.add('opacity-60', 'cursor-not-allowed');
+                btn.setAttribute('title', 'Chemistry engine is loading');
+            }
+        }
+
+        function buildAminoAcidIndex() {
+            if (!isOCLReady() || !Array.isArray(aminoAcids)) return;
+            const index = new Map();
+            const indexNoStereo = new Map();
+            for (const aa of aminoAcids) {
+                if (!aa || !aa.smiles) continue;
+                try {
+                    const mol = OCL.Molecule.fromSmiles(aa.smiles);
+                    normalizeMolecule(mol);
+                    const id = getIdCode(mol);
+                    if (id && !index.has(id)) {
+                        index.set(id, aa);
+                    }
+                    const noStereo = getIdCodeNoStereo(mol);
+                    if (noStereo && !indexNoStereo.has(noStereo)) {
+                        indexNoStereo.set(noStereo, aa);
+                    }
+                } catch (err) {
+                    continue;
+                }
+            }
+            aminoAcidIndex = index;
+            aminoAcidIndexNoStereo = indexNoStereo;
+        }
+
+        function ensureChemistryReady() {
+            if (chemistryReady) return true;
+            if (!isOCLReady()) return false;
+            buildAminoAcidIndex();
+            setChemistryReady(true);
+            return true;
+        }
 
         function jsmeOnLoad() {
             jsmeApplet = new JSApplet.JSME("jsme-container", "100%", "100%");
@@ -276,6 +331,19 @@
             return fallback || '';
         }
 
+        function identifyAminoAcid(mol) {
+            if (!mol || !aminoAcidIndex) return null;
+            const id = getIdCode(mol);
+            if (id && aminoAcidIndex.has(id)) {
+                return { aminoAcid: aminoAcidIndex.get(id), match: 'exact' };
+            }
+            const idNoStereo = getIdCodeNoStereo(mol);
+            if (idNoStereo && aminoAcidIndexNoStereo && aminoAcidIndexNoStereo.has(idNoStereo)) {
+                return { aminoAcid: aminoAcidIndexNoStereo.get(idNoStereo), match: 'nostereo' };
+            }
+            return null;
+        }
+
         function parseUserMolecule() {
             const exportData = getJSMEExport();
             const hasMolecule = typeof jsmeApplet?.hasMolecule === 'function' ? jsmeApplet.hasMolecule() : null;
@@ -363,6 +431,11 @@
             if (!drawTarget || !jsmeApplet) return;
             const expectedSmiles = drawTarget.smiles;
             const feedback = document.getElementById('draw-feedback');
+            if (!ensureChemistryReady()) {
+                feedback.textContent = 'Chemistry engine is still loading. Try again in a moment.';
+                feedback.className = 'text-lg font-bold text-slate-600';
+                return;
+            }
             const userResult = parseUserMolecule();
 
             document.getElementById('draw-user-smiles').textContent = userResult.display || '-';
@@ -395,11 +468,14 @@
                 return;
             }
 
+            const detected = identifyAminoAcid(userResult.mol);
+            const detectedName = detected?.aminoAcid?.name;
+            const detectedSuffix = detectedName ? ` You drew: ${detectedName}.` : '';
             const idUser = getIdCode(userResult.mol);
             const idExpected = getIdCode(expectedMol);
 
             if (idUser && idExpected && idUser === idExpected) {
-                feedback.textContent = 'Correct structure!';
+                feedback.textContent = `Correct structure!${detectedSuffix}`;
                 feedback.className = 'text-lg font-bold text-emerald-600';
                 return;
             }
@@ -408,12 +484,12 @@
             const idExpectedNoStereo = getIdCodeNoStereo(expectedMol);
 
             if (idUserNoStereo && idExpectedNoStereo && idUserNoStereo === idExpectedNoStereo) {
-                feedback.textContent = 'Correct connectivity, but check stereochemistry!';
+                feedback.textContent = `Correct connectivity, but check stereochemistry!${detectedSuffix}`;
                 feedback.className = 'text-lg font-bold text-amber-600';
                 return;
             }
 
-            feedback.textContent = 'Not quite. Compare your structure with the expected one.';
+            feedback.textContent = `Not quite. Compare your structure with the expected one.${detectedSuffix}`;
             feedback.className = 'text-lg font-bold text-red-600';
         }
 
@@ -430,6 +506,14 @@
 
         window.addEventListener('load', () => {
             pickNewTarget();
+            setChemistryReady(false);
+            if (!ensureChemistryReady()) {
+                const waitForChem = setInterval(() => {
+                    if (ensureChemistryReady()) {
+                        clearInterval(waitForChem);
+                    }
+                }, 250);
+            }
             document.getElementById('check-answer-btn').addEventListener('click', checkAnswer);
             document.getElementById('new-target-btn').addEventListener('click', pickNewTarget);
             document.getElementById('clear-drawing-btn').addEventListener('click', clearDrawing);
