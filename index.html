@@ -143,7 +143,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center">
-                    <span class="text-2xl font-bold text-blue-600 tracking-tight">AminoAcid.io</span>
+                    <!-- Removed Logo -->
                 </div>
                 
                 <div class="flex items-center space-x-6">
@@ -188,38 +188,38 @@
             </div>
         </section>
 
-        <section id="page-learn" class="hidden py-8">
-            <div class="max-w-md mx-auto">
-                <div id="flashcard-container" class="perspective-1000 h-96">
-                    <div id="flashcard" class="relative w-full h-full transition-transform duration-500 transform-style-3d cursor-pointer" onclick="flipCard()">
+        <section id="page-learn" class="hidden h-[calc(100vh-4rem)] flex flex-col">
+            <div class="flex-grow w-full px-2 md:px-4 flex flex-col pt-4 pb-2">
+                <div id="flashcard-container" class="perspective-1000 flex-grow w-full relative mb-4">
+                    <div id="flashcard" class="absolute inset-0 w-full h-full transition-transform duration-500 transform-style-3d cursor-pointer" onclick="flipCard()">
                         <!-- Front -->
-                        <div id="flashcard-front" class="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center p-8">
-                            <h2 class="text-sm font-semibold text-blue-500 uppercase tracking-wider mb-4">Amino Acid</h2>
-                            <div id="flashcard-question" class="text-4xl font-bold text-slate-800 dark:text-white text-center"></div>
-                            <p class="mt-8 text-slate-400 text-xs uppercase tracking-widest">Click to reveal</p>
+                        <div id="flashcard-front" class="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-3xl border-2 border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col items-center justify-center p-8">
+                            <h2 class="text-xl md:text-3xl font-bold text-blue-500 uppercase tracking-widest mb-8">Amino Acid</h2>
+                            <div id="flashcard-question" class="text-7xl md:text-9xl font-black text-slate-800 dark:text-white text-center tracking-tight"></div>
+                            <p class="mt-12 text-slate-400 text-sm md:text-lg font-medium uppercase tracking-[0.2em] animate-pulse">Click to reveal</p>
                         </div>
                         <!-- Back -->
-                        <div id="flashcard-back" class="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-2xl border-2 border-blue-500 dark:border-blue-500 shadow-xl flex flex-col items-center justify-center p-8 rotate-y-180">
-                            <div class="w-full h-full flex flex-col">
-                                <div class="flex-grow flex items-center justify-center py-2 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg mb-4 border border-slate-100 dark:border-slate-800 w-full overflow-hidden">
-                                    <canvas id="flashcard-canvas"></canvas>
+                        <div id="flashcard-back" class="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-3xl border-2 border-blue-500 dark:border-blue-500 shadow-2xl flex flex-col items-center justify-center p-4 rotate-y-180">
+                            <div class="w-full h-full flex flex-col mx-auto">
+                                <div class="flex-grow flex items-center justify-center bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl mb-4 border border-slate-100 dark:border-slate-800 w-full overflow-hidden relative">
+                                    <canvas id="flashcard-canvas" class="w-full h-full object-contain"></canvas>
                                 </div>
-                                <div class="grid grid-cols-2 gap-4 w-full">
-                                    <div class="text-left">
-                                        <p class="text-[10px] text-slate-500 uppercase font-bold">3-Letter</p>
-                                        <p id="flash-abbr3" class="text-lg font-bold text-blue-600"></p>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full shrink-0">
+                                    <div class="text-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                                        <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">3-Letter</p>
+                                        <p id="flash-abbr3" class="text-2xl md:text-3xl font-bold text-blue-600"></p>
                                     </div>
-                                    <div class="text-left">
-                                        <p class="text-[10px] text-slate-500 uppercase font-bold">1-Letter</p>
-                                        <p id="flash-abbr1" class="text-lg font-bold text-green-600"></p>
+                                    <div class="text-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                                        <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">1-Letter</p>
+                                        <p id="flash-abbr1" class="text-2xl md:text-3xl font-bold text-green-600"></p>
                                     </div>
-                                    <div class="text-left">
-                                        <p class="text-[10px] text-slate-500 uppercase font-bold">Side Chain pKa</p>
-                                        <p id="flash-pkaR" class="text-lg font-bold text-orange-600"></p>
+                                    <div class="text-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                                        <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">pKa (R)</p>
+                                        <p id="flash-pkaR" class="text-2xl md:text-3xl font-bold text-orange-600"></p>
                                     </div>
-                                    <div class="text-left">
-                                        <p class="text-[10px] text-slate-500 uppercase font-bold">Name</p>
-                                        <p id="flash-name" class="text-lg font-bold text-slate-800 dark:text-white"></p>
+                                    <div class="text-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                                        <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Name</p>
+                                        <p id="flash-name" class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white truncate"></p>
                                     </div>
                                 </div>
                             </div>
@@ -227,20 +227,22 @@
                     </div>
                 </div>
                 
-                <div class="mt-8 flex justify-center items-center space-x-6">
-                    <button onclick="prevCard()" class="p-3 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                <div class="shrink-0 mb-2 flex justify-center items-center space-x-8">
+                    <button onclick="prevCard()" class="p-4 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:scale-110 transition-all shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     </button>
-                    <button onclick="shuffleCards()" class="px-6 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Shuffle</button>
-                    <button onclick="nextCard()" class="p-3 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                    </button>
-                </div>
-                
-                <div class="mt-6 text-center">
-                    <div class="inline-block px-4 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-medium">
-                        Card <span id="card-index" class="text-slate-800 dark:text-slate-200">1</span> of <span id="card-total">20</span>
+                    <div class="text-center min-w-[100px]">
+                        <button onclick="shuffleCards()" class="w-full px-6 py-3 rounded-xl bg-slate-800 dark:bg-slate-700 text-white font-bold hover:bg-slate-700 dark:hover:bg-slate-600 hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            Shuffle
+                        </button>
+                        <div class="mt-2 text-xs font-medium text-slate-400">
+                            Card <span id="card-index" class="text-slate-900 dark:text-white">1</span> / <span id="card-total">20</span>
+                        </div>
                     </div>
+                    <button onclick="nextCard()" class="p-4 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:scale-110 transition-all shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
                 </div>
             </div>
         </section>
@@ -422,28 +424,32 @@
                 // We need a unique ID for each canvas as the index in filtered list might change
                 const uniqueIdx = aminoAcids.indexOf(aa); 
                 
-                // Generate Box Shadows for Tags
-                let boxShadows = [];
-                if (aa.tags) {
-                    aa.tags.forEach((tag, i) => {
-                        const color = colorMap[tag];
-                        if (color) {
-                            // Creates concentric rings: 0 0 0 3px color1, 0 0 0 6px color2...
-                            boxShadows.push(`0 0 0 ${(i + 1) * 3}px ${color}`);
-                        }
-                    });
-                }
-                const shadowStyle = boxShadows.length > 0 ? `box-shadow: ${boxShadows.join(', ')};` : '';
-                // Add extra margin to compensate for outer shadows if needed, 
-                // but grid gap usually handles it. We'll add a small margin to the card style just in case.
-
                 const card = document.createElement('div');
-                card.className = `molecule-card bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-4 m-1`;
-                // Override shadow if tags exist
-                if (shadowStyle) {
-                     card.style.cssText = shadowStyle;
-                     // Remove default border if we have colored outlines to avoid clash, 
-                     // or keep it as the innermost boundary. Let's keep it.
+                card.className = `molecule-card bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-4 m-1 shadow-sm`;
+
+                // Generate Tag Badges
+                let tagsHtml = '';
+                if (aa.tags) {
+                    tagsHtml = `<div class="mt-3 flex flex-wrap gap-1 justify-center">`;
+                    aa.tags.forEach(tag => {
+                        const colorClass = tagColors[tag] || 'border-slate-200 text-slate-500';
+                        // Extract just the text color for the background tint, or map manually
+                        // Let's use a mapping for nice pastel backgrounds matching the text
+                        const bgMap = {
+                            'nonpolar': 'bg-gray-100 dark:bg-gray-800',
+                            'polar': 'bg-cyan-50 dark:bg-cyan-900/20',
+                            'aliphatic': 'bg-amber-50 dark:bg-amber-900/20',
+                            'aromatic': 'bg-purple-50 dark:bg-purple-900/20',
+                            'acidic': 'bg-red-50 dark:bg-red-900/20',
+                            'basic': 'bg-blue-50 dark:bg-blue-900/20',
+                            'hydroxyl': 'bg-teal-50 dark:bg-teal-900/20',
+                            'sulfur': 'bg-yellow-50 dark:bg-yellow-900/20'
+                        };
+                        const bgClass = bgMap[tag] || 'bg-slate-100 dark:bg-slate-800';
+                        
+                        tagsHtml += `<span class="${bgClass} ${colorClass} text-[10px] px-2 py-0.5 rounded-full font-semibold border border-opacity-20">${tag}</span>`;
+                    });
+                    tagsHtml += `</div>`;
                 }
 
                 card.innerHTML = `
@@ -466,7 +472,8 @@
                     <div class="flex-grow flex items-center justify-center py-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg my-2 border border-slate-100 dark:border-slate-800">
                         <canvas id="canvas-${uniqueIdx}"></canvas>
                     </div>
-                    <div class="mt-1 flex items-center gap-1">
+                    ${tagsHtml}
+                    <div class="mt-3 flex items-center gap-1">
                         <input id="input-${uniqueIdx}" type="text" class="smiles-input text-slate-400 dark:text-slate-500" value="${aa.smiles}" spellcheck="false" oninput="handleSmilesEdit(${uniqueIdx}, this.value)" title="Edit structure" />
                         <button onclick="resetSmiles(${uniqueIdx})" class="reset-btn" title="Reset structure">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
@@ -627,7 +634,13 @@
             }
 
             document.getElementById('recall-streak').textContent = recallState.streak;
-            document.getElementById('recall-correct-answer').textContent = `Answer: ${recallState.currentQuestion.validAnswers[0]}`;
+            
+            let answerText = `Answer: ${recallState.currentQuestion.validAnswers[0]}`;
+            // If the question type is 5, 6, or 7 (Structure -> Property), show the name as well
+            if ([5, 6, 7].includes(recallState.currentQuestion.type)) {
+                answerText += ` (${recallState.currentQuestion.aa.name})`;
+            }
+            document.getElementById('recall-correct-answer').textContent = answerText;
             
             document.getElementById('recall-input-container').classList.add('hidden');
             document.getElementById('recall-feedback').classList.remove('hidden');
@@ -715,7 +728,8 @@
         function renderFlashcardStructure() {
             const aa = flashcardList[currentCardIndex];
             const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
-            const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: 300, height: 250 });
+            // Massive view for large screens
+            const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: 1600, height: 1200, bondThickness: 3.0 });
             smilesDrawer.draw(aa.smiles, '#flashcard-canvas', isDarkMode ? 'dark' : 'light');
         }
 
