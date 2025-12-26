@@ -7,14 +7,7 @@
     <link rel="preconnect" href="https://api.github.com" crossorigin>
     <link rel="dns-prefetch" href="https://api.github.com">
     <script>
-        window.__commitMetaPromise = fetch('https://api.github.com/repos/nikhi1g/aminoacids/commits?per_page=1&t=' + Date.now(), {
-            cache: 'no-store',
-            headers: {
-                'Accept': 'application/vnd.github+json',
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            }
-        })
+        window.__commitMetaPromise = fetch('https://api.github.com/repos/nikhi1g/aminoacids/commits?per_page=1&t=' + Date.now(), { cache: 'no-store' })
             .then(response => response.ok ? response.json() : null)
             .then(data => {
                 const commit = Array.isArray(data) ? data[0] : data;

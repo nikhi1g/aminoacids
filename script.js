@@ -29,7 +29,6 @@ const INITIAL_SMILES = aminoAcids.map(aa => aa.smiles);
 let isDarkMode = false;
 const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, bondLength: 18, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false, compactDrawing: false };
 const PROGRESS_STORAGE_KEY = 'aa_progress_v1';
-const COMMIT_JSON_PATH = 'commit.json';
 const GITHUB_COMMITS_API = 'https://api.github.com/repos/nikhi1g/aminoacids/commits?per_page=1';
 const COMMIT_POLL_MS = 300000;
 const DEFAULT_PROGRESS_ITEM = {
@@ -161,14 +160,7 @@ function formatCommitDate(value) {
 
 async function fetchGitHubCommitMeta() {
     try {
-        const response = await fetch(`${GITHUB_COMMITS_API}&t=${Date.now()}`, {
-            cache: 'no-store',
-            headers: {
-                'Accept': 'application/vnd.github+json',
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            }
-        });
+        const response = await fetch(`${GITHUB_COMMITS_API}&t=${Date.now()}`, { cache: 'no-store' });
         if (!response.ok) return null;
         const data = await response.json();
         const commit = Array.isArray(data) ? data[0] : data;
@@ -184,33 +176,13 @@ async function fetchGitHubCommitMeta() {
     }
 }
 
-async function fetchCommitJsonMeta() {
-    try {
-        const response = await fetch(`${COMMIT_JSON_PATH}?t=${Date.now()}`, {
-            cache: 'no-store',
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            }
-        });
-        if (!response.ok) return null;
-        const data = await response.json();
-        if (!data || typeof data.commit !== 'string') return null;
-        return data;
-    } catch (err) {
-        return null;
-    }
-}
-
 async function fetchCommitMeta() {
     const prefetch = !currentCommitHash ? window.__commitMetaPromise : null;
     if (prefetch) {
         const meta = await prefetch;
         if (meta && meta.commit) return meta;
     }
-    const githubMeta = await fetchGitHubCommitMeta();
-    if (githubMeta) return githubMeta;
-    return fetchCommitJsonMeta();
+    return fetchGitHubCommitMeta();
 }
 
 function updateHeaderCommit(meta) {
