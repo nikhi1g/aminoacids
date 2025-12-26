@@ -1,3 +1,5 @@
+--- 
+--- 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,8 +23,8 @@
     <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100" data-page="show" data-show-filters="true">
-    <div id="site-header"></div>
+<body data-page="show" data-show-filters="true" class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    {% include header.html %}
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="molecule-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -30,7 +32,7 @@
         </div>
     </main>
 
-    <div id="site-footer"></div>
+    {% include footer.html %}
 
     <script src="script.js"></script>
     <script>

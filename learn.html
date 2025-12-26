@@ -1,3 +1,5 @@
+--- 
+--- 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,8 +23,8 @@
     <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col min-h-screen" data-page="learn" data-show-filters="true">
-    <div id="site-header"></div>
+<body data-page="learn" data-show-filters="true" class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col min-h-screen">
+    {% include header.html %}
 
     <main class="flex-grow w-full px-4 sm:px-6 lg:px-8 py-4 flex flex-col h-full">
         <div class="flex-grow w-full flex flex-col">
@@ -86,7 +88,7 @@
         </div>
     </main>
 
-    <div id="site-footer"></div>
+    {% include footer.html %}
 
     <script src="script.js"></script>
     <script>
