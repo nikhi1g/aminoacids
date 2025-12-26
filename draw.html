@@ -167,6 +167,15 @@
             smilesDrawer.draw(drawTarget.smiles, '#draw-expected-canvas', isDarkMode ? 'dark' : 'light');
         }
 
+        function revealExpectedStructure() {
+            const wrapper = document.getElementById('draw-expected-wrapper');
+            if (!wrapper) return;
+            wrapper.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                updateExpectedStructure();
+            });
+        }
+
         function checkAnswer() {
             if (!drawTarget || !jsmeApplet) return;
             const userSmiles = jsmeApplet.smiles();
@@ -183,8 +192,7 @@
 
             document.getElementById('draw-user-smiles').textContent = userSmiles;
             document.getElementById('draw-expected-smiles').textContent = expectedSmiles;
-            updateExpectedStructure();
-            document.getElementById('draw-expected-wrapper').classList.remove('hidden');
+            revealExpectedStructure();
 
             try {
                 const OCL = window.OCL;
@@ -243,7 +251,9 @@
         });
 
         window.addEventListener('themeChanged', () => {
-            updateExpectedStructure();
+            if (!document.getElementById('draw-expected-wrapper').classList.contains('hidden')) {
+                updateExpectedStructure();
+            }
         });
 
         window.addEventListener('filterChanged', () => {
