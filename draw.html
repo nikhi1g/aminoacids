@@ -57,13 +57,13 @@
                         <p class="text-xs uppercase tracking-widest text-slate-400">Your SMILES</p>
                         <p id="draw-user-smiles" class="text-xs font-mono text-slate-600 dark:text-slate-300 break-all">-</p>
                     </div>
-                    <div class="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                    <div id="draw-expected-smiles-card" class="hidden bg-slate-50 dark:bg-slate-800/40 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
                         <p class="text-xs uppercase tracking-widest text-slate-400">Expected SMILES</p>
                         <p id="draw-expected-smiles" class="text-xs font-mono text-slate-600 dark:text-slate-300 break-all">-</p>
                     </div>
                 </div>
 
-                <div class="bg-slate-50/60 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+                <div id="draw-expected-panel" class="hidden bg-slate-50/60 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800 p-4">
                     <p class="text-xs uppercase tracking-widest text-slate-400 mb-2">Expected Structure</p>
                     <div class="flex items-center justify-center min-h-[220px]">
                         <canvas id="draw-expected-canvas" class="w-full h-full"></canvas>
@@ -101,6 +101,20 @@
                 .replace(/\[O\]\[H\]/g, 'O');
         }
 
+        function setExpectedVisibility(show) {
+            const panel = document.getElementById('draw-expected-panel');
+            const smilesCard = document.getElementById('draw-expected-smiles-card');
+            if (!panel || !smilesCard) return;
+            if (show) {
+                panel.classList.remove('hidden');
+                smilesCard.classList.remove('hidden');
+                updateExpectedStructure();
+            } else {
+                panel.classList.add('hidden');
+                smilesCard.classList.add('hidden');
+            }
+        }
+
         function pickNewTarget() {
             const filtered = getFilteredAminoAcids();
             if (filtered.length === 0) {
@@ -117,7 +131,7 @@
             if (jsmeApplet) {
                 jsmeApplet.reset();
             }
-            updateExpectedStructure();
+            setExpectedVisibility(false);
         }
 
         function updateExpectedStructure() {
@@ -133,6 +147,7 @@
             const expectedSmiles = drawTarget.smiles;
             document.getElementById('draw-user-smiles').textContent = userSmiles || 'No structure drawn.';
             document.getElementById('draw-expected-smiles').textContent = expectedSmiles;
+            setExpectedVisibility(true);
 
             const isCorrect = normalizeSmiles(userSmiles) === normalizeSmiles(expectedSmiles);
             const feedback = document.getElementById('draw-feedback');
@@ -150,6 +165,8 @@
                 jsmeApplet.reset();
             }
             document.getElementById('draw-user-smiles').textContent = '-';
+            document.getElementById('draw-expected-smiles').textContent = '-';
+            setExpectedVisibility(false);
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
             document.getElementById('draw-feedback').className = 'text-lg font-bold text-slate-600';
         }
@@ -162,7 +179,10 @@
         });
 
         window.addEventListener('themeChanged', () => {
-            updateExpectedStructure();
+            const panel = document.getElementById('draw-expected-panel');
+            if (panel && !panel.classList.contains('hidden')) {
+                updateExpectedStructure();
+            }
         });
 
         window.addEventListener('filterChanged', () => {
