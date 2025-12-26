@@ -154,8 +154,12 @@ function getFilteredAminoAcids() {
 async function fetchLocalCommitMeta() {
     try {
         const response = await fetch(`commit.json?t=${Date.now()}`, { cache: 'no-store' });
-        if (!response.ok) return null;
+        if (!response.ok) {
+            console.warn("Failed to fetch commit.json");
+            return null;
+        }
         const data = await response.json();
+        console.log("Local commit meta:", data);
         if (!data || !data.commit) return null;
         return {
             commit: data.commit,
@@ -163,6 +167,7 @@ async function fetchLocalCommitMeta() {
             message: data.message
         };
     } catch (err) {
+        console.error("Error fetching local commit meta:", err);
         return null;
     }
 }
@@ -184,6 +189,13 @@ function updateHeaderCommit(meta) {
             el.title = meta.message;
             el.style.cursor = 'help';
             el.onclick = () => showVersionInfo(meta);
+            // Add visual hint that it's interactive
+            el.classList.add('underline', 'decoration-dotted', 'decoration-slate-400', 'underline-offset-4');
+        } else {
+            el.style.cursor = 'default';
+            el.onclick = null;
+            el.removeAttribute('title');
+            el.classList.remove('underline', 'decoration-dotted', 'decoration-slate-400', 'underline-offset-4');
         }
     }
 }
