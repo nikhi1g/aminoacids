@@ -150,7 +150,13 @@ function getFilteredAminoAcids() {
 
 async function fetchCommitHash() {
     try {
-        const response = await fetch(`${COMMIT_JSON_PATH}?t=${Date.now()}`, { cache: 'no-store' });
+        const response = await fetch(`${COMMIT_JSON_PATH}?t=${Date.now()}`, {
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
         if (!response.ok) return null;
         const data = await response.json();
         if (!data || typeof data.commit !== 'string') return null;
@@ -199,7 +205,13 @@ function initCommitWatcher() {
         });
     }
     checkForCommitUpdate();
-    setInterval(checkForCommitUpdate, 30000);
+    setInterval(checkForCommitUpdate, 10000);
+    window.addEventListener('focus', checkForCommitUpdate);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            checkForCommitUpdate();
+        }
+    });
 }
 
 function loadProgress() {
@@ -229,7 +241,7 @@ function getProgressItem(progress, abbr3) {
 }
 
 // Init
-window.addEventListener('load', () => {
+window.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
     updateFilterUI();
     initCommitWatcher();
