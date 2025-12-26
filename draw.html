@@ -21,6 +21,7 @@
         }
     </script>
     <script src="https://unpkg.com/jsme-editor@latest/jsme.nocache.js"></script>
+    <script src="https://unpkg.com/openchemlib/dist/openchemlib-full.js"></script>
     <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -137,20 +138,7 @@
             }
         }
 
-        function normalizeSmiles(smiles) {
-            if (!smiles) return '';
-            return smiles
-                .replace(/\s+/g, '')
-                .replace(/\[H\]/g, '')
-                .replace(/\[NH2\]/g, 'N')
-                .replace(/\[NH\]/g, 'N')
-                .replace(/\[OH\]/g, 'O')
-                .replace(/\[SH\]/g, 'S')
-                .replace(/\[O\]\[H\]/g, 'O');
-        }
-
         function pickNewTarget() {
-            const filtered = getFilteredAminoAcids();
             if (filtered.length === 0) {
                 drawTarget = null;
                 document.getElementById('draw-target-name').textContent = 'No Match';
@@ -184,14 +172,50 @@
             document.getElementById('draw-expected-smiles').textContent = expectedSmiles;
             document.getElementById('draw-expected-wrapper').classList.remove('hidden');
 
-            const isCorrect = normalizeSmiles(userSmiles) === normalizeSmiles(expectedSmiles);
             const feedback = document.getElementById('draw-feedback');
-            if (isCorrect && userSmiles) {
-                feedback.textContent = 'Correct structure!';
-                feedback.className = 'text-lg font-bold text-emerald-600';
-            } else {
-                feedback.textContent = 'Not quite. Compare your structure with the expected one.';
-                feedback.className = 'text-lg font-bold text-amber-600';
+            
+            if (!userSmiles) {
+                 feedback.textContent = 'Please draw a structure first.';
+                 feedback.className = 'text-lg font-bold text-slate-600';
+                 return;
+            }
+
+            try {
+                const OCL = window.OCL;
+                const molUser = OCL.Molecule.fromSmiles(userSmiles);
+                const molExpected = OCL.Molecule.fromSmiles(expectedSmiles);
+                
+                // Create IDCodes for strict structural comparison
+                // We use getIDCode() which creates a canonical representation
+                const idUser = molUser.getIDCode();
+                const idExpected = molExpected.getIDCode();
+
+                if (idUser === idExpected) {
+                    feedback.textContent = 'Correct structure!';
+                    feedback.className = 'text-lg font-bold text-emerald-600';
+                } else {
+                    // Check if it's just a stereochemistry issue
+                    molUser.stripStereoInformation();
+                    molExpected.stripStereoInformation();
+                    const idUserNoStereo = molUser.getIDCode();
+                    const idExpectedNoStereo = molExpected.getIDCode();
+                    
+                    if (idUserNoStereo === idExpectedNoStereo) {
+                         feedback.textContent = 'Correct connectivity, but check stereochemistry!';
+                         feedback.className = 'text-lg font-bold text-amber-600';
+                    } else {
+                         // Check if it's an explicit hydrogen mismatch (common issue)
+                         // We reconstruct molecules from the IDCode to normalize, then compare again? 
+                         // No, IDCode should have handled it.
+                         // But if implicit vs explicit fails:
+                         feedback.textContent = 'Not quite. Compare your structure with the expected one.';
+                         feedback.className = 'text-lg font-bold text-red-600';
+                    }
+                }
+            } catch (err) {
+                console.error("Comparison error:", err);
+                feedback.textContent = 'Error verifying structure. Please try again.';
+                feedback.className = 'text-lg font-bold text-red-600';
             }
         }
 
