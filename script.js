@@ -163,12 +163,17 @@ async function fetchLocalCommitMeta() {
         }
         const text = await response.text();
         const data = parseCommitJson(text);
-        if (!data || !data.commit) return null;
-        console.log("Local commit meta:", data);
-        return {
-            commit: data.commit,
-            commit_date: data.build_time,
+        if (!data || !isValidCommitHash(data.commit)) return null;
+        const normalized = {
+            commit: data.commit.trim(),
+            commit_date: data.build_time || data.commit_date,
             message: data.message
+        };
+        console.log("Local commit meta:", normalized);
+        return {
+            commit: normalized.commit,
+            commit_date: normalized.commit_date,
+            message: normalized.message
         };
     } catch (err) {
         console.error("Error fetching local commit meta:", err);
@@ -188,6 +193,12 @@ async function fetchCommitMeta() {
 function getShortCommitHash(meta) {
     if (!meta || !meta.commit) return 'unknown';
     return meta.commit.slice(0, 7);
+}
+
+function isValidCommitHash(value) {
+    if (typeof value !== 'string') return false;
+    const trimmed = value.trim();
+    return /^[0-9a-f]{7,40}$/i.test(trimmed);
 }
 
 function parseCommitJson(text) {
