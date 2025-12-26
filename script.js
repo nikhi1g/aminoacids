@@ -254,37 +254,31 @@ function createUpdateModal(oldHash, newHash, message) {
     modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in';
     
     modal.innerHTML = `
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 transform transition-all scale-100">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Update Available</h3>
-                    <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider">New Version</span>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 transform transition-all scale-100 p-6 text-center">
+            
+            <div class="mb-4">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4">
+                    <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
                 </div>
-                
-                <div class="space-y-4">
-                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Version Change</p>
-                        <div class="flex items-center gap-3 text-sm font-mono">
-                            <span class="text-slate-500 line-through decoration-red-500/50">${oldHash ? oldHash.slice(0, 7) : 'xxxxxxx'}</span>
-                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                            <span class="text-green-600 font-bold bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded">${newHash.slice(0, 7)}</span>
-                        </div>
-                    </div>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">New version out!</h3>
+            </div>
 
-                    ${message ? `
-                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">What's New</p>
-                        <p class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed max-h-40 overflow-y-auto">${message}</p>
+            <div class="space-y-4 mb-6">
+                <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 font-mono text-sm">
+                    <div class="flex items-center justify-center gap-2 text-slate-500 mb-2">
+                        <span class="line-through opacity-75">${oldHash ? oldHash.slice(0, 7) : '???????'}</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                        <span class="text-blue-600 font-bold bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">${newHash.slice(0, 7)}</span>
                     </div>
-                    ` : ''}
-                </div>
-                
-                <div class="mt-8">
-                    <button onclick="window.location.reload()" class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg hover:shadow-blue-500/25 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
-                        Update Now
-                    </button>
+                    ${message ? `<p class="text-slate-700 dark:text-slate-300 italic">"${message}"</p>` : ''}
                 </div>
             </div>
+            
+            <button onclick="window.location.reload()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]">
+                Reload
+            </button>
         </div>
     `;
     
