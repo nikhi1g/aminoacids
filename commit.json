@@ -1,3 +1,6 @@
+---
+---
 {
-  "commit": "dev"
+  "commit": "{{ site.github.build_revision | default: 'local' }}",
+  "build_time": "{{ site.time | date: '%Y-%m-%d %H:%M UTC' }}"
 }

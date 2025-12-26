@@ -174,22 +174,27 @@ function getFilteredAminoAcids() {
         : aminoAcids.filter(aa => aa.tags && aa.tags.includes(currentFilter));
 }
 
-async function fetchCommitHash() {
+async function fetchCommitMeta() {
     try {
         const response = await fetch(`${COMMIT_JSON_PATH}?t=${Date.now()}`, { cache: 'no-store' });
         if (!response.ok) return null;
         const data = await response.json();
         if (!data || typeof data.commit !== 'string') return null;
-        return data.commit;
+        return data;
     } catch (err) {
         return null;
     }
 }
 
-function updateFooterCommit(hash) {
-    const el = document.getElementById('commit-hash');
-    if (!el) return;
-    el.textContent = hash ? hash.slice(0, 7) : 'unknown';
+function updateFooterCommit(meta) {
+    const hashEl = document.getElementById('commit-hash');
+    if (hashEl) {
+        hashEl.textContent = meta && meta.commit ? meta.commit.slice(0, 7) : 'unknown';
+    }
+    const dateEl = document.getElementById('commit-date');
+    if (dateEl && meta && meta.build_time) {
+        dateEl.textContent = meta.build_time;
+    }
 }
 
 function showUpdateBanner(newHash) {
@@ -203,17 +208,17 @@ function showUpdateBanner(newHash) {
 }
 
 async function checkForCommitUpdate() {
-    const latestHash = await fetchCommitHash();
-    if (!latestHash) return;
+    const latestMeta = await fetchCommitMeta();
+    if (!latestMeta) return;
     if (!currentCommitHash) {
-        currentCommitHash = latestHash;
-        updateFooterCommit(currentCommitHash);
+        currentCommitHash = latestMeta.commit;
+        updateFooterCommit(latestMeta);
         return;
     }
-    if (latestHash !== currentCommitHash) {
-        updateFooterCommit(latestHash);
-        showUpdateBanner(latestHash);
-        currentCommitHash = latestHash;
+    if (latestMeta.commit !== currentCommitHash) {
+        updateFooterCommit(latestMeta);
+        showUpdateBanner(latestMeta.commit);
+        currentCommitHash = latestMeta.commit;
     }
 }
 
