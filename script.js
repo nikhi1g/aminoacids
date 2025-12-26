@@ -160,20 +160,20 @@ async function fetchCommitHash() {
     }
 }
 
-function updateFooterCommit(hash) {
+function updateHeaderCommit(hash) {
     const el = document.getElementById('commit-hash');
     if (!el) return;
     el.textContent = hash ? hash.slice(0, 7) : 'unknown';
 }
 
-function showUpdateBanner(newHash) {
-    const banner = document.getElementById('update-banner');
-    if (!banner) return;
-    const hashEl = banner.querySelector('[data-commit]');
+function showUpdateIndicator(newHash) {
+    const indicator = document.getElementById('update-indicator');
+    if (!indicator) return;
+    const hashEl = indicator.querySelector('[data-commit]');
     if (hashEl) {
         hashEl.textContent = newHash ? newHash.slice(0, 7) : '';
     }
-    banner.classList.remove('hidden');
+    indicator.classList.remove('hidden');
 }
 
 async function checkForCommitUpdate() {
@@ -181,12 +181,12 @@ async function checkForCommitUpdate() {
     if (!latestHash) return;
     if (!currentCommitHash) {
         currentCommitHash = latestHash;
-        updateFooterCommit(currentCommitHash);
+        updateHeaderCommit(currentCommitHash);
         return;
     }
     if (latestHash !== currentCommitHash) {
-        updateFooterCommit(latestHash);
-        showUpdateBanner(latestHash);
+        updateHeaderCommit(latestHash);
+        showUpdateIndicator(latestHash);
         currentCommitHash = latestHash;
     }
 }

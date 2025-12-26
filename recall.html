@@ -27,7 +27,18 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col space-y-4 py-4">
                 <div class="flex justify-between items-center h-16">
-                    <div class="flex items-center"></div>
+                    <div class="flex items-center">
+                        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 px-3 py-2">
+                            <div class="text-xs font-semibold uppercase tracking-widest text-slate-400">Amino Acid Explorer</div>
+                            <div class="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
+                                <span>Commit: <span id="commit-hash">loading...</span></span>
+                                <span id="update-indicator" class="hidden inline-flex items-center gap-2">
+                                    <span class="rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 font-semibold">New <span data-commit></span></span>
+                                    <button id="refresh-site-btn" class="px-2 py-0.5 rounded-full bg-amber-600 text-white font-semibold hover:bg-amber-700 transition-colors">Refresh</button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div class="flex items-center space-x-6">
                         <nav class="flex space-x-8">
@@ -114,19 +125,9 @@
         </div>
     </main>
 
-    <footer class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-xs text-slate-500 flex items-center justify-between">
-            <span>Amino Acid Explorer</span>
-            <span>Deployed Commit: <span id="commit-hash">loading...</span></span>
-        </div>
-    </footer>
+    
 
-    <div id="update-banner" class="hidden fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
-        <div class="bg-slate-900 text-white rounded-2xl shadow-2xl px-5 py-3 flex flex-col sm:flex-row items-center gap-3">
-            <span class="text-sm font-semibold">New version available (<span data-commit></span>). Refresh to update.</span>
-            <button id="refresh-site-btn" class="px-3 py-1.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition-colors">Refresh</button>
-        </div>
-    </div>
+    
 
     <script src="script.js"></script>
     <script>
