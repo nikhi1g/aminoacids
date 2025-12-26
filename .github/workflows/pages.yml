@@ -25,7 +25,7 @@ jobs:
         run: |
           mkdir -p _site
           # Inject commit hash into script.js
-          sed -i "s/^const BUILD_COMMIT = .*$/const BUILD_COMMIT = '${GITHUB_SHA}';/" script.js
+          sed -i "s/const BUILD_COMMIT = 'DEV_VERSION';/const BUILD_COMMIT = '${GITHUB_SHA}';/" script.js
           # Add cache busting to script tag in HTML files
           sed -i "s/script.js/script.js?v=${GITHUB_SHA}/g" *.html
           tar --exclude='./.git' --exclude='./.github' --exclude='./_site' -cf - . | tar -xf - -C _site

@@ -29,6 +29,7 @@ const INITIAL_SMILES = aminoAcids.map(aa => aa.smiles);
 let isDarkMode = false;
 // This will be replaced by the build pipeline
 const BUILD_COMMIT = 'DEV_VERSION'; 
+console.log("Runtime BUILD_COMMIT:", BUILD_COMMIT);
 const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, bondLength: 18, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false, compactDrawing: false };
 const PROGRESS_STORAGE_KEY = 'aa_progress_v1';
 const COMMIT_POLL_MS = 300000;
