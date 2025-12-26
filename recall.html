@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recall - Amino Acid Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col min-h-screen">
+
+    <header class="bg-white dark:bg-slate-900 border-b dark:border-slate-800 sticky top-0 z-20 shadow-sm transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col space-y-4 py-4">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center"></div>
+                    
+                    <div class="flex items-center space-x-6">
+                        <nav class="flex space-x-8">
+                            <a href="index.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Show</a>
+                            <a href="learn.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Learn</a>
+                            <a href="recall.html" class="nav-link active py-5 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Recall</a>
+                        </nav>
+
+                        <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0" title="Toggle Dark/Light Mode">
+                            <svg id="sun-icon" class="hidden dark:block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path>
+                            </svg>
+                            <svg id="moon-icon" class="block dark:hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 justify-center pb-2">
+                    <button onclick="applyFilter('all')" class="filter-btn active px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:opacity-80">All</button>
+                    <button onclick="applyFilter('nonpolar')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-gray-400 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900/30">Non-polar</button>
+                    <button onclick="applyFilter('polar')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-cyan-400 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30">Polar</button>
+                    <button onclick="applyFilter('aliphatic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-amber-400 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30">Aliphatic</button>
+                    <button onclick="applyFilter('aromatic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-purple-400 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30">Aromatic</button>
+                    <button onclick="applyFilter('acidic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30">Acidic</button>
+                    <button onclick="applyFilter('basic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-blue-400 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30">Basic</button>
+                    <button onclick="applyFilter('hydroxyl')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-teal-400 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30">Hydroxyl</button>
+                    <button onclick="applyFilter('sulfur')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-yellow-400 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/30">Sulfur</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow flex flex-col justify-center">
+        <!-- Score Board -->
+        <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Current Streak</span>
+                <span id="recall-streak" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0</span>
+            </div>
+            <div class="text-xs text-slate-400">Press Enter to Submit</div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden flex flex-col">
+            <div class="p-8 text-center space-y-6 flex-grow flex flex-col justify-center min-h-[300px]">
+                <div>
+                    <span id="recall-type-badge" class="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                        Identify
+                    </span>
+                </div>
+                
+                <!-- Content Area (Text or Canvas) -->
+                <div id="recall-content" class="min-h-[180px] w-full flex items-center justify-center">
+                    <!-- Will be populated by JS -->
+                </div>
+
+                <h3 id="recall-prompt" class="text-xl font-bold text-slate-700 dark:text-slate-300">
+                    <!-- Question Text -->
+                </h3>
+            </div>
+
+            <!-- Input Area -->
+            <div class="bg-slate-50 dark:bg-slate-950 p-6 border-t border-slate-100 dark:border-slate-800">
+                <div id="recall-input-container" class="space-y-4">
+                    <input type="text" id="recall-input" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="Type your answer..." autocomplete="off">
+                    <button onclick="submitRecallAnswer()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md transition-colors duration-200">
+                        Check Answer
+                    </button>
+                </div>
+                
+                <!-- Feedback (Hidden by default) -->
+                <div id="recall-feedback" class="hidden space-y-4 text-center">
+                    <div id="recall-result-message" class="text-xl font-bold"></div>
+                    <div id="recall-correct-answer" class="text-sm text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 py-2 px-4 rounded-lg inline-block"></div>
+                    <button id="recall-next-btn" onclick="nextRecallQuestion()" class="w-full py-3 rounded-xl bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white font-bold transition-colors shadow-md">
+                        Next Question
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        const recallState = {
+            streak: 0,
+            currentQuestion: null,
+            isWaitingForNext: false
+        };
+
+        function nextRecallQuestion() {
+            recallState.isWaitingForNext = false;
+            
+            // Reset UI
+            document.getElementById('recall-input-container').classList.remove('hidden');
+            document.getElementById('recall-feedback').classList.add('hidden');
+            document.getElementById('recall-input').value = '';
+            document.getElementById('recall-input').focus();
+
+            // Generate Question based on filter
+            const filtered = getFilteredAminoAcids();
+            if (filtered.length === 0) {
+                document.getElementById('recall-prompt').textContent = "No amino acids match current filter.";
+                document.getElementById('recall-content').innerHTML = "";
+                document.getElementById('recall-input-container').classList.add('hidden');
+                return;
+            }
+
+            const aa = filtered[Math.floor(Math.random() * filtered.length)];
+            // Types: 0-7
+            const type = Math.floor(Math.random() * 8); 
+            
+            let question = { aa, type };
+            
+            const promptEl = document.getElementById('recall-prompt');
+            const contentEl = document.getElementById('recall-content');
+            const badgeEl = document.getElementById('recall-type-badge');
+
+            contentEl.innerHTML = ''; 
+
+            const renderStructure = () => {
+                const canvasId = 'recall-canvas-' + Date.now();
+                contentEl.innerHTML = `<canvas id="${canvasId}" class="w-full max-w-[200px]"></canvas>`;
+                setTimeout(() => {
+                    const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+                    const sd = new SmiDrawer({ ...mainStrategy, width: 300, height: 250 });
+                    sd.draw(aa.smiles, `#${canvasId}`, isDarkMode ? 'dark' : 'light');
+                }, 0);
+            };
+
+            switch(type) {
+                case 0: // Structure -> Name
+                    badgeEl.textContent = 'Structure ID';
+                    promptEl.textContent = 'What is the name of this amino acid?';
+                    renderStructure();
+                    question.validAnswers = [aa.name];
+                    break;
+                case 1: // Name -> 1-Letter
+                    badgeEl.textContent = '1-Letter Abbreviation';
+                    promptEl.textContent = `What is the 1-letter abbreviation for ${aa.name}?`;
+                    contentEl.innerHTML = `<div class="text-6xl font-bold text-slate-800 dark:text-white">${aa.name}</div>`;
+                    question.validAnswers = [aa.abbr1];
+                    break;
+                case 2: // Name -> 3-Letter
+                    badgeEl.textContent = '3-Letter Abbreviation';
+                    promptEl.textContent = `What is the 3-letter abbreviation for ${aa.name}?`;
+                    contentEl.innerHTML = `<div class="text-6xl font-bold text-slate-800 dark:text-white">${aa.name}</div>`;
+                    question.validAnswers = [aa.abbr3];
+                    break;
+                case 3: // Name -> pKa Side Chain
+                    badgeEl.textContent = 'Side Chain pKa';
+                    promptEl.textContent = `What is the side chain pKa of ${aa.name}? (Press Enter for "none")`;
+                    contentEl.innerHTML = `<div class="text-6xl font-bold text-slate-800 dark:text-white">${aa.name}</div>`;
+                    question.validAnswers = aa.pkaR ? [aa.pkaR.toString()] : ['none', 'n/a', 'no', 'null'];
+                    break;
+                case 4: // 1-Letter -> Name
+                    badgeEl.textContent = 'Expand Abbreviation';
+                    promptEl.textContent = `Which amino acid has the 1-letter abbreviation "${aa.abbr1}"?`;
+                    contentEl.innerHTML = `<div class="text-9xl font-bold text-green-600">${aa.abbr1}</div>`;
+                    question.validAnswers = [aa.name];
+                    break;
+                case 5: // Structure -> 1-Letter
+                    badgeEl.textContent = 'Structure -> 1-Letter';
+                    promptEl.textContent = 'What is the 1-letter abbreviation for this amino acid?';
+                    renderStructure();
+                    question.validAnswers = [aa.abbr1];
+                    break;
+                case 6: // Structure -> 3-Letter
+                    badgeEl.textContent = 'Structure -> 3-Letter';
+                    promptEl.textContent = 'What is the 3-letter abbreviation for this amino acid?';
+                    renderStructure();
+                    question.validAnswers = [aa.abbr3];
+                    break;
+                case 7: // Structure -> pKa
+                    badgeEl.textContent = 'Structure -> pKa';
+                    promptEl.textContent = 'What is the side chain pKa of this amino acid? (Press Enter for "none")';
+                    renderStructure();
+                    question.validAnswers = aa.pkaR ? [aa.pkaR.toString()] : ['none', 'n/a', 'no', 'null'];
+                    break;
+            }
+
+            recallState.currentQuestion = question;
+        }
+
+        function submitRecallAnswer() {
+            if (recallState.isWaitingForNext) return;
+
+            let input = document.getElementById('recall-input').value.trim().toLowerCase();
+            if (input === '') input = 'none';
+
+            const validAnswers = recallState.currentQuestion.validAnswers.map(a => a.toString().toLowerCase());
+            
+            const isCorrect = validAnswers.includes(input);
+            
+            if (isCorrect) {
+                recallState.streak++;
+                document.getElementById('recall-result-message').textContent = 'Correct! 🎉';
+                document.getElementById('recall-result-message').className = 'text-xl font-bold text-green-600 dark:text-green-400';
+            } else {
+                recallState.streak = 0;
+                document.getElementById('recall-result-message').textContent = 'Incorrect 😔';
+                document.getElementById('recall-result-message').className = 'text-xl font-bold text-red-600 dark:text-red-400';
+            }
+
+            document.getElementById('recall-streak').textContent = recallState.streak;
+            
+            let answerText = `Answer: ${recallState.currentQuestion.validAnswers[0]}`;
+            if ([5, 6, 7].includes(recallState.currentQuestion.type)) {
+                answerText += ` (${recallState.currentQuestion.aa.name})`;
+            }
+            document.getElementById('recall-correct-answer').textContent = answerText;
+            
+            document.getElementById('recall-input-container').classList.add('hidden');
+            document.getElementById('recall-feedback').classList.remove('hidden');
+            document.getElementById('recall-next-btn').focus();
+            
+            recallState.isWaitingForNext = true;
+        }
+
+        document.getElementById('recall-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                submitRecallAnswer();
+            }
+        });
+
+        window.addEventListener('load', () => {
+            nextRecallQuestion();
+        });
+
+        window.addEventListener('themeChanged', () => {
+            // Re-render canvas if it exists
+            const container = document.getElementById('recall-content');
+            if (container.querySelector('canvas') && recallState.currentQuestion) {
+                // Ideally we'd just re-draw, but simply reloading question keeps it simple for now or we could store the last draw call
+                // For a quick fix, let's just re-draw if it's a structure question
+                if ([0, 5, 6, 7].includes(recallState.currentQuestion.type)) {
+                     const canvasId = container.querySelector('canvas').id;
+                     const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+                     const sd = new SmiDrawer({ ...mainStrategy, width: 300, height: 250 });
+                     sd.draw(recallState.currentQuestion.aa.smiles, `#${canvasId}`, isDarkMode ? 'dark' : 'light');
+                }
+            }
+        });
+
+        window.addEventListener('filterChanged', () => {
+            nextRecallQuestion();
+        });
+    </script>
+</body>
+</html>
