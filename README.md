@@ -10,4 +10,4 @@
 
 ## Notes
 - Your progress is saved in your browser on this device.
-- Clearing browser storage resets your progress.
+- Clearing browser storage resets your progress. You can also clear by clicking the button in Progress.
