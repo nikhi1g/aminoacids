@@ -78,6 +78,47 @@ function toggleDarkMode() {
     window.dispatchEvent(new CustomEvent('themeChanged'));
 }
 
+async function loadShell() {
+    const headerHost = document.getElementById('site-header');
+    const footerHost = document.getElementById('site-footer');
+    if (headerHost) {
+        try {
+            const res = await fetch(`partials/header.html?t=${Date.now()}`, { cache: 'no-store' });
+            if (res.ok) {
+                headerHost.innerHTML = await res.text();
+            }
+        } catch (err) {
+            // Header is optional; fail quietly.
+        }
+    }
+    if (footerHost) {
+        try {
+            const res = await fetch(`partials/footer.html?t=${Date.now()}`, { cache: 'no-store' });
+            if (res.ok) {
+                footerHost.innerHTML = await res.text();
+            }
+        } catch (err) {
+            // Footer is optional; fail quietly.
+        }
+    }
+
+    const page = document.body.getAttribute('data-page');
+    if (page) {
+        document.querySelectorAll('a[data-page]').forEach((link) => {
+            if (link.getAttribute('data-page') === page) {
+                link.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+                link.classList.remove('text-slate-500', 'dark:text-slate-400');
+            }
+        });
+    }
+
+    const showFilters = document.body.getAttribute('data-show-filters');
+    const filterBar = document.getElementById('filter-bar');
+    if (filterBar && showFilters === 'false') {
+        filterBar.classList.add('hidden');
+    }
+}
+
 function initializeTheme() {
     // Check localStorage first, then system preference
     const storedTheme = localStorage.getItem('theme');
@@ -229,8 +270,10 @@ function getProgressItem(progress, abbr3) {
 }
 
 // Init
-window.addEventListener('load', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+    await loadShell();
     initializeTheme();
     updateFilterUI();
     initCommitWatcher();
+    window.dispatchEvent(new CustomEvent('shellLoaded'));
 });
