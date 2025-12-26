@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amino Acid Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- SmilesDrawer Library v2.0.1 -->
+    <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        .molecule-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .molecule-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            max-width: 240px;
+            margin: 0 auto;
+        }
+
+        .pka-badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link.active {
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        .smiles-input {
+            flex-grow: 1;
+            background: transparent;
+            border: 1px solid transparent;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 9px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            cursor: text;
+        }
+
+        .dark .smiles-input:hover {
+            background: #1e293b;
+            color: #94a3b8;
+        }
+
+        .smiles-input:hover {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .smiles-input:focus {
+            outline: none;
+            background: white;
+            border-color: #bfdbfe;
+            color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .dark .smiles-input:focus {
+            background: #0f172a;
+            border-color: #334155;
+            color: #60a5fa;
+        }
+
+        .reset-btn {
+            padding: 4px;
+            border-radius: 4px;
+            color: #94a3b8;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reset-btn:hover {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+        
+        .dark .reset-btn:hover {
+            background-color: #450a0a;
+            color: #f87171;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white dark:bg-slate-900 border-b dark:border-slate-800 sticky top-0 z-20 shadow-sm transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-blue-600 tracking-tight">AminoAcid.io</span>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <nav class="flex space-x-8">
+                        <button onclick="switchTab('show')" id="nav-show" class="nav-link active py-5 text-sm font-medium">Show</button>
+                        <button onclick="switchTab('learn')" id="nav-learn" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Learn</button>
+                        <button onclick="switchTab('recall')" id="nav-recall" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Recall</button>
+                    </nav>
+
+                    <!-- Theme Toggle in Top Right -->
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0" title="Toggle Dark/Light Mode">
+                        <svg id="sun-icon" class="hidden dark:block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path>
+                        </svg>
+                        <svg id="moon-icon" class="block dark:hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Grid Content -->
+        <section id="page-show">
+            <div id="molecule-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Molecule Cards will be injected here -->
+            </div>
+        </section>
+
+        <section id="page-learn" class="hidden text-center py-20">
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Learn Mode</h2>
+            <p class="text-slate-500 dark:text-slate-400">Coming Soon</p>
+        </section>
+        <section id="page-recall" class="hidden text-center py-20">
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Recall Mode</h2>
+            <p class="text-slate-500 dark:text-slate-400">Coming Soon</p>
+        </section>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="bg-white dark:bg-slate-900 border-t dark:border-slate-800 py-6 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
+                <p>Edit SMILES strings to modify structures. Use the refresh icon to reset.</p>
+                <p class="flex items-center gap-1">
+                    Powered by <a href="https://github.com/reymond-group/smilesDrawer" target="_blank" class="hover:text-blue-500 font-semibold transition-colors">smiles-drawer</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /**
+         * SMILES Data
+         */
+        const aminoAcids = [
+            { name: "Alanine", abbr3: "Ala", abbr1: "A", pka1: 2.34, pka2: 9.69, pkaR: null, smiles: "CC([NH2])C(=O)[O][H]" },
+            { name: "Arginine", abbr3: "Arg", abbr1: "R", pka1: 2.17, pka2: 9.04, pkaR: 12.48, smiles: "[H][N]=C([NH2])[NH]CCCNC([NH2])C(=O)[O][H]" },
+            { name: "Asparagine", abbr3: "Asn", abbr1: "N", pka1: 2.02, pka2: 8.80, pkaR: null, smiles: "[NH2]C(CC(=O)[NH2])C(=O)[O][H]" },
+            { name: "Aspartic Acid", abbr3: "Asp", abbr1: "D", pka1: 1.88, pka2: 9.60, pkaR: 3.65, smiles: "[NH2]C(CC(=O)[O][H])C(=O)[O][H]" },
+            { name: "Cysteine", abbr3: "Cys", abbr1: "C", pka1: 1.96, pka2: 10.28, pkaR: 8.18, smiles: "[NH2]C(C[SH])C(=O)[O][H]" },
+            { name: "Glutamine", abbr3: "Gln", abbr1: "Q", pka1: 2.17, pka2: 9.13, pkaR: null, smiles: "[NH2]C(CCC(=O)[NH2])C(=O)[O][H]" },
+            { name: "Glutamic Acid", abbr3: "Glu", abbr1: "E", pka1: 2.19, pka2: 9.67, pkaR: 4.25, smiles: "[NH2]C(CCC(=O)[O][H])C(=O)[O][H]" },
+            { name: "Glycine", abbr3: "Gly", abbr1: "G", pka1: 2.34, pka2: 9.60, pkaR: null, smiles: "[NH2]CC(=O)[O][H]" },
+            { name: "Histidine", abbr3: "His", abbr1: "H", pka1: 1.82, pka2: 9.17, pkaR: 6.00, smiles: "[NH2]C(CC1=CN=C[NH]1)C(=O)[O][H]" },
+            { name: "Isoleucine", abbr3: "Ile", abbr1: "I", pka1: 2.36, pka2: 9.68, pkaR: null, smiles: "CCC(C)C([NH2])C(=O)[O][H]" },
+            { name: "Leucine", abbr3: "Leu", abbr1: "L", pka1: 2.36, pka2: 9.60, pkaR: null, smiles: "CC(C)CC([NH2])C(=O)[O][H]" },
+            { name: "Lysine", abbr3: "Lys", abbr1: "K", pka1: 2.18, pka2: 8.95, pkaR: 10.53, smiles: "[NH2]CCCC([NH2])C(=O)[O][H]" },
+            { name: "Methionine", abbr3: "Met", abbr1: "M", pka1: 2.28, pka2: 9.21, pkaR: null, smiles: "CSCCC([NH2])C(=O)[O][H]" },
+            { name: "Phenylalanine", abbr3: "Phe", abbr1: "F", pka1: 1.83, pka2: 9.13, pkaR: null, smiles: "[NH2]C(CC1=CC=CC=C1)C(=O)[O][H]" },
+            { name: "Proline", abbr3: "Pro", abbr1: "P", pka1: 1.99, pka2: 10.60, pkaR: null, smiles: "[H][O]C(=O)C1CCCN1" },
+            { name: "Serine", abbr3: "Ser", abbr1: "S", pka1: 2.21, pka2: 9.15, pkaR: null, smiles: "[NH2]C(C[OH])C(=O)[O][H]" },
+            { name: "Threonine", abbr3: "Thr", abbr1: "T", pka1: 2.11, pka2: 9.62, pkaR: null, smiles: "CC([OH])C([NH2])C(=O)[O][H]" },
+            { name: "Tryptophan", abbr3: "Trp", abbr1: "W", pka1: 2.38, pka2: 9.39, pkaR: null, smiles: "[NH2]C(CC1=CNC2=C1C=CC=C2)C(=O)[O][H]" },
+            { name: "Tyrosine", abbr3: "Tyrosine", abbr1: "Y", pka1: 2.20, pka2: 9.11, pkaR: 10.07, smiles: "[NH2]C(CC1=CC=C([OH])C=C1)C(=O)[O][H]" },
+            { name: "Valine", abbr3: "Val", abbr1: "V", pka1: 2.32, pka2: 9.62, pkaR: null, smiles: "CC(C)C([NH2])C(=O)[O][H]" }
+        ];
+
+        const INITIAL_SMILES = aminoAcids.map(aa => aa.smiles);
+        let isDarkMode = false;
+        const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false };
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.documentElement.classList.toggle('dark', isDarkMode);
+            renderGrid();
+        }
+
+        function handleSmilesEdit(index, newSmiles) {
+            aminoAcids[index].smiles = newSmiles;
+            const canvasId = `canvas-${index}`;
+            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+            const smilesDrawer = new SmiDrawer(mainStrategy);
+            try {
+                smilesDrawer.draw(newSmiles, `#${canvasId}`, isDarkMode ? 'dark' : 'light');
+            } catch (err) {
+                console.warn("Invalid SMILES string:", newSmiles);
+            }
+        }
+
+        function resetSmiles(index) {
+            const original = INITIAL_SMILES[index];
+            const input = document.getElementById(`input-${index}`);
+            if (input) {
+                input.value = original;
+                handleSmilesEdit(index, original);
+            }
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('molecule-grid');
+            grid.innerHTML = '';
+            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+            const smilesDrawer = new SmiDrawer(mainStrategy);
+
+            aminoAcids.forEach((aa, index) => {
+                const card = document.createElement('div');
+                card.className = 'molecule-card bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-4 shadow-sm';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">${aa.name}</h3>
+                            <div class="flex space-x-2 mt-1">
+                                <span class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] px-2 py-0.5 rounded font-bold border border-blue-100 dark:border-blue-800/50">${aa.abbr3}</span>
+                                <span class="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] px-2 py-0.5 rounded font-bold border border-green-100 dark:border-green-800/50">${aa.abbr1}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="flex flex-col items-end space-y-1">
+                                <span class="pka-badge bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">α-C: ${aa.pka1}</span>
+                                <span class="pka-badge bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">α-N: ${aa.pka2}</span>
+                                ${aa.pkaR ? `<span class="pka-badge bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-800/50">R: ${aa.pkaR}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-grow flex items-center justify-center py-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg my-2 border border-slate-100 dark:border-slate-800">
+                        <canvas id="canvas-${index}"></canvas>
+                    </div>
+                    <div class="mt-1 flex items-center gap-1">
+                        <input id="input-${index}" type="text" class="smiles-input text-slate-400 dark:text-slate-500" value="${aa.smiles}" spellcheck="false" oninput="handleSmilesEdit(${index}, this.value)" title="Edit structure" />
+                        <button onclick="resetSmiles(${index})" class="reset-btn" title="Reset structure">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+                smilesDrawer.draw(aa.smiles, `#canvas-${index}`, isDarkMode ? 'dark' : 'light');
+            });
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`page-${tabId}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active', 'text-blue-600');
+                link.classList.add('text-slate-500', 'dark:text-slate-400');
+            });
+            const activeLink = document.getElementById(`nav-${tabId}`);
+            activeLink.classList.add('active', 'text-blue-600');
+            activeLink.classList.remove('text-slate-500', 'dark:text-slate-400');
+        }
+
+        window.addEventListener('load', () => {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                toggleDarkMode();
+            } else {
+                renderGrid();
+            }
+        });
+    </script>
+</body>
+</html>
