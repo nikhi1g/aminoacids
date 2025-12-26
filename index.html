@@ -6,15 +6,6 @@
     <title>Amino Acid Explorer</title>
     <link rel="preconnect" href="https://api.github.com" crossorigin>
     <link rel="dns-prefetch" href="https://api.github.com">
-    <script>
-        window.__commitMetaPromise = fetch('commit.json?t=' + Date.now(), { cache: 'no-store' })
-            .then(response => response.ok ? response.json() : null)
-            .then(data => {
-                if (!data || !data.commit) return null;
-                return { commit: data.commit, commit_date: data.build_time || null };
-            })
-            .catch(() => null);
-    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {

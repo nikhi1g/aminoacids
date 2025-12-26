@@ -27,6 +27,8 @@ const aminoAcids = [
 
 const INITIAL_SMILES = aminoAcids.map(aa => aa.smiles);
 let isDarkMode = false;
+// This will be replaced by the build pipeline
+const BUILD_COMMIT = 'DEV_VERSION'; 
 const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, bondLength: 18, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false, compactDrawing: false };
 const PROGRESS_STORAGE_KEY = 'aa_progress_v1';
 const COMMIT_POLL_MS = 300000;
@@ -241,16 +243,23 @@ async function checkForCommitUpdate() {
 }
 
 function initCommitWatcher() {
-    initialCommitPromise = fetchCommitMeta();
-    initialCommitPromise.then((meta) => {
-        if (meta && meta.commit && !currentCommitHash) {
-            currentCommitHash = meta.commit;
-            updateHeaderCommit(meta);
-        }
-        if (window.__commitMetaPromise) {
-            window.__commitMetaPromise = null;
-        }
-    });
+    if (BUILD_COMMIT !== 'DEV_VERSION') {
+        currentCommitHash = BUILD_COMMIT;
+        updateHeaderCommit({ commit: BUILD_COMMIT });
+    } else {
+        initialCommitPromise = fetchCommitMeta();
+        initialCommitPromise.then((meta) => {
+            if (meta && meta.commit && !currentCommitHash) {
+                currentCommitHash = meta.commit;
+                updateHeaderCommit(meta);
+            }
+        });
+    }
+
+    if (window.__commitMetaPromise) {
+        window.__commitMetaPromise = null;
+    }
+
     setInterval(() => {
         initialCommitPromise = null;
         checkForCommitUpdate();
