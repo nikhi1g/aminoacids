@@ -27,7 +27,7 @@ const aminoAcids = [
 
 const INITIAL_SMILES = aminoAcids.map(aa => aa.smiles);
 let isDarkMode = false;
-const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false };
+const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, bondLength: 18, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false, compactDrawing: false };
 const PROGRESS_STORAGE_KEY = 'aa_progress_v1';
 const DEFAULT_PROGRESS_ITEM = {
     correctStreak: 0,
