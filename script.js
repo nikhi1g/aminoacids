@@ -33,6 +33,7 @@ console.log("Runtime BUILD_COMMIT:", BUILD_COMMIT);
 const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, bondLength: 18, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false, compactDrawing: false };
 const PROGRESS_STORAGE_KEY = 'aa_progress_v1';
 const COMMIT_POLL_MS = 300000;
+const COMMIT_MESSAGE_MAX_LEN = 40;
 const DEFAULT_PROGRESS_ITEM = {
     correctStreak: 0,
     totalCorrect: 0,
@@ -64,6 +65,7 @@ const colorMap = {
 };
 
 let currentCommitHash = null;
+let currentCommitMeta = null;
 let initialCommitPromise = null;
 
 // --- Shared Functions ---
@@ -188,12 +190,46 @@ async function fetchCommitMeta() {
     return fetchLocalCommitMeta();
 }
 
+function getShortCommitHash(meta) {
+    if (!meta || !meta.commit) return 'unknown';
+    return meta.commit.slice(0, 7);
+}
+
+function formatCommitMessage(meta, maxLen = COMMIT_MESSAGE_MAX_LEN) {
+    if (!meta || typeof meta.message !== 'string') return 'no message';
+    const cleaned = meta.message.replace(/\s+/g, ' ').trim();
+    if (!cleaned) return 'no message';
+    if (cleaned.length <= maxLen) return cleaned;
+    const clipped = cleaned.slice(0, Math.max(0, maxLen - 3));
+    return `${clipped}...`;
+}
+
+function formatCommitDate(meta) {
+    if (!meta || !meta.commit_date) return null;
+    return meta.commit_date;
+}
+
 function updateHeaderCommit(meta) {
     const el = document.getElementById('commit-hash');
     if (el) {
-        const hash = meta && meta.commit ? meta.commit.slice(0, 7) : 'unknown';
-        el.textContent = hash;
-        
+        const hash = getShortCommitHash(meta);
+        const date = formatCommitDate(meta) || (hash !== 'unknown' ? 'Unknown' : null);
+        currentCommitMeta = meta;
+        el.textContent = '';
+        el.className = 'inline-flex flex-wrap items-center gap-2';
+
+        const hashSpan = document.createElement('span');
+        hashSpan.textContent = hash;
+        hashSpan.className = 'font-mono text-slate-600 dark:text-slate-300';
+        el.appendChild(hashSpan);
+
+        if (date) {
+            const dateSpan = document.createElement('span');
+            dateSpan.textContent = date;
+            dateSpan.className = 'text-slate-400';
+            el.appendChild(dateSpan);
+        }
+
         if (hash !== 'unknown') {
             el.title = meta && meta.message ? meta.message : 'View version info';
             el.style.cursor = 'pointer';
@@ -252,43 +288,39 @@ function showVersionInfo(meta) {
     document.body.appendChild(modal);
 }
 
-function createUpdateModal(oldHash, newHash, message) {
-    if (document.getElementById('update-modal')) return;
+function showInlineCommitUpdate(oldMeta, newMeta) {
+    const el = document.getElementById('commit-hash');
+    if (!el) return;
 
-    const modal = document.createElement('div');
-    modal.id = 'update-modal';
-    modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in';
-    
-    modal.innerHTML = `
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 transform transition-all scale-100 p-6 text-center">
-            
-            <div class="mb-4">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4">
-                    <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                </div>
-                <h3 class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">New version out!</h3>
-            </div>
+    const oldLabel = `${getShortCommitHash(oldMeta)} (${formatCommitMessage(oldMeta)})`;
+    const newLabel = `${getShortCommitHash(newMeta)} (${formatCommitMessage(newMeta)})`;
 
-            <div class="space-y-4 mb-6">
-                <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 font-mono text-sm">
-                    <div class="flex items-center justify-center gap-2 text-slate-500 mb-2">
-                        <span class="line-through opacity-75">${oldHash ? oldHash.slice(0, 7) : '???????'}</span>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                        <span class="text-blue-600 font-bold bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">${newHash.slice(0, 7)}</span>
-                    </div>
-                    ${message ? `<p class="text-slate-700 dark:text-slate-300 italic">"${message}"</p>` : ''}
-                </div>
-            </div>
-            
-            <button onclick="window.location.reload()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                Reload
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
+    el.textContent = '';
+    el.className = 'inline-flex flex-wrap items-center gap-2';
+
+    const textSpan = document.createElement('span');
+    textSpan.textContent = `${oldLabel} --> ${newLabel}`;
+    textSpan.className = 'text-slate-600 dark:text-slate-300';
+    el.appendChild(textSpan);
+
+    const badge = document.createElement('span');
+    badge.textContent = 'New';
+    badge.className = 'inline-flex items-center rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest';
+    el.appendChild(badge);
+
+    const refreshButton = document.createElement('button');
+    refreshButton.type = 'button';
+    refreshButton.textContent = 'Refresh';
+    refreshButton.className = 'px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors';
+    refreshButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        window.location.reload();
+    });
+    el.appendChild(refreshButton);
+
+    el.title = 'New version available. Refresh to update.';
+    el.style.cursor = 'pointer';
+    el.onclick = () => showVersionInfo(oldMeta);
 }
 
 async function checkForCommitUpdate() {
@@ -300,7 +332,8 @@ async function checkForCommitUpdate() {
         return;
     }
     if (latestMeta.commit !== currentCommitHash) {
-        createUpdateModal(currentCommitHash, latestMeta.commit, latestMeta.message);
+        const oldMeta = currentCommitMeta || (currentCommitHash ? { commit: currentCommitHash } : null);
+        showInlineCommitUpdate(oldMeta, latestMeta);
         currentCommitHash = latestMeta.commit;
     }
 }
