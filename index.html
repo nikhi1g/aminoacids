@@ -177,7 +177,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="flex-grow flex items-center justify-center py-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg my-2 border border-slate-100 dark:border-slate-800 canvas-container" style="min-height: 200px">
+                    <div class="flex-grow flex items-center justify-center py-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg my-2 border border-slate-100 dark:border-slate-800 canvas-container aspect-[3/2] w-full">
                         <canvas id="canvas-${uniqueIdx}" class="w-full h-full object-contain"></canvas>
                     </div>
                     ${tagsHtml}
@@ -200,10 +200,11 @@
                     
                     const container = canvas.parentElement;
                     const rect = container.getBoundingClientRect();
-                    const width = rect.width || 300;
-                    const height = rect.height || 200;
+                    const width = rect.width;
+                    const height = rect.height;
                     
-                    const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: width, height: height });
+                    // Use reduced padding to fill the box
+                    const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: width, height: height, padding: 10 });
                     smilesDrawer.draw(aa.smiles, `#canvas-${uniqueIdx}`, isDarkMode ? 'dark' : 'light');
                 });
             });
