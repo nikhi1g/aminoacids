@@ -1,34 +1,14 @@
-# Project Status: Amino Acids Site
+# Project Goal
+Help users memorize all amino acids through repeated exposure and recall practice. The app must be fully client-side with no accounts. Users can optionally save and restore their progress using a local JSON file.
 
-## Known Issues
-- **Supabase Integration:** Auth UI is currently being re-implemented. Actual project credentials need to be swapped in.
-
-## Future Tasks: Smart Progress Tracking (Planned)
-*Do not implement the logic below yet. This is a reference architecture.*
-
-### 1. Database Schema
-Create a table `user_progress` in Supabase:
-- `id`: uuid (Primary Key)
-- `user_id`: uuid (Foreign Key to auth.users)
-- `amino_acid_id`: text (The 3-letter code, e.g., "Ala")
-- `is_mastered`: boolean (User manually ticked this off)
-- `proficiency`: integer (0-5 scale of knowledge)
-- `next_review`: timestamp (When to show this card again)
-- `last_reviewed`: timestamp
-
-### 2. Spaced Repetition Logic (SRS)
-The "Recall" and "Learn" modes should query the local `aminoAcids` data, which will be enriched with the user's progress data on load.
-
-**Selection Algorithm:**
-1. **Due Items:** `next_review < now()`
-2. **New Items:** `proficiency == 0`
-3. **Hard Items:** Lowest proficiency score.
-4. **Random:** If no priority items, pick random non-mastered items.
-
-**Scoring:**
-- **Correct:** Increment `proficiency`. Set `next_review` to `now + (2 ^ proficiency) days`.
-- **Incorrect:** Reset `proficiency` to 0. Set `next_review` to `now`.
-
-### 3. Sync Strategy
-- **On Load:** Fetch all `user_progress` rows for `auth.uid()`. Map them to the global `aminoAcids` array.
-- **On Action:** When a user ticks "Mastered" or answers a question, update the local state immediately, then fire an async Supabase `upsert` to save to the cloud.
+# Coding Practices
+- Keep everything client-side and deterministic; avoid any auth or backend dependencies.
+- Keep the core data source in `script.js` and treat it as the single source of truth.
+- Prefer small, pure helper functions for selection/scoring logic so behavior is easy to test and reason about.
+- Persist user progress only to local state, `localStorage`, or a downloadable JSON file; never assume server state.
+- When adding features, preserve existing UX flows in `index.html`, `learn.html`, and `recall.html` unless explicitly requested.
+- Validate JSON import/export and handle missing or malformed fields gracefully with safe defaults.
+- Avoid heavy dependencies; use existing Tailwind + inline JS patterns already in the project.
+- Keep UI changes accessible: readable contrast, keyboard-friendly controls, and clear feedback.
+- Add brief comments only when logic is non-obvious.
+- Maintain ASCII-only edits unless a file already uses Unicode.

@@ -34,6 +34,7 @@
                             <a href="index.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Show</a>
                             <a href="learn.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Learn</a>
                             <a href="recall.html" class="nav-link active py-5 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Recall</a>
+                            <a href="progress.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Progress</a>
                         </nav>
 
                         <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0" title="Toggle Dark/Light Mode">
@@ -114,31 +115,82 @@
 
     <script src="script.js"></script>
     <script>
+        const MASTERY_STREAK = 3;
+        const ACTIVE_SET_SIZE = 7;
+
         const recallState = {
             streak: 0,
             currentQuestion: null,
-            isWaitingForNext: false
+            isWaitingForNext: false,
+            activeSet: [],
+            remainingPool: [],
+            progress: loadProgress()
         };
 
-        function nextRecallQuestion() {
+        function shuffleArray(items) {
+            const copy = [...items];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function buildRecallPools() {
+            recallState.progress = loadProgress();
+            const filtered = getFilteredAminoAcids();
+            const unmastered = filtered.filter((aa) => {
+                const item = getProgressItem(recallState.progress, aa.abbr3);
+                return !item.mastered;
+            });
+
+            const shuffled = shuffleArray(unmastered);
+            recallState.activeSet = shuffled.slice(0, ACTIVE_SET_SIZE);
+            recallState.remainingPool = shuffled.slice(ACTIVE_SET_SIZE);
+        }
+
+        function refillActiveSet() {
+            while (recallState.activeSet.length < ACTIVE_SET_SIZE && recallState.remainingPool.length > 0) {
+                recallState.activeSet.push(recallState.remainingPool.pop());
+            }
+        }
+
+        function pickNextAminoAcid() {
+            if (recallState.activeSet.length === 0) return null;
+            const idx = Math.floor(Math.random() * recallState.activeSet.length);
+            return recallState.activeSet[idx];
+        }
+
+        function resetRecallUI() {
             recallState.isWaitingForNext = false;
-            
-            // Reset UI
             document.getElementById('recall-input-container').classList.remove('hidden');
             document.getElementById('recall-feedback').classList.add('hidden');
             document.getElementById('recall-input').value = '';
             document.getElementById('recall-input').focus();
+        }
 
-            // Generate Question based on filter
+        function showRecallMessage(message) {
+            document.getElementById('recall-prompt').textContent = message;
+            document.getElementById('recall-content').innerHTML = "";
+            document.getElementById('recall-input-container').classList.add('hidden');
+        }
+
+        function nextRecallQuestion() {
+            resetRecallUI();
+
             const filtered = getFilteredAminoAcids();
             if (filtered.length === 0) {
-                document.getElementById('recall-prompt').textContent = "No amino acids match current filter.";
-                document.getElementById('recall-content').innerHTML = "";
-                document.getElementById('recall-input-container').classList.add('hidden');
+                showRecallMessage("No amino acids match current filter.");
                 return;
             }
 
-            const aa = filtered[Math.floor(Math.random() * filtered.length)];
+            refillActiveSet();
+            const aa = pickNextAminoAcid();
+            if (!aa) {
+                showRecallMessage("All amino acids in this filter are mastered.");
+                return;
+            }
+
             // Types: 0-7
             const type = Math.floor(Math.random() * 8); 
             
@@ -224,12 +276,22 @@
             
             const isCorrect = validAnswers.includes(input);
             
+            const progressItem = getProgressItem(recallState.progress, recallState.currentQuestion.aa.abbr3);
+            progressItem.lastSeen = Date.now();
+
             if (isCorrect) {
                 recallState.streak++;
+                progressItem.correctStreak += 1;
+                progressItem.totalCorrect += 1;
+                if (progressItem.correctStreak >= MASTERY_STREAK) {
+                    progressItem.mastered = true;
+                }
                 document.getElementById('recall-result-message').textContent = 'Correct! 🎉';
                 document.getElementById('recall-result-message').className = 'text-xl font-bold text-green-600 dark:text-green-400';
             } else {
                 recallState.streak = 0;
+                progressItem.correctStreak = 0;
+                progressItem.totalWrong += 1;
                 document.getElementById('recall-result-message').textContent = 'Incorrect 😔';
                 document.getElementById('recall-result-message').className = 'text-xl font-bold text-red-600 dark:text-red-400';
             }
@@ -246,6 +308,12 @@
             document.getElementById('recall-feedback').classList.remove('hidden');
             document.getElementById('recall-next-btn').focus();
             
+            if (progressItem.mastered) {
+                recallState.activeSet = recallState.activeSet.filter((item) => item.abbr3 !== recallState.currentQuestion.aa.abbr3);
+                refillActiveSet();
+            }
+
+            saveProgress(recallState.progress);
             recallState.isWaitingForNext = true;
         }
 
@@ -256,6 +324,7 @@
         });
 
         window.addEventListener('load', () => {
+            buildRecallPools();
             nextRecallQuestion();
         });
 
@@ -275,6 +344,7 @@
         });
 
         window.addEventListener('filterChanged', () => {
+            buildRecallPools();
             nextRecallQuestion();
         });
     </script>

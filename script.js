@@ -28,6 +28,14 @@ const aminoAcids = [
 const INITIAL_SMILES = aminoAcids.map(aa => aa.smiles);
 let isDarkMode = false;
 const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false };
+const PROGRESS_STORAGE_KEY = 'aa_progress_v1';
+const DEFAULT_PROGRESS_ITEM = {
+    correctStreak: 0,
+    totalCorrect: 0,
+    totalWrong: 0,
+    lastSeen: null,
+    mastered: false
+};
 
 const tagColors = {
     'nonpolar': 'border-gray-400 text-gray-600',
@@ -135,6 +143,32 @@ function getFilteredAminoAcids() {
     return currentFilter === 'all' 
         ? aminoAcids 
         : aminoAcids.filter(aa => aa.tags && aa.tags.includes(currentFilter));
+}
+
+function loadProgress() {
+    try {
+        const raw = localStorage.getItem(PROGRESS_STORAGE_KEY);
+        if (!raw) return { version: 1, items: {} };
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return { version: 1, items: {} };
+        if (!parsed.items || typeof parsed.items !== 'object') parsed.items = {};
+        return parsed;
+    } catch (err) {
+        return { version: 1, items: {} };
+    }
+}
+
+function saveProgress(progress) {
+    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+}
+
+function getProgressItem(progress, abbr3) {
+    if (!progress.items[abbr3]) {
+        progress.items[abbr3] = { ...DEFAULT_PROGRESS_ITEM };
+    } else {
+        progress.items[abbr3] = { ...DEFAULT_PROGRESS_ITEM, ...progress.items[abbr3] };
+    }
+    return progress.items[abbr3];
 }
 
 // Init
