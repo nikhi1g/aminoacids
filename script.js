@@ -184,12 +184,13 @@ async function fetchCommitMeta() {
 function updateHeaderCommit(meta) {
     const el = document.getElementById('commit-hash');
     if (el) {
-        el.textContent = meta && meta.commit ? meta.commit.slice(0, 7) : 'unknown';
-        if (meta && meta.message) {
-            el.title = meta.message;
-            el.style.cursor = 'help';
+        const hash = meta && meta.commit ? meta.commit.slice(0, 7) : 'unknown';
+        el.textContent = hash;
+        
+        if (hash !== 'unknown') {
+            el.title = meta && meta.message ? meta.message : 'View version info';
+            el.style.cursor = 'pointer';
             el.onclick = () => showVersionInfo(meta);
-            // Add visual hint that it's interactive
             el.classList.add('underline', 'decoration-dotted', 'decoration-slate-400', 'underline-offset-4');
         } else {
             el.style.cursor = 'default';
