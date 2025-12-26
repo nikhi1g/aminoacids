@@ -159,14 +159,20 @@ async function fetchLocalCommitMeta() {
             console.warn("Failed to fetch commit.json");
             return null;
         }
-        const data = await response.json();
-        console.log("Local commit meta:", data);
-        if (!data || !data.commit) return null;
-        return {
-            commit: data.commit,
-            commit_date: data.build_time,
-            message: data.message
-        };
+        const text = await response.text();
+        try {
+            const data = JSON.parse(text);
+            console.log("Local commit meta:", data);
+            if (!data || !data.commit) return null;
+            return {
+                commit: data.commit,
+                commit_date: data.build_time,
+                message: data.message
+            };
+        } catch (e) {
+            console.error("JSON Parse Error. Raw text:", text);
+            return null;
+        }
     } catch (err) {
         console.error("Error fetching local commit meta:", err);
         return null;
