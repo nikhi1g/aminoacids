@@ -180,7 +180,56 @@ function updateHeaderCommit(meta) {
     const el = document.getElementById('commit-hash');
     if (el) {
         el.textContent = meta && meta.commit ? meta.commit.slice(0, 7) : 'unknown';
+        if (meta && meta.message) {
+            el.title = meta.message;
+            el.style.cursor = 'help';
+            el.onclick = () => showVersionInfo(meta);
+        }
     }
+}
+
+function showVersionInfo(meta) {
+    const existing = document.getElementById('version-modal');
+    if (existing) { existing.remove(); return; }
+
+    const modal = document.createElement('div');
+    modal.id = 'version-modal';
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in cursor-pointer';
+    modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
+    
+    modal.innerHTML = `
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 transform transition-all scale-100 cursor-default">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Current Version</h3>
+                    <button onclick="document.getElementById('version-modal').remove()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Commit Hash</p>
+                        <p class="text-sm font-mono text-slate-600 dark:text-slate-300 select-all">${meta.commit}</p>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Build Time</p>
+                        <p class="text-sm font-mono text-slate-600 dark:text-slate-300">${meta.commit_date || 'Unknown'}</p>
+                    </div>
+
+                    ${meta.message ? `
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Changelog</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">${meta.message}</p>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
 }
 
 function createUpdateModal(oldHash, newHash, message) {
@@ -246,15 +295,18 @@ function initCommitWatcher() {
     if (BUILD_COMMIT !== 'DEV_VERSION') {
         currentCommitHash = BUILD_COMMIT;
         updateHeaderCommit({ commit: BUILD_COMMIT });
-    } else {
-        initialCommitPromise = fetchCommitMeta();
-        initialCommitPromise.then((meta) => {
-            if (meta && meta.commit && !currentCommitHash) {
-                currentCommitHash = meta.commit;
-                updateHeaderCommit(meta);
-            }
-        });
     }
+
+    // Always fetch full metadata (for message/date) to populate tooltip/modal info
+    fetchLocalCommitMeta().then(meta => {
+        if (meta && meta.commit) {
+            // If we are in dev mode or somehow hash mismatches (shouldn't happen if built correctly)
+            if (!currentCommitHash) currentCommitHash = meta.commit;
+            
+            // Update header with full info (message)
+            updateHeaderCommit(meta);
+        }
+    });
 
     if (window.__commitMetaPromise) {
         window.__commitMetaPromise = null;
