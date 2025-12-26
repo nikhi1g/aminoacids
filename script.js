@@ -307,6 +307,14 @@ function initCommitWatcher() {
     if (BUILD_COMMIT !== 'DEV_VERSION') {
         currentCommitHash = BUILD_COMMIT;
         updateHeaderCommit({ commit: BUILD_COMMIT });
+    } else {
+        // Fallback for dev mode or failed injection
+        // If we can't fetch commit.json within 2 seconds, show 'DEV'
+        setTimeout(() => {
+            if (!currentCommitHash) {
+                updateHeaderCommit({ commit: 'DEV' });
+            }
+        }, 2000);
     }
 
     // Always fetch full metadata (for message/date) to populate tooltip/modal info
