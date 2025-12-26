@@ -30,6 +30,8 @@ let isDarkMode = false;
 const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, bondLength: 18, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false, compactDrawing: false };
 const PROGRESS_STORAGE_KEY = 'aa_progress_v1';
 const COMMIT_JSON_PATH = 'commit.json';
+const GITHUB_COMMITS_API = 'https://api.github.com/repos/nikhi1g/aminoacids/commits?per_page=1';
+const COMMIT_POLL_MS = 300000;
 const DEFAULT_PROGRESS_ITEM = {
     correctStreak: 0,
     totalCorrect: 0,
@@ -61,6 +63,7 @@ const colorMap = {
 };
 
 let currentCommitHash = null;
+let initialCommitPromise = null;
 
 // --- Shared Functions ---
 
@@ -148,7 +151,40 @@ function getFilteredAminoAcids() {
         : aminoAcids.filter(aa => aa.tags && aa.tags.includes(currentFilter));
 }
 
-async function fetchCommitHash() {
+function formatCommitDate(value) {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())} UTC`;
+}
+
+async function fetchGitHubCommitMeta() {
+    try {
+        const response = await fetch(`${GITHUB_COMMITS_API}&t=${Date.now()}`, {
+            cache: 'no-store',
+            headers: {
+                'Accept': 'application/vnd.github+json',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+        if (!response.ok) return null;
+        const data = await response.json();
+        const commit = Array.isArray(data) ? data[0] : data;
+        if (!commit || typeof commit.sha !== 'string') return null;
+        const info = commit.commit || {};
+        const committer = info.committer || info.author || {};
+        return {
+            commit: commit.sha,
+            commit_date: committer.date
+        };
+    } catch (err) {
+        return null;
+    }
+}
+
+async function fetchCommitJsonMeta() {
     try {
         const response = await fetch(`${COMMIT_JSON_PATH}?t=${Date.now()}`, {
             cache: 'no-store',
@@ -160,16 +196,36 @@ async function fetchCommitHash() {
         if (!response.ok) return null;
         const data = await response.json();
         if (!data || typeof data.commit !== 'string') return null;
-        return data.commit;
+        return data;
     } catch (err) {
         return null;
     }
 }
 
-function updateHeaderCommit(hash) {
+async function fetchCommitMeta() {
+    const prefetch = !currentCommitHash ? window.__commitMetaPromise : null;
+    if (prefetch) {
+        const meta = await prefetch;
+        if (meta && meta.commit) return meta;
+    }
+    const githubMeta = await fetchGitHubCommitMeta();
+    if (githubMeta) return githubMeta;
+    return fetchCommitJsonMeta();
+}
+
+function updateHeaderCommit(meta) {
     const el = document.getElementById('commit-hash');
-    if (!el) return;
-    el.textContent = hash ? hash.slice(0, 7) : 'unknown';
+    if (el) {
+        el.textContent = meta && meta.commit ? meta.commit.slice(0, 7) : 'unknown';
+    }
+    const dateEl = document.getElementById('commit-date');
+    if (dateEl) {
+        const rawDate = meta && (meta.commit_date || meta.build_time);
+        const formattedDate = formatCommitDate(rawDate) || rawDate;
+        if (formattedDate) {
+            dateEl.textContent = formattedDate;
+        }
+    }
 }
 
 function showUpdateIndicator(newHash) {
@@ -183,17 +239,17 @@ function showUpdateIndicator(newHash) {
 }
 
 async function checkForCommitUpdate() {
-    const latestHash = await fetchCommitHash();
-    if (!latestHash) return;
+    const latestMeta = await (currentCommitHash ? fetchCommitMeta() : (initialCommitPromise || fetchCommitMeta()));
+    if (!latestMeta || !latestMeta.commit) return;
     if (!currentCommitHash) {
-        currentCommitHash = latestHash;
-        updateHeaderCommit(currentCommitHash);
+        currentCommitHash = latestMeta.commit;
+        updateHeaderCommit(latestMeta);
         return;
     }
-    if (latestHash !== currentCommitHash) {
-        updateHeaderCommit(latestHash);
-        showUpdateIndicator(latestHash);
-        currentCommitHash = latestHash;
+    if (latestMeta.commit !== currentCommitHash) {
+        updateHeaderCommit(latestMeta);
+        showUpdateIndicator(latestMeta.commit);
+        currentCommitHash = latestMeta.commit;
     }
 }
 
@@ -204,8 +260,20 @@ function initCommitWatcher() {
             window.location.reload();
         });
     }
-    checkForCommitUpdate();
-    setInterval(checkForCommitUpdate, 10000);
+    initialCommitPromise = fetchCommitMeta();
+    initialCommitPromise.then((meta) => {
+        if (meta && meta.commit && !currentCommitHash) {
+            currentCommitHash = meta.commit;
+            updateHeaderCommit(meta);
+        }
+        if (window.__commitMetaPromise) {
+            window.__commitMetaPromise = null;
+        }
+    });
+    setInterval(() => {
+        initialCommitPromise = null;
+        checkForCommitUpdate();
+    }, COMMIT_POLL_MS);
     window.addEventListener('focus', checkForCommitUpdate);
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
