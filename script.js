@@ -151,7 +151,7 @@ function getFilteredAminoAcids() {
         : aminoAcids.filter(aa => aa.tags && aa.tags.includes(currentFilter));
 }
 
-async function fetchGitHubCommitMeta() {
+async function fetchLocalCommitMeta() {
     try {
         const response = await fetch(`commit.json?t=${Date.now()}`, { cache: 'no-store' });
         if (!response.ok) return null;
@@ -173,7 +173,7 @@ async function fetchCommitMeta() {
         const meta = await prefetch;
         if (meta && meta.commit) return meta;
     }
-    return fetchGitHubCommitMeta();
+    return fetchLocalCommitMeta();
 }
 
 function updateHeaderCommit(meta) {
