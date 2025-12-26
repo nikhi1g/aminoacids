@@ -202,19 +202,18 @@
         function getJSMEExport() {
             const molfile = getJSMEValue(
                 [
-                    'molfile',
                     'molFile',
-                    'getMolfile',
+                    'molfile',
                     'getMolFile',
+                    'getMolfile',
                     'getMolfileV3',
                     'getMolfileV2',
                     'getMolfileV2000',
                     'getMolfileV3000'
                 ],
-                [[], [true], ['v2000'], ['v3000']]
+                [[], [false], [true]]
             );
-            const smiles = getJSMEValue(['smiles', 'getSmiles', 'getSMILES']);
-            return { molfile, smiles };
+            return { molfile };
         }
 
         function cloneMolecule(mol) {
@@ -279,34 +278,27 @@
 
         function parseUserMolecule() {
             const exportData = getJSMEExport();
-            if (!exportData.molfile && !exportData.smiles) {
+            const hasMolecule = typeof jsmeApplet?.hasMolecule === 'function' ? jsmeApplet.hasMolecule() : null;
+            if (!exportData.molfile) {
+                if (hasMolecule) {
+                    return { mol: null, display: 'Structure detected.', reason: 'molfile' };
+                }
                 return { mol: null, display: 'No structure drawn.', reason: 'empty' };
             }
             if (!window.OCL) {
-                return { mol: null, display: exportData.smiles || 'Structure detected.', reason: 'ocl' };
+                return { mol: null, display: 'Structure detected.', reason: 'ocl' };
             }
             let mol = null;
-            let source = exportData.molfile ? 'molfile' : 'smiles';
-            if (exportData.molfile) {
-                try {
-                    mol = OCL.Molecule.fromMolfile(exportData.molfile);
-                } catch (err) {
-                    mol = null;
-                }
-            }
-            if (!mol && exportData.smiles) {
-                try {
-                    mol = OCL.Molecule.fromSmiles(exportData.smiles);
-                    source = 'smiles';
-                } catch (err) {
-                    mol = null;
-                }
+            try {
+                mol = OCL.Molecule.fromMolfile(exportData.molfile);
+            } catch (err) {
+                mol = null;
             }
             if (!mol) {
-                return { mol: null, display: exportData.smiles || 'Structure detected.', reason: 'parse' };
+                return { mol: null, display: 'Structure detected.', reason: 'parse' };
             }
             normalizeMolecule(mol);
-            return { mol, display: getDisplaySmiles(mol, exportData.smiles), reason: 'ok', source };
+            return { mol, display: getDisplaySmiles(mol, ''), reason: 'ok' };
         }
 
         function parseExpectedMolecule(smiles) {
@@ -382,6 +374,9 @@
                 } else if (userResult.reason === 'ocl') {
                     feedback.textContent = 'Chemistry engine is still loading. Try again in a moment.';
                     feedback.className = 'text-lg font-bold text-slate-600';
+                } else if (userResult.reason === 'molfile') {
+                    feedback.textContent = 'Could not export MOL from the editor. Try again.';
+                    feedback.className = 'text-lg font-bold text-red-600';
                 } else {
                     feedback.textContent = 'Could not read your drawing. Try again.';
                     feedback.className = 'text-lg font-bold text-red-600';
