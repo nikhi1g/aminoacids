@@ -130,11 +130,61 @@
     <script>
         let jsmeApplet = null;
         let drawTarget = null;
+        const DRAW_TEMPLATE_SMILES = 'NCC(=O)O';
 
         function jsmeOnLoad() {
             jsmeApplet = new JSApplet.JSME("jsme-container", "100%", "100%");
-            if (drawTarget) {
+            applyTemplateStructure();
+            if (drawTarget && !document.getElementById('draw-expected-wrapper').classList.contains('hidden')) {
                 updateExpectedStructure();
+            }
+        }
+
+        function setJSMEStructureFromSmiles(smiles) {
+            if (!jsmeApplet || !smiles) return false;
+            const directMethods = [
+                'readSmiles',
+                'readSMILES',
+                'setSmiles',
+                'setSMILES',
+                'readGenericMolecule',
+                'readMolecule',
+                'setMolecule',
+                'loadSmiles',
+                'loadSMILES'
+            ];
+            for (const method of directMethods) {
+                if (typeof jsmeApplet[method] === 'function') {
+                    try {
+                        jsmeApplet[method](smiles);
+                        return true;
+                    } catch (err) {
+                        continue;
+                    }
+                }
+            }
+            if (window.OCL && typeof OCL.Molecule.fromSmiles === 'function') {
+                try {
+                    const molfile = OCL.Molecule.fromSmiles(smiles).toMolfile();
+                    const molMethods = ['readMolFile', 'readMolfile', 'setMolFile', 'setMolfile', 'readMol'];
+                    for (const method of molMethods) {
+                        if (typeof jsmeApplet[method] === 'function') {
+                            jsmeApplet[method](molfile);
+                            return true;
+                        }
+                    }
+                } catch (err) {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        function applyTemplateStructure() {
+            if (!jsmeApplet) return;
+            const loaded = setJSMEStructureFromSmiles(DRAW_TEMPLATE_SMILES);
+            if (!loaded) {
+                jsmeApplet.reset();
             }
         }
 
@@ -157,6 +207,7 @@
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
             if (jsmeApplet) {
                 jsmeApplet.reset();
+                applyTemplateStructure();
             }
         }
 
@@ -236,6 +287,7 @@
         function clearDrawing() {
             if (jsmeApplet) {
                 jsmeApplet.reset();
+                applyTemplateStructure();
             }
             document.getElementById('draw-user-smiles').textContent = '-';
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
