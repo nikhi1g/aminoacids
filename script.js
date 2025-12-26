@@ -276,41 +276,9 @@ function getProgressItem(progress, abbr3) {
     return progress.items[abbr3];
 }
 
-function initSmartHeader() {
-    const header = document.querySelector('header');
-    if (!header) return;
-    
-    // Ensure transition property covers transform
-    header.classList.add('transition-transform', 'duration-300', 'ease-in-out');
-    
-    let lastScrollY = window.scrollY;
-    let ticking = false;
-
-    window.addEventListener('scroll', () => {
-        if (!ticking) {
-            window.requestAnimationFrame(() => {
-                const currentScrollY = window.scrollY;
-                
-                // If scrolling down and past threshold (e.g., 60px)
-                if (currentScrollY > lastScrollY && currentScrollY > 60) {
-                    header.classList.add('-translate-y-full');
-                } else {
-                    // Scrolling up or at top
-                    header.classList.remove('-translate-y-full');
-                }
-                
-                lastScrollY = currentScrollY;
-                ticking = false;
-            });
-            ticking = true;
-        }
-    });
-}
-
 // Init
 window.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
     updateFilterUI();
     initCommitWatcher();
-    initSmartHeader();
 });
