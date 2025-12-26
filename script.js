@@ -149,14 +149,6 @@ function getFilteredAminoAcids() {
         : aminoAcids.filter(aa => aa.tags && aa.tags.includes(currentFilter));
 }
 
-function formatCommitDate(value) {
-    if (!value) return null;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return null;
-    const pad = (num) => String(num).padStart(2, '0');
-    return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())} UTC`;
-}
-
 async function fetchGitHubCommitMeta() {
     try {
         const response = await fetch(`commit.json?t=${Date.now()}`, { cache: 'no-store' });
@@ -186,14 +178,6 @@ function updateHeaderCommit(meta) {
     const el = document.getElementById('commit-hash');
     if (el) {
         el.textContent = meta && meta.commit ? meta.commit.slice(0, 7) : 'unknown';
-    }
-    const dateEl = document.getElementById('commit-date');
-    if (dateEl) {
-        const rawDate = meta && (meta.commit_date || meta.build_time);
-        const formattedDate = formatCommitDate(rawDate) || rawDate;
-        if (formattedDate) {
-            dateEl.textContent = formattedDate;
-        }
     }
 }
 
