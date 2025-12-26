@@ -165,7 +165,8 @@ async function fetchGitHubCommitMeta() {
         if (!data || !data.commit) return null;
         return {
             commit: data.commit,
-            commit_date: data.build_time
+            commit_date: data.build_time,
+            message: data.message
         };
     } catch (err) {
         return null;
@@ -196,14 +197,49 @@ function updateHeaderCommit(meta) {
     }
 }
 
-function showUpdateIndicator(newHash) {
-    const indicator = document.getElementById('update-indicator');
-    if (!indicator) return;
-    const hashEl = indicator.querySelector('[data-commit]');
-    if (hashEl) {
-        hashEl.textContent = newHash ? newHash.slice(0, 7) : '';
-    }
-    indicator.classList.remove('hidden');
+function createUpdateModal(oldHash, newHash, message) {
+    if (document.getElementById('update-modal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'update-modal';
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in';
+    
+    modal.innerHTML = `
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 transform transition-all scale-100">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Update Available</h3>
+                    <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider">New Version</span>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Version Change</p>
+                        <div class="flex items-center gap-3 text-sm font-mono">
+                            <span class="text-slate-500 line-through decoration-red-500/50">${oldHash ? oldHash.slice(0, 7) : 'xxxxxxx'}</span>
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                            <span class="text-green-600 font-bold bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded">${newHash.slice(0, 7)}</span>
+                        </div>
+                    </div>
+
+                    ${message ? `
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">What's New</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed max-h-40 overflow-y-auto">${message}</p>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="mt-8">
+                    <button onclick="window.location.reload()" class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg hover:shadow-blue-500/25 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+                        Update Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
 }
 
 async function checkForCommitUpdate() {
@@ -215,19 +251,12 @@ async function checkForCommitUpdate() {
         return;
     }
     if (latestMeta.commit !== currentCommitHash) {
-        updateHeaderCommit(latestMeta);
-        showUpdateIndicator(latestMeta.commit);
+        createUpdateModal(currentCommitHash, latestMeta.commit, latestMeta.message);
         currentCommitHash = latestMeta.commit;
     }
 }
 
 function initCommitWatcher() {
-    const refreshBtn = document.getElementById('refresh-site-btn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => {
-            window.location.reload();
-        });
-    }
     initialCommitPromise = fetchCommitMeta();
     initialCommitPromise.then((meta) => {
         if (meta && meta.commit && !currentCommitHash) {

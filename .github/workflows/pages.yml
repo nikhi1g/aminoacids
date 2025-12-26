@@ -25,7 +25,7 @@ jobs:
         run: |
           mkdir -p _site
           tar --exclude='./.git' --exclude='./.github' --exclude='./_site' -cf - . | tar -xf - -C _site
-          echo '{"commit":"'"${GITHUB_SHA}"'","build_time":"'"$(date -u +"%Y-%m-%d %H:%M UTC")"'"}' > _site/commit.json
+          jq -n --arg sha "$GITHUB_SHA" --arg time "$(date -u +'%Y-%m-%d %H:%M UTC')" --arg msg "$(git log -1 --pretty=%B)" '{commit: $sha, build_time: $time, message: $msg}' > _site/commit.json
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
