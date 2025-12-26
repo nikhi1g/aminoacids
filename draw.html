@@ -139,10 +139,14 @@
         }
 
         function pickNewTarget() {
+            const filtered = getFilteredAminoAcids();
             if (filtered.length === 0) {
                 drawTarget = null;
                 document.getElementById('draw-target-name').textContent = 'No Match';
                 document.getElementById('draw-feedback').textContent = 'No amino acids match this filter.';
+                document.getElementById('draw-user-smiles').textContent = '-';
+                document.getElementById('draw-expected-smiles').textContent = '-';
+                document.getElementById('draw-expected-wrapper').classList.add('hidden');
                 return;
             }
             drawTarget = filtered[Math.floor(Math.random() * filtered.length)];
@@ -154,7 +158,6 @@
             if (jsmeApplet) {
                 jsmeApplet.reset();
             }
-            updateExpectedStructure();
         }
 
         function updateExpectedStructure() {
@@ -168,17 +171,20 @@
             if (!drawTarget || !jsmeApplet) return;
             const userSmiles = jsmeApplet.smiles();
             const expectedSmiles = drawTarget.smiles;
-            document.getElementById('draw-user-smiles').textContent = userSmiles || 'No structure drawn.';
-            document.getElementById('draw-expected-smiles').textContent = expectedSmiles;
-            document.getElementById('draw-expected-wrapper').classList.remove('hidden');
-
             const feedback = document.getElementById('draw-feedback');
             
             if (!userSmiles) {
-                 feedback.textContent = 'Please draw a structure first.';
-                 feedback.className = 'text-lg font-bold text-slate-600';
-                 return;
+                document.getElementById('draw-user-smiles').textContent = 'No structure drawn.';
+                feedback.textContent = 'Please draw a structure first.';
+                feedback.className = 'text-lg font-bold text-slate-600';
+                document.getElementById('draw-expected-wrapper').classList.add('hidden');
+                return;
             }
+
+            document.getElementById('draw-user-smiles').textContent = userSmiles;
+            document.getElementById('draw-expected-smiles').textContent = expectedSmiles;
+            updateExpectedStructure();
+            document.getElementById('draw-expected-wrapper').classList.remove('hidden');
 
             try {
                 const OCL = window.OCL;
