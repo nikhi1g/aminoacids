@@ -12,6 +12,30 @@ main {
     flex: 1;
 }
 
+.commit-status-card {
+    border-color: #9ca3af;
+    box-shadow: 0 0 0 1px #9ca3af;
+    animation: commit-border-cycle 16s linear infinite;
+}
+
+@keyframes commit-border-cycle {
+    0% { border-color: #9ca3af; box-shadow: 0 0 0 1px #9ca3af; }
+    12.5% { border-color: #22d3ee; box-shadow: 0 0 0 1px #22d3ee; }
+    25% { border-color: #fbbf24; box-shadow: 0 0 0 1px #fbbf24; }
+    37.5% { border-color: #c084fc; box-shadow: 0 0 0 1px #c084fc; }
+    50% { border-color: #f87171; box-shadow: 0 0 0 1px #f87171; }
+    62.5% { border-color: #60a5fa; box-shadow: 0 0 0 1px #60a5fa; }
+    75% { border-color: #2dd4bf; box-shadow: 0 0 0 1px #2dd4bf; }
+    87.5% { border-color: #facc15; box-shadow: 0 0 0 1px #facc15; }
+    100% { border-color: #9ca3af; box-shadow: 0 0 0 1px #9ca3af; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .commit-status-card {
+        animation: none;
+    }
+}
+
 .molecule-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
