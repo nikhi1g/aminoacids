@@ -55,16 +55,27 @@ const colorMap = {
 
 function toggleDarkMode() {
     isDarkMode = !isDarkMode;
-    document.documentElement.classList.toggle('dark', isDarkMode);
+    if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+    }
     
     // Dispatch custom event for page-specific handling
     window.dispatchEvent(new CustomEvent('themeChanged'));
 }
 
 function initializeTheme() {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    // Check localStorage first, then system preference
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         isDarkMode = true;
-        document.documentElement.classList.toggle('dark', isDarkMode);
+        document.documentElement.classList.add('dark');
+    } else {
+        isDarkMode = false;
+        document.documentElement.classList.remove('dark');
     }
 }
 
