@@ -192,16 +192,32 @@ function getShortCommitHash(meta) {
 
 function parseCommitJson(text) {
     if (!text) return null;
+    const cleanedText = text.replace(/\uFEFF/g, '').trim();
+    if (!cleanedText) return null;
     try {
-        return JSON.parse(text);
+        const parsed = JSON.parse(cleanedText);
+        if (Array.isArray(parsed)) {
+            return parsed.length ? parsed[parsed.length - 1] : null;
+        }
+        return parsed;
     } catch (err) {
-        const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+        const lines = cleanedText.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
         for (let i = lines.length - 1; i >= 0; i -= 1) {
             try {
                 return JSON.parse(lines[i]);
             } catch (lineErr) {
                 continue;
             }
+        }
+        const commitMatches = [...cleanedText.matchAll(/"commit"\s*:\s*"([^"]+)"/g)];
+        if (commitMatches.length) {
+            const buildMatches = [...cleanedText.matchAll(/"build_time"\s*:\s*"([^"]+)"/g)];
+            const messageMatches = [...cleanedText.matchAll(/"message"\s*:\s*"([^"]+)"/g)];
+            return {
+                commit: commitMatches[commitMatches.length - 1][1],
+                build_time: buildMatches.length ? buildMatches[buildMatches.length - 1][1] : null,
+                message: messageMatches.length ? messageMatches[messageMatches.length - 1][1] : null
+            };
         }
         console.error("JSON Parse Error. Raw text:", text);
         return null;
