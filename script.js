@@ -162,19 +162,14 @@ async function fetchLocalCommitMeta() {
             return null;
         }
         const text = await response.text();
-        try {
-            const data = JSON.parse(text);
-            console.log("Local commit meta:", data);
-            if (!data || !data.commit) return null;
-            return {
-                commit: data.commit,
-                commit_date: data.build_time,
-                message: data.message
-            };
-        } catch (e) {
-            console.error("JSON Parse Error. Raw text:", text);
-            return null;
-        }
+        const data = parseCommitJson(text);
+        if (!data || !data.commit) return null;
+        console.log("Local commit meta:", data);
+        return {
+            commit: data.commit,
+            commit_date: data.build_time,
+            message: data.message
+        };
     } catch (err) {
         console.error("Error fetching local commit meta:", err);
         return null;
@@ -193,6 +188,24 @@ async function fetchCommitMeta() {
 function getShortCommitHash(meta) {
     if (!meta || !meta.commit) return 'unknown';
     return meta.commit.slice(0, 7);
+}
+
+function parseCommitJson(text) {
+    if (!text) return null;
+    try {
+        return JSON.parse(text);
+    } catch (err) {
+        const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+        for (let i = lines.length - 1; i >= 0; i -= 1) {
+            try {
+                return JSON.parse(lines[i]);
+            } catch (lineErr) {
+                continue;
+            }
+        }
+        console.error("JSON Parse Error. Raw text:", text);
+        return null;
+    }
 }
 
 function formatCommitMessage(meta, maxLen = COMMIT_MESSAGE_MAX_LEN) {
@@ -357,9 +370,10 @@ function initCommitWatcher() {
         if (meta && meta.commit) {
             // If we are in dev mode or somehow hash mismatches (shouldn't happen if built correctly)
             if (!currentCommitHash) currentCommitHash = meta.commit;
-            
-            // Update header with full info (message)
-            updateHeaderCommit(meta);
+            if (meta.commit === currentCommitHash) {
+                // Update header with full info (message)
+                updateHeaderCommit(meta);
+            }
         }
     });
 
