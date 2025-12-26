@@ -180,6 +180,139 @@
             return false;
         }
 
+        function getJSMEValue(methods) {
+            if (!jsmeApplet) return '';
+            for (const method of methods) {
+                if (typeof jsmeApplet[method] === 'function') {
+                    try {
+                        const value = jsmeApplet[method]();
+                        if (typeof value === 'string' && value.trim()) {
+                            return value.trim();
+                        }
+                    } catch (err) {
+                        continue;
+                    }
+                }
+            }
+            return '';
+        }
+
+        function getJSMEExport() {
+            const molfile = getJSMEValue([
+                'molfile',
+                'molFile',
+                'getMolfile',
+                'getMolFile',
+                'getMolfileV3',
+                'getMolfileV2',
+                'getMolfileV2000',
+                'getMolfileV3000'
+            ]);
+            const smiles = getJSMEValue(['smiles', 'getSmiles', 'getSMILES']);
+            return { molfile, smiles };
+        }
+
+        function cloneMolecule(mol) {
+            if (!mol) return null;
+            if (typeof mol.getCompactCopy === 'function') return mol.getCompactCopy();
+            if (typeof mol.getCopy === 'function') return mol.getCopy();
+            if (typeof mol.getIDCode === 'function' && window.OCL && typeof OCL.Molecule.fromIDCode === 'function') {
+                try {
+                    return OCL.Molecule.fromIDCode(mol.getIDCode());
+                } catch (err) {
+                    return mol;
+                }
+            }
+            return mol;
+        }
+
+        function normalizeMolecule(mol) {
+            if (!mol) return null;
+            if (typeof mol.removeExplicitHydrogens === 'function') {
+                try {
+                    mol.removeExplicitHydrogens();
+                } catch (err) {
+                    // ignore normalization failure
+                }
+            }
+            return mol;
+        }
+
+        function getIdCode(mol) {
+            if (!mol || typeof mol.getIDCode !== 'function') return null;
+            try {
+                return mol.getIDCode();
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function getIdCodeNoStereo(mol) {
+            const copy = cloneMolecule(mol);
+            if (!copy) return null;
+            if (typeof copy.stripStereoInformation === 'function') {
+                try {
+                    copy.stripStereoInformation();
+                } catch (err) {
+                    return null;
+                }
+            }
+            return getIdCode(copy);
+        }
+
+        function getDisplaySmiles(mol, fallback) {
+            if (mol && typeof mol.toSmiles === 'function') {
+                try {
+                    const value = mol.toSmiles();
+                    if (value) return value;
+                } catch (err) {
+                    return fallback || '';
+                }
+            }
+            return fallback || '';
+        }
+
+        function parseUserMolecule() {
+            const exportData = getJSMEExport();
+            if (!exportData.molfile && !exportData.smiles) {
+                return { mol: null, display: 'No structure drawn.', reason: 'empty' };
+            }
+            if (!window.OCL) {
+                return { mol: null, display: exportData.smiles || 'Structure detected.', reason: 'ocl' };
+            }
+            let mol = null;
+            if (exportData.molfile) {
+                try {
+                    mol = OCL.Molecule.fromMolfile(exportData.molfile);
+                } catch (err) {
+                    mol = null;
+                }
+            }
+            if (!mol && exportData.smiles) {
+                try {
+                    mol = OCL.Molecule.fromSmiles(exportData.smiles);
+                } catch (err) {
+                    mol = null;
+                }
+            }
+            if (!mol) {
+                return { mol: null, display: exportData.smiles || 'Structure detected.', reason: 'parse' };
+            }
+            normalizeMolecule(mol);
+            return { mol, display: getDisplaySmiles(mol, exportData.smiles), reason: 'ok' };
+        }
+
+        function parseExpectedMolecule(smiles) {
+            if (!window.OCL || !smiles) return null;
+            try {
+                const mol = OCL.Molecule.fromSmiles(smiles);
+                normalizeMolecule(mol);
+                return mol;
+            } catch (err) {
+                return null;
+            }
+        }
+
         function applyTemplateStructure() {
             if (!jsmeApplet) return;
             const loaded = setJSMEStructureFromSmiles(DRAW_TEMPLATE_SMILES);
@@ -229,59 +362,54 @@
 
         function checkAnswer() {
             if (!drawTarget || !jsmeApplet) return;
-            const userSmiles = jsmeApplet.smiles();
             const expectedSmiles = drawTarget.smiles;
             const feedback = document.getElementById('draw-feedback');
-            
-            if (!userSmiles) {
-                document.getElementById('draw-user-smiles').textContent = 'No structure drawn.';
-                feedback.textContent = 'Please draw a structure first.';
-                feedback.className = 'text-lg font-bold text-slate-600';
+            const userResult = parseUserMolecule();
+
+            document.getElementById('draw-user-smiles').textContent = userResult.display || '-';
+
+            if (!userResult.mol) {
+                if (userResult.reason === 'empty') {
+                    feedback.textContent = 'Please draw a structure first.';
+                    feedback.className = 'text-lg font-bold text-slate-600';
+                } else {
+                    feedback.textContent = 'Could not read your drawing. Try again.';
+                    feedback.className = 'text-lg font-bold text-red-600';
+                }
                 document.getElementById('draw-expected-wrapper').classList.add('hidden');
                 return;
             }
 
-            document.getElementById('draw-user-smiles').textContent = userSmiles;
+            const expectedMol = parseExpectedMolecule(expectedSmiles);
             document.getElementById('draw-expected-smiles').textContent = expectedSmiles;
             revealExpectedStructure();
 
-            try {
-                const OCL = window.OCL;
-                const molUser = OCL.Molecule.fromSmiles(userSmiles);
-                const molExpected = OCL.Molecule.fromSmiles(expectedSmiles);
-                
-                // Create IDCodes for strict structural comparison
-                // We use getIDCode() which creates a canonical representation
-                const idUser = molUser.getIDCode();
-                const idExpected = molExpected.getIDCode();
-
-                if (idUser === idExpected) {
-                    feedback.textContent = 'Correct structure!';
-                    feedback.className = 'text-lg font-bold text-emerald-600';
-                } else {
-                    // Check if it's just a stereochemistry issue
-                    molUser.stripStereoInformation();
-                    molExpected.stripStereoInformation();
-                    const idUserNoStereo = molUser.getIDCode();
-                    const idExpectedNoStereo = molExpected.getIDCode();
-                    
-                    if (idUserNoStereo === idExpectedNoStereo) {
-                         feedback.textContent = 'Correct connectivity, but check stereochemistry!';
-                         feedback.className = 'text-lg font-bold text-amber-600';
-                    } else {
-                         // Check if it's an explicit hydrogen mismatch (common issue)
-                         // We reconstruct molecules from the IDCode to normalize, then compare again? 
-                         // No, IDCode should have handled it.
-                         // But if implicit vs explicit fails:
-                         feedback.textContent = 'Not quite. Compare your structure with the expected one.';
-                         feedback.className = 'text-lg font-bold text-red-600';
-                    }
-                }
-            } catch (err) {
-                console.error("Comparison error:", err);
-                feedback.textContent = 'Error verifying structure. Please try again.';
+            if (!expectedMol) {
+                feedback.textContent = 'Error loading expected structure.';
                 feedback.className = 'text-lg font-bold text-red-600';
+                return;
             }
+
+            const idUser = getIdCode(userResult.mol);
+            const idExpected = getIdCode(expectedMol);
+
+            if (idUser && idExpected && idUser === idExpected) {
+                feedback.textContent = 'Correct structure!';
+                feedback.className = 'text-lg font-bold text-emerald-600';
+                return;
+            }
+
+            const idUserNoStereo = getIdCodeNoStereo(userResult.mol);
+            const idExpectedNoStereo = getIdCodeNoStereo(expectedMol);
+
+            if (idUserNoStereo && idExpectedNoStereo && idUserNoStereo === idExpectedNoStereo) {
+                feedback.textContent = 'Correct connectivity, but check stereochemistry!';
+                feedback.className = 'text-lg font-bold text-amber-600';
+                return;
+            }
+
+            feedback.textContent = 'Not quite. Compare your structure with the expected one.';
+            feedback.className = 'text-lg font-bold text-red-600';
         }
 
         function clearDrawing() {
