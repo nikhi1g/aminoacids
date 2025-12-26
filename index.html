@@ -84,6 +84,12 @@
                     <button onclick="applyFilter('basic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-blue-400 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30">Basic</button>
                     <button onclick="applyFilter('hydroxyl')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-teal-400 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30">Hydroxyl</button>
                     <button onclick="applyFilter('sulfur')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-yellow-400 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/30">Sulfur</button>
+                    <div class="flex items-center space-x-2 ml-4 border-l pl-4 border-slate-300 dark:border-slate-700">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cols</span>
+                        <button onclick="changeColumns(-1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-bold transition-colors shadow-sm text-xs">-</button>
+                        <span id="col-display" class="text-xs font-bold text-slate-600 dark:text-slate-400 w-4 text-center">4</span>
+                        <button onclick="changeColumns(1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-bold transition-colors shadow-sm text-xs">+</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -101,13 +107,25 @@
 
     <script src="script.js"></script>
     <script>
+        let gridColumns = 4;
+
+        function changeColumns(delta) {
+            gridColumns += delta;
+            if (gridColumns < 1) gridColumns = 1;
+            if (gridColumns > 8) gridColumns = 8;
+            document.getElementById('col-display').textContent = gridColumns;
+            renderGrid();
+        }
+
         function renderGrid() {
             const grid = document.getElementById('molecule-grid');
             if (!grid) return;
+            
+            // Apply grid column class dynamically
+            grid.className = `grid grid-cols-${gridColumns} gap-6 transition-all duration-300`;
             grid.innerHTML = '';
+            
             const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
-            const smilesDrawer = new SmiDrawer(mainStrategy);
-
             const filteredAA = getFilteredAminoAcids();
 
             if (filteredAA.length === 0) {
@@ -115,6 +133,7 @@
                 return;
             }
 
+            // Phase 1: Create Elements
             filteredAA.forEach((aa) => {
                 const uniqueIdx = aminoAcids.indexOf(aa); 
                 
@@ -161,8 +180,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="flex-grow flex items-center justify-center py-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg my-2 border border-slate-100 dark:border-slate-800">
-                        <canvas id="canvas-${uniqueIdx}"></canvas>
+                    <div class="flex-grow flex items-center justify-center py-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg my-2 border border-slate-100 dark:border-slate-800 canvas-container" style="min-height: 200px">
+                        <canvas id="canvas-${uniqueIdx}" class="w-full h-full object-contain"></canvas>
                     </div>
                     ${tagsHtml}
                     <div class="mt-3 flex items-center gap-1">
@@ -173,13 +192,30 @@
                     </div>
                 `;
                 grid.appendChild(card);
-                smilesDrawer.draw(aa.smiles, `#canvas-${uniqueIdx}`, isDarkMode ? 'dark' : 'light');
+            });
+            
+            // Phase 2: Draw after layout
+            requestAnimationFrame(() => {
+                filteredAA.forEach((aa) => {
+                    const uniqueIdx = aminoAcids.indexOf(aa);
+                    const canvas = document.getElementById(`canvas-${uniqueIdx}`);
+                    if(!canvas) return;
+                    
+                    const container = canvas.parentElement;
+                    const rect = container.getBoundingClientRect();
+                    const width = rect.width || 300;
+                    const height = rect.height || 200;
+                    
+                    const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: width, height: height });
+                    smilesDrawer.draw(aa.smiles, `#canvas-${uniqueIdx}`, isDarkMode ? 'dark' : 'light');
+                });
             });
         }
 
         window.addEventListener('load', renderGrid);
         window.addEventListener('themeChanged', renderGrid);
         window.addEventListener('filterChanged', renderGrid);
+        window.addEventListener('resize', renderGrid);
     </script>
 </body>
 </html>
