@@ -180,17 +180,19 @@
             return false;
         }
 
-        function getJSMEValue(methods) {
+        function getJSMEValue(methods, argsList = [[]]) {
             if (!jsmeApplet) return '';
             for (const method of methods) {
                 if (typeof jsmeApplet[method] === 'function') {
-                    try {
-                        const value = jsmeApplet[method]();
-                        if (typeof value === 'string' && value.trim()) {
-                            return value.trim();
+                    for (const args of argsList) {
+                        try {
+                            const value = jsmeApplet[method](...args);
+                            if (typeof value === 'string' && value.trim()) {
+                                return value.trim();
+                            }
+                        } catch (err) {
+                            continue;
                         }
-                    } catch (err) {
-                        continue;
                     }
                 }
             }
@@ -198,16 +200,19 @@
         }
 
         function getJSMEExport() {
-            const molfile = getJSMEValue([
-                'molfile',
-                'molFile',
-                'getMolfile',
-                'getMolFile',
-                'getMolfileV3',
-                'getMolfileV2',
-                'getMolfileV2000',
-                'getMolfileV3000'
-            ]);
+            const molfile = getJSMEValue(
+                [
+                    'molfile',
+                    'molFile',
+                    'getMolfile',
+                    'getMolFile',
+                    'getMolfileV3',
+                    'getMolfileV2',
+                    'getMolfileV2000',
+                    'getMolfileV3000'
+                ],
+                [[], [true], ['v2000'], ['v3000']]
+            );
             const smiles = getJSMEValue(['smiles', 'getSmiles', 'getSMILES']);
             return { molfile, smiles };
         }
@@ -281,6 +286,7 @@
                 return { mol: null, display: exportData.smiles || 'Structure detected.', reason: 'ocl' };
             }
             let mol = null;
+            let source = exportData.molfile ? 'molfile' : 'smiles';
             if (exportData.molfile) {
                 try {
                     mol = OCL.Molecule.fromMolfile(exportData.molfile);
@@ -291,6 +297,7 @@
             if (!mol && exportData.smiles) {
                 try {
                     mol = OCL.Molecule.fromSmiles(exportData.smiles);
+                    source = 'smiles';
                 } catch (err) {
                     mol = null;
                 }
@@ -299,7 +306,7 @@
                 return { mol: null, display: exportData.smiles || 'Structure detected.', reason: 'parse' };
             }
             normalizeMolecule(mol);
-            return { mol, display: getDisplaySmiles(mol, exportData.smiles), reason: 'ok' };
+            return { mol, display: getDisplaySmiles(mol, exportData.smiles), reason: 'ok', source };
         }
 
         function parseExpectedMolecule(smiles) {
@@ -371,6 +378,9 @@
             if (!userResult.mol) {
                 if (userResult.reason === 'empty') {
                     feedback.textContent = 'Please draw a structure first.';
+                    feedback.className = 'text-lg font-bold text-slate-600';
+                } else if (userResult.reason === 'ocl') {
+                    feedback.textContent = 'Chemistry engine is still loading. Try again in a moment.';
                     feedback.className = 'text-lg font-bold text-slate-600';
                 } else {
                     feedback.textContent = 'Could not read your drawing. Try again.';
