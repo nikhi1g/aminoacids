@@ -118,6 +118,22 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        .flipped {
+            transform: rotateY(180deg);
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -154,18 +170,128 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Grid Content -->
         <section id="page-show">
+            <!-- Filter Buttons -->
+            <div class="mb-8 flex flex-wrap gap-2 justify-center">
+                <button onclick="renderGrid('all')" class="filter-btn active px-4 py-2 rounded-full text-xs font-bold transition-all border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:opacity-80">All</button>
+                <button onclick="renderGrid('nonpolar')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold transition-all border bg-white dark:bg-slate-900 border-gray-400 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900/30">Non-polar</button>
+                <button onclick="renderGrid('polar')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold transition-all border bg-white dark:bg-slate-900 border-cyan-400 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30">Polar</button>
+                <button onclick="renderGrid('aliphatic')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold transition-all border bg-white dark:bg-slate-900 border-amber-400 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30">Aliphatic</button>
+                <button onclick="renderGrid('aromatic')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold transition-all border bg-white dark:bg-slate-900 border-purple-400 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30">Aromatic</button>
+                <button onclick="renderGrid('acidic')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold transition-all border bg-white dark:bg-slate-900 border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30">Acidic</button>
+                <button onclick="renderGrid('basic')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold transition-all border bg-white dark:bg-slate-900 border-blue-400 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30">Basic</button>
+                <button onclick="renderGrid('hydroxyl')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold transition-all border bg-white dark:bg-slate-900 border-teal-400 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30">Hydroxyl</button>
+                <button onclick="renderGrid('sulfur')" class="filter-btn px-4 py-2 rounded-full text-xs font-bold transition-all border bg-white dark:bg-slate-900 border-yellow-400 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/30">Sulfur</button>
+            </div>
+
             <div id="molecule-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 <!-- Molecule Cards will be injected here -->
             </div>
         </section>
 
-        <section id="page-learn" class="hidden text-center py-20">
-            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Learn Mode</h2>
-            <p class="text-slate-500 dark:text-slate-400">Coming Soon</p>
+        <section id="page-learn" class="hidden py-8">
+            <div class="max-w-md mx-auto">
+                <div id="flashcard-container" class="perspective-1000 h-96">
+                    <div id="flashcard" class="relative w-full h-full transition-transform duration-500 transform-style-3d cursor-pointer" onclick="flipCard()">
+                        <!-- Front -->
+                        <div id="flashcard-front" class="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center p-8">
+                            <h2 class="text-sm font-semibold text-blue-500 uppercase tracking-wider mb-4">Amino Acid</h2>
+                            <div id="flashcard-question" class="text-4xl font-bold text-slate-800 dark:text-white text-center"></div>
+                            <p class="mt-8 text-slate-400 text-xs uppercase tracking-widest">Click to reveal</p>
+                        </div>
+                        <!-- Back -->
+                        <div id="flashcard-back" class="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-2xl border-2 border-blue-500 dark:border-blue-500 shadow-xl flex flex-col items-center justify-center p-8 rotate-y-180">
+                            <div class="w-full h-full flex flex-col">
+                                <div class="flex-grow flex items-center justify-center py-2 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg mb-4 border border-slate-100 dark:border-slate-800 w-full overflow-hidden">
+                                    <canvas id="flashcard-canvas"></canvas>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 w-full">
+                                    <div class="text-left">
+                                        <p class="text-[10px] text-slate-500 uppercase font-bold">3-Letter</p>
+                                        <p id="flash-abbr3" class="text-lg font-bold text-blue-600"></p>
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="text-[10px] text-slate-500 uppercase font-bold">1-Letter</p>
+                                        <p id="flash-abbr1" class="text-lg font-bold text-green-600"></p>
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="text-[10px] text-slate-500 uppercase font-bold">Side Chain pKa</p>
+                                        <p id="flash-pkaR" class="text-lg font-bold text-orange-600"></p>
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="text-[10px] text-slate-500 uppercase font-bold">Name</p>
+                                        <p id="flash-name" class="text-lg font-bold text-slate-800 dark:text-white"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex justify-center items-center space-x-6">
+                    <button onclick="prevCard()" class="p-3 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <button onclick="shuffleCards()" class="px-6 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Shuffle</button>
+                    <button onclick="nextCard()" class="p-3 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <div class="inline-block px-4 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-medium">
+                        Card <span id="card-index" class="text-slate-800 dark:text-slate-200">1</span> of <span id="card-total">20</span>
+                    </div>
+                </div>
+            </div>
         </section>
-        <section id="page-recall" class="hidden text-center py-20">
-            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Recall Mode</h2>
-            <p class="text-slate-500 dark:text-slate-400">Coming Soon</p>
+        <section id="page-recall" class="hidden max-w-xl mx-auto py-8 space-y-6">
+            <!-- Score Board -->
+            <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Current Streak</span>
+                    <span id="recall-streak" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0</span>
+                </div>
+                <div class="text-xs text-slate-400">Press Enter to Submit</div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden flex flex-col">
+                <div class="p-8 text-center space-y-6 flex-grow flex flex-col justify-center">
+                    <div>
+                        <span id="recall-type-badge" class="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                            Identify
+                        </span>
+                    </div>
+                    
+                    <!-- Content Area (Text or Canvas) -->
+                    <div id="recall-content" class="min-h-[180px] w-full flex items-center justify-center">
+                        <!-- Will be populated by JS -->
+                    </div>
+
+                    <h3 id="recall-prompt" class="text-xl font-bold text-slate-700 dark:text-slate-300">
+                        <!-- Question Text -->
+                    </h3>
+                </div>
+
+                <!-- Input Area -->
+                <div class="bg-slate-50 dark:bg-slate-950 p-6 border-t border-slate-100 dark:border-slate-800">
+                    <div id="recall-input-container" class="space-y-4">
+                        <input type="text" id="recall-input" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="Type your answer..." autocomplete="off">
+                        <button onclick="submitRecallAnswer()" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md transition-colors duration-200">
+                            Check Answer
+                        </button>
+                    </div>
+                    
+                    <!-- Feedback (Hidden by default) -->
+                    <div id="recall-feedback" class="hidden space-y-4 text-center">
+                        <div id="recall-result-message" class="text-xl font-bold"></div>
+                        <div id="recall-correct-answer" class="text-sm text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 py-2 px-4 rounded-lg inline-block"></div>
+                        <button id="recall-next-btn" onclick="nextRecallQuestion()" class="w-full py-3 rounded-xl bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white font-bold transition-colors shadow-md">
+                            Next Question
+                        </button>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -175,7 +301,7 @@
             <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
                 <p>Edit SMILES strings to modify structures. Use the refresh icon to reset.</p>
                 <p class="flex items-center gap-1">
-                    Powered by <a href="https://github.com/reymond-group/smilesDrawer" target="_blank" class="hover:text-blue-500 font-semibold transition-colors">smiles-drawer</a>
+                    Molecules powered by <a href="https://github.com/reymond-group/smilesDrawer" target="_blank" class="hover:text-blue-500 font-semibold transition-colors">smiles-drawer</a>
                 </p>
             </div>
         </div>
@@ -186,36 +312,50 @@
          * SMILES Data
          */
         const aminoAcids = [
-            { name: "Alanine", abbr3: "Ala", abbr1: "A", pka1: 2.34, pka2: 9.69, pkaR: null, smiles: "CC([NH2])C(=O)[O][H]" },
-            { name: "Arginine", abbr3: "Arg", abbr1: "R", pka1: 2.17, pka2: 9.04, pkaR: 12.48, smiles: "[H][N]=C([NH2])[NH]CCCNC([NH2])C(=O)[O][H]" },
-            { name: "Asparagine", abbr3: "Asn", abbr1: "N", pka1: 2.02, pka2: 8.80, pkaR: null, smiles: "[NH2]C(CC(=O)[NH2])C(=O)[O][H]" },
-            { name: "Aspartic Acid", abbr3: "Asp", abbr1: "D", pka1: 1.88, pka2: 9.60, pkaR: 3.65, smiles: "[NH2]C(CC(=O)[O][H])C(=O)[O][H]" },
-            { name: "Cysteine", abbr3: "Cys", abbr1: "C", pka1: 1.96, pka2: 10.28, pkaR: 8.18, smiles: "[NH2]C(C[SH])C(=O)[O][H]" },
-            { name: "Glutamine", abbr3: "Gln", abbr1: "Q", pka1: 2.17, pka2: 9.13, pkaR: null, smiles: "[NH2]C(CCC(=O)[NH2])C(=O)[O][H]" },
-            { name: "Glutamic Acid", abbr3: "Glu", abbr1: "E", pka1: 2.19, pka2: 9.67, pkaR: 4.25, smiles: "[NH2]C(CCC(=O)[O][H])C(=O)[O][H]" },
-            { name: "Glycine", abbr3: "Gly", abbr1: "G", pka1: 2.34, pka2: 9.60, pkaR: null, smiles: "[NH2]CC(=O)[O][H]" },
-            { name: "Histidine", abbr3: "His", abbr1: "H", pka1: 1.82, pka2: 9.17, pkaR: 6.00, smiles: "[NH2]C(CC1=CN=C[NH]1)C(=O)[O][H]" },
-            { name: "Isoleucine", abbr3: "Ile", abbr1: "I", pka1: 2.36, pka2: 9.68, pkaR: null, smiles: "CCC(C)C([NH2])C(=O)[O][H]" },
-            { name: "Leucine", abbr3: "Leu", abbr1: "L", pka1: 2.36, pka2: 9.60, pkaR: null, smiles: "CC(C)CC([NH2])C(=O)[O][H]" },
-            { name: "Lysine", abbr3: "Lys", abbr1: "K", pka1: 2.18, pka2: 8.95, pkaR: 10.53, smiles: "[NH2]CCCC([NH2])C(=O)[O][H]" },
-            { name: "Methionine", abbr3: "Met", abbr1: "M", pka1: 2.28, pka2: 9.21, pkaR: null, smiles: "CSCCC([NH2])C(=O)[O][H]" },
-            { name: "Phenylalanine", abbr3: "Phe", abbr1: "F", pka1: 1.83, pka2: 9.13, pkaR: null, smiles: "[NH2]C(CC1=CC=CC=C1)C(=O)[O][H]" },
-            { name: "Proline", abbr3: "Pro", abbr1: "P", pka1: 1.99, pka2: 10.60, pkaR: null, smiles: "[H][O]C(=O)C1CCCN1" },
-            { name: "Serine", abbr3: "Ser", abbr1: "S", pka1: 2.21, pka2: 9.15, pkaR: null, smiles: "[NH2]C(C[OH])C(=O)[O][H]" },
-            { name: "Threonine", abbr3: "Thr", abbr1: "T", pka1: 2.11, pka2: 9.62, pkaR: null, smiles: "CC([OH])C([NH2])C(=O)[O][H]" },
-            { name: "Tryptophan", abbr3: "Trp", abbr1: "W", pka1: 2.38, pka2: 9.39, pkaR: null, smiles: "[NH2]C(CC1=CNC2=C1C=CC=C2)C(=O)[O][H]" },
-            { name: "Tyrosine", abbr3: "Tyrosine", abbr1: "Y", pka1: 2.20, pka2: 9.11, pkaR: 10.07, smiles: "[NH2]C(CC1=CC=C([OH])C=C1)C(=O)[O][H]" },
-            { name: "Valine", abbr3: "Val", abbr1: "V", pka1: 2.32, pka2: 9.62, pkaR: null, smiles: "CC(C)C([NH2])C(=O)[O][H]" }
+            { name: "Alanine", abbr3: "Ala", abbr1: "A", pka1: 2.34, pka2: 9.69, pkaR: null, smiles: "CC([NH2])C(=O)[O][H]", tags: ["nonpolar", "aliphatic"] },
+            { name: "Arginine", abbr3: "Arg", abbr1: "R", pka1: 2.17, pka2: 9.04, pkaR: 12.48, smiles: "[H][N]=C([NH2])[NH]CCCNC([NH2])C(=O)[O][H]", tags: ["polar", "basic"] },
+            { name: "Asparagine", abbr3: "Asn", abbr1: "N", pka1: 2.02, pka2: 8.80, pkaR: null, smiles: "[NH2]C(CC(=O)[NH2])C(=O)[O][H]", tags: ["polar"] },
+            { name: "Aspartic Acid", abbr3: "Asp", abbr1: "D", pka1: 1.88, pka2: 9.60, pkaR: 3.65, smiles: "[NH2]C(CC(=O)[O][H])C(=O)[O][H]", tags: ["polar", "acidic"] },
+            { name: "Cysteine", abbr3: "Cys", abbr1: "C", pka1: 1.96, pka2: 10.28, pkaR: 8.18, smiles: "[NH2]C(C[SH])C(=O)[O][H]", tags: ["polar", "sulfur"] },
+            { name: "Glutamine", abbr3: "Gln", abbr1: "Q", pka1: 2.17, pka2: 9.13, pkaR: null, smiles: "[NH2]C(CCC(=O)[NH2])C(=O)[O][H]", tags: ["polar"] },
+            { name: "Glutamic Acid", abbr3: "Glu", abbr1: "E", pka1: 2.19, pka2: 9.67, pkaR: 4.25, smiles: "[NH2]C(CCC(=O)[O][H])C(=O)[O][H]", tags: ["polar", "acidic"] },
+            { name: "Glycine", abbr3: "Gly", abbr1: "G", pka1: 2.34, pka2: 9.60, pkaR: null, smiles: "[NH2]CC(=O)[O][H]", tags: ["nonpolar", "aliphatic"] },
+            { name: "Histidine", abbr3: "His", abbr1: "H", pka1: 1.82, pka2: 9.17, pkaR: 6.00, smiles: "[NH2]C(CC1=CN=C[NH]1)C(=O)[O][H]", tags: ["polar", "basic", "aromatic"] },
+            { name: "Isoleucine", abbr3: "Ile", abbr1: "I", pka1: 2.36, pka2: 9.68, pkaR: null, smiles: "CCC(C)C([NH2])C(=O)[O][H]", tags: ["nonpolar", "aliphatic"] },
+            { name: "Leucine", abbr3: "Leu", abbr1: "L", pka1: 2.36, pka2: 9.60, pkaR: null, smiles: "CC(C)CC([NH2])C(=O)[O][H]", tags: ["nonpolar", "aliphatic"] },
+            { name: "Lysine", abbr3: "Lys", abbr1: "K", pka1: 2.18, pka2: 8.95, pkaR: 10.53, smiles: "[NH2]CCCC([NH2])C(=O)[O][H]", tags: ["polar", "basic"] },
+            { name: "Methionine", abbr3: "Met", abbr1: "M", pka1: 2.28, pka2: 9.21, pkaR: null, smiles: "CSCCC([NH2])C(=O)[O][H]", tags: ["nonpolar", "sulfur"] },
+            { name: "Phenylalanine", abbr3: "Phe", abbr1: "F", pka1: 1.83, pka2: 9.13, pkaR: null, smiles: "[NH2]C(CC1=CC=CC=C1)C(=O)[O][H]", tags: ["nonpolar", "aromatic"] },
+            { name: "Proline", abbr3: "Pro", abbr1: "P", pka1: 1.99, pka2: 10.60, pkaR: null, smiles: "[H][O]C(=O)C1CCCN1", tags: ["nonpolar", "aliphatic"] },
+            { name: "Serine", abbr3: "Ser", abbr1: "S", pka1: 2.21, pka2: 9.15, pkaR: null, smiles: "[NH2]C(C[OH])C(=O)[O][H]", tags: ["polar", "hydroxyl"] },
+            { name: "Threonine", abbr3: "Thr", abbr1: "T", pka1: 2.11, pka2: 9.62, pkaR: null, smiles: "CC([OH])C([NH2])C(=O)[O][H]", tags: ["polar", "hydroxyl"] },
+            { name: "Tryptophan", abbr3: "Trp", abbr1: "W", pka1: 2.38, pka2: 9.39, pkaR: null, smiles: "[NH2]C(CC1=CNC2=C1C=CC=C2)C(=O)[O][H]", tags: ["nonpolar", "aromatic"] },
+            { name: "Tyrosine", abbr3: "Tyr", abbr1: "Y", pka1: 2.20, pka2: 9.11, pkaR: 10.07, smiles: "[NH2]C(CC1=CC=C([OH])C=C1)C(=O)[O][H]", tags: ["polar", "aromatic", "hydroxyl"] },
+            { name: "Valine", abbr3: "Val", abbr1: "V", pka1: 2.32, pka2: 9.62, pkaR: null, smiles: "CC(C)C([NH2])C(=O)[O][H]", tags: ["nonpolar", "aliphatic"] }
         ];
 
         const INITIAL_SMILES = aminoAcids.map(aa => aa.smiles);
         let isDarkMode = false;
         const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false };
 
+        const tagColors = {
+            'nonpolar': 'border-gray-400 text-gray-600',
+            'polar': 'border-cyan-400 text-cyan-600',
+            'aliphatic': 'border-amber-400 text-amber-600',
+            'aromatic': 'border-purple-400 text-purple-600',
+            'acidic': 'border-red-400 text-red-600',
+            'basic': 'border-blue-400 text-blue-600',
+            'hydroxyl': 'border-teal-400 text-teal-600',
+            'sulfur': 'border-yellow-400 text-yellow-600'
+        };
+
         function toggleDarkMode() {
             isDarkMode = !isDarkMode;
             document.documentElement.classList.toggle('dark', isDarkMode);
             renderGrid();
+            if (isFlipped) {
+                renderFlashcardStructure();
+            }
         }
 
         function handleSmilesEdit(index, newSmiles) {
@@ -239,15 +379,73 @@
             }
         }
 
-        function renderGrid() {
+        const colorMap = {
+            'nonpolar': '#9ca3af', // gray-400
+            'polar': '#22d3ee', // cyan-400
+            'aliphatic': '#fbbf24', // amber-400
+            'aromatic': '#c084fc', // purple-400
+            'acidic': '#f87171', // red-400
+            'basic': '#60a5fa', // blue-400
+            'hydroxyl': '#2dd4bf', // teal-400
+            'sulfur': '#facc15'  // yellow-400
+        };
+
+        function renderGrid(filter = 'all') {
             const grid = document.getElementById('molecule-grid');
             grid.innerHTML = '';
             const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
             const smilesDrawer = new SmiDrawer(mainStrategy);
 
-            aminoAcids.forEach((aa, index) => {
+            // Update Active Button UI
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const btnFilter = btn.textContent.toLowerCase().replace('-', '');
+                // Reset styles
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+                
+                if (btnFilter === filter || (filter === 'all' && btn.textContent === 'All')) {
+                    if (filter === 'all') {
+                        btn.style.backgroundColor = '#e2e8f0'; // slate-200
+                        btn.style.color = '#475569'; // slate-600
+                    } else {
+                        btn.style.backgroundColor = colorMap[filter] || '#e2e8f0';
+                        btn.style.color = 'white';
+                    }
+                }
+            });
+
+            const filteredAA = filter === 'all' 
+                ? aminoAcids 
+                : aminoAcids.filter(aa => aa.tags && aa.tags.includes(filter));
+
+            filteredAA.forEach((aa, index) => {
+                // We need a unique ID for each canvas as the index in filtered list might change
+                const uniqueIdx = aminoAcids.indexOf(aa); 
+                
+                // Generate Box Shadows for Tags
+                let boxShadows = [];
+                if (aa.tags) {
+                    aa.tags.forEach((tag, i) => {
+                        const color = colorMap[tag];
+                        if (color) {
+                            // Creates concentric rings: 0 0 0 3px color1, 0 0 0 6px color2...
+                            boxShadows.push(`0 0 0 ${(i + 1) * 3}px ${color}`);
+                        }
+                    });
+                }
+                const shadowStyle = boxShadows.length > 0 ? `box-shadow: ${boxShadows.join(', ')};` : '';
+                // Add extra margin to compensate for outer shadows if needed, 
+                // but grid gap usually handles it. We'll add a small margin to the card style just in case.
+
                 const card = document.createElement('div');
-                card.className = 'molecule-card bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-4 shadow-sm';
+                card.className = `molecule-card bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-4 m-1`;
+                // Override shadow if tags exist
+                if (shadowStyle) {
+                     card.style.cssText = shadowStyle;
+                     // Remove default border if we have colored outlines to avoid clash, 
+                     // or keep it as the innermost boundary. Let's keep it.
+                }
+
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <div>
@@ -266,17 +464,17 @@
                         </div>
                     </div>
                     <div class="flex-grow flex items-center justify-center py-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg my-2 border border-slate-100 dark:border-slate-800">
-                        <canvas id="canvas-${index}"></canvas>
+                        <canvas id="canvas-${uniqueIdx}"></canvas>
                     </div>
                     <div class="mt-1 flex items-center gap-1">
-                        <input id="input-${index}" type="text" class="smiles-input text-slate-400 dark:text-slate-500" value="${aa.smiles}" spellcheck="false" oninput="handleSmilesEdit(${index}, this.value)" title="Edit structure" />
-                        <button onclick="resetSmiles(${index})" class="reset-btn" title="Reset structure">
+                        <input id="input-${uniqueIdx}" type="text" class="smiles-input text-slate-400 dark:text-slate-500" value="${aa.smiles}" spellcheck="false" oninput="handleSmilesEdit(${uniqueIdx}, this.value)" title="Edit structure" />
+                        <button onclick="resetSmiles(${uniqueIdx})" class="reset-btn" title="Reset structure">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
                         </button>
                     </div>
                 `;
                 grid.appendChild(card);
-                smilesDrawer.draw(aa.smiles, `#canvas-${index}`, isDarkMode ? 'dark' : 'light');
+                smilesDrawer.draw(aa.smiles, `#canvas-${uniqueIdx}`, isDarkMode ? 'dark' : 'light');
             });
         }
 
@@ -290,6 +488,235 @@
             const activeLink = document.getElementById(`nav-${tabId}`);
             activeLink.classList.add('active', 'text-blue-600');
             activeLink.classList.remove('text-slate-500', 'dark:text-slate-400');
+
+            if (tabId === 'learn') {
+                updateFlashcard();
+            } else if (tabId === 'recall') {
+                if (!recallState.currentQuestion) {
+                    nextRecallQuestion();
+                }
+                setTimeout(() => document.getElementById('recall-input').focus(), 100);
+            }
+        }
+
+        /**
+         * Recall Logic
+         */
+        const recallState = {
+            streak: 0,
+            currentQuestion: null,
+            isWaitingForNext: false
+        };
+
+        function nextRecallQuestion() {
+            recallState.isWaitingForNext = false;
+            
+            // Reset UI
+            document.getElementById('recall-input-container').classList.remove('hidden');
+            document.getElementById('recall-feedback').classList.add('hidden');
+            document.getElementById('recall-input').value = '';
+            document.getElementById('recall-input').focus();
+
+            // Generate Question
+            const aa = aminoAcids[Math.floor(Math.random() * aminoAcids.length)];
+            // Types: 
+            // 0: Structure -> Name
+            // 1: Name -> 1-Let
+            // 2: Name -> 3-Let
+            // 3: Name -> pKa
+            // 4: 1-Let -> Name
+            // 5: Structure -> 1-Let
+            // 6: Structure -> 3-Let
+            // 7: Structure -> pKa
+            const type = Math.floor(Math.random() * 8); 
+            
+            let question = { aa, type };
+            
+            const promptEl = document.getElementById('recall-prompt');
+            const contentEl = document.getElementById('recall-content');
+            const badgeEl = document.getElementById('recall-type-badge');
+
+            contentEl.innerHTML = ''; // Clear previous content
+
+            // Helper to render structure
+            const renderStructure = () => {
+                const canvasId = 'recall-canvas-' + Date.now();
+                contentEl.innerHTML = `<canvas id="${canvasId}" class="w-full max-w-[200px]"></canvas>`;
+                setTimeout(() => {
+                    const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+                    const sd = new SmiDrawer({ ...mainStrategy, width: 300, height: 250 });
+                    sd.draw(aa.smiles, `#${canvasId}`, isDarkMode ? 'dark' : 'light');
+                }, 0);
+            };
+
+            switch(type) {
+                case 0: // Structure -> Name
+                    badgeEl.textContent = 'Structure ID';
+                    promptEl.textContent = 'What is the name of this amino acid?';
+                    renderStructure();
+                    question.validAnswers = [aa.name];
+                    break;
+                case 1: // Name -> 1-Letter
+                    badgeEl.textContent = '1-Letter Abbreviation';
+                    promptEl.textContent = `What is the 1-letter abbreviation for ${aa.name}?`;
+                    contentEl.innerHTML = `<div class="text-6xl font-bold text-slate-800 dark:text-white">${aa.name}</div>`;
+                    question.validAnswers = [aa.abbr1];
+                    break;
+                case 2: // Name -> 3-Letter
+                    badgeEl.textContent = '3-Letter Abbreviation';
+                    promptEl.textContent = `What is the 3-letter abbreviation for ${aa.name}?`;
+                    contentEl.innerHTML = `<div class="text-6xl font-bold text-slate-800 dark:text-white">${aa.name}</div>`;
+                    question.validAnswers = [aa.abbr3];
+                    break;
+                case 3: // Name -> pKa Side Chain
+                    badgeEl.textContent = 'Side Chain pKa';
+                    promptEl.textContent = `What is the side chain pKa of ${aa.name}? (Press Enter for "none")`;
+                    contentEl.innerHTML = `<div class="text-6xl font-bold text-slate-800 dark:text-white">${aa.name}</div>`;
+                    question.validAnswers = aa.pkaR ? [aa.pkaR.toString()] : ['none', 'n/a', 'no', 'null'];
+                    break;
+                case 4: // 1-Letter -> Name
+                    badgeEl.textContent = 'Expand Abbreviation';
+                    promptEl.textContent = `Which amino acid has the 1-letter abbreviation "${aa.abbr1}"?`;
+                    contentEl.innerHTML = `<div class="text-9xl font-bold text-green-600">${aa.abbr1}</div>`;
+                    question.validAnswers = [aa.name];
+                    break;
+                case 5: // Structure -> 1-Letter
+                    badgeEl.textContent = 'Structure -> 1-Letter';
+                    promptEl.textContent = 'What is the 1-letter abbreviation for this amino acid?';
+                    renderStructure();
+                    question.validAnswers = [aa.abbr1];
+                    break;
+                case 6: // Structure -> 3-Letter
+                    badgeEl.textContent = 'Structure -> 3-Letter';
+                    promptEl.textContent = 'What is the 3-letter abbreviation for this amino acid?';
+                    renderStructure();
+                    question.validAnswers = [aa.abbr3];
+                    break;
+                case 7: // Structure -> pKa
+                    badgeEl.textContent = 'Structure -> pKa';
+                    promptEl.textContent = 'What is the side chain pKa of this amino acid? (Press Enter for "none")';
+                    renderStructure();
+                    question.validAnswers = aa.pkaR ? [aa.pkaR.toString()] : ['none', 'n/a', 'no', 'null'];
+                    break;
+            }
+
+            recallState.currentQuestion = question;
+        }
+
+        function submitRecallAnswer() {
+            if (recallState.isWaitingForNext) return;
+
+            let input = document.getElementById('recall-input').value.trim().toLowerCase();
+            // Handle empty input as "none"
+            if (input === '') {
+                input = 'none';
+            }
+
+            const validAnswers = recallState.currentQuestion.validAnswers.map(a => a.toString().toLowerCase());
+            
+            const isCorrect = validAnswers.includes(input);
+            
+            if (isCorrect) {
+                recallState.streak++;
+                document.getElementById('recall-result-message').textContent = 'Correct! 🎉';
+                document.getElementById('recall-result-message').className = 'text-xl font-bold text-green-600 dark:text-green-400';
+            } else {
+                recallState.streak = 0;
+                document.getElementById('recall-result-message').textContent = 'Incorrect 😔';
+                document.getElementById('recall-result-message').className = 'text-xl font-bold text-red-600 dark:text-red-400';
+            }
+
+            document.getElementById('recall-streak').textContent = recallState.streak;
+            document.getElementById('recall-correct-answer').textContent = `Answer: ${recallState.currentQuestion.validAnswers[0]}`;
+            
+            document.getElementById('recall-input-container').classList.add('hidden');
+            document.getElementById('recall-feedback').classList.remove('hidden');
+            document.getElementById('recall-next-btn').focus();
+            
+            recallState.isWaitingForNext = true;
+        }
+
+        // Handle Enter key for submission
+        document.getElementById('recall-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                submitRecallAnswer();
+            }
+        });
+
+        // Global Keyboard Shortcuts
+        window.addEventListener('keydown', function(e) {
+            const activeTab = document.querySelector('.nav-link.active').id;
+            
+            if (activeTab === 'nav-learn') {
+                if (e.code === 'Space') {
+                    e.preventDefault(); // Prevent page scroll
+                    flipCard();
+                } else if (e.key === 'ArrowRight') {
+                    nextCard();
+                } else if (e.key === 'ArrowLeft') {
+                    prevCard();
+                }
+            }
+        });
+
+        /**
+         * Flashcard Logic
+         */
+        let currentCardIndex = 0;
+        let flashcardList = [...aminoAcids];
+        let isFlipped = false;
+
+        function shuffleCards() {
+            flashcardList.sort(() => Math.random() - 0.5);
+            currentCardIndex = 0;
+            isFlipped = false;
+            document.getElementById('flashcard').classList.remove('flipped');
+            updateFlashcard();
+        }
+
+        function flipCard() {
+            isFlipped = !isFlipped;
+            document.getElementById('flashcard').classList.toggle('flipped', isFlipped);
+            if (isFlipped) {
+                renderFlashcardStructure();
+            }
+        }
+
+        function nextCard() {
+            currentCardIndex = (currentCardIndex + 1) % flashcardList.length;
+            isFlipped = false;
+            document.getElementById('flashcard').classList.remove('flipped');
+            updateFlashcard();
+        }
+
+        function prevCard() {
+            currentCardIndex = (currentCardIndex - 1 + flashcardList.length) % flashcardList.length;
+            isFlipped = false;
+            document.getElementById('flashcard').classList.remove('flipped');
+            updateFlashcard();
+        }
+
+        function updateFlashcard() {
+            const aa = flashcardList[currentCardIndex];
+            document.getElementById('flashcard-question').textContent = aa.name;
+            document.getElementById('flash-abbr3').textContent = aa.abbr3;
+            document.getElementById('flash-abbr1').textContent = aa.abbr1;
+            document.getElementById('flash-pkaR').textContent = aa.pkaR || 'N/A';
+            document.getElementById('flash-name').textContent = aa.name;
+            document.getElementById('card-index').textContent = currentCardIndex + 1;
+            document.getElementById('card-total').textContent = flashcardList.length;
+            
+            // If it was already flipped, we should probably reset it or render the new one
+            if (isFlipped) {
+                renderFlashcardStructure();
+            }
+        }
+
+        function renderFlashcardStructure() {
+            const aa = flashcardList[currentCardIndex];
+            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+            const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: 300, height: 250 });
+            smilesDrawer.draw(aa.smiles, '#flashcard-canvas', isDarkMode ? 'dark' : 'light');
         }
 
         window.addEventListener('load', () => {
