@@ -29,7 +29,6 @@ const INITIAL_SMILES = aminoAcids.map(aa => aa.smiles);
 let isDarkMode = false;
 const mainStrategy = { width: 250, height: 220, bondThickness: 1.6, bondLength: 18, padding: 30, terminalCarbons: false, explicitHydrogens: true, condenseNodes: false, compactDrawing: false };
 const PROGRESS_STORAGE_KEY = 'aa_progress_v1';
-const GITHUB_COMMITS_API = 'https://api.github.com/repos/nikhi1g/aminoacids/commits?per_page=1';
 const COMMIT_POLL_MS = 300000;
 const DEFAULT_PROGRESS_ITEM = {
     correctStreak: 0,
@@ -160,16 +159,13 @@ function formatCommitDate(value) {
 
 async function fetchGitHubCommitMeta() {
     try {
-        const response = await fetch(`${GITHUB_COMMITS_API}&t=${Date.now()}`, { cache: 'no-store' });
+        const response = await fetch(`commit.json?t=${Date.now()}`, { cache: 'no-store' });
         if (!response.ok) return null;
         const data = await response.json();
-        const commit = Array.isArray(data) ? data[0] : data;
-        if (!commit || typeof commit.sha !== 'string') return null;
-        const info = commit.commit || {};
-        const committer = info.committer || info.author || {};
+        if (!data || !data.commit) return null;
         return {
-            commit: commit.sha,
-            commit_date: committer.date
+            commit: data.commit,
+            commit_date: data.build_time
         };
     } catch (err) {
         return null;

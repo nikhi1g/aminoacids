@@ -15,9 +15,9 @@ Help users memorize all amino acids through repeated exposure and recall practic
 
 # Deployment Versioning
 - The header displays the latest GitHub commit hash and commit date (no "Commit:" label).
-- Commit data is fetched directly from `https://api.github.com/repos/nikhi1g/aminoacids/commits?per_page=1`.
-- Do not add custom headers to the GitHub API fetch; it triggers CORS preflight and fails on GitHub Pages.
-- Poll for updates every 5 minutes to avoid hitting GitHub's unauthenticated rate limits.
+- Commit data is fetched from the local `commit.json` file generated during the GitHub Pages build.
+- This avoids hitting GitHub API rate limits.
+- Poll for updates every 5 minutes to detect new deployments.
 - A "New" indicator appears in the header when the hash changes, with a Refresh button.
 
 # Known Bugs
