@@ -139,6 +139,7 @@
     <script>
         let jsmeApplet = null;
         let drawTarget = null;
+        let drawTargetSmiles = '';
         let chemistryReady = false;
         let aminoAcidIndex = null;
         let aminoAcidIndexNoStereo = null;
@@ -197,6 +198,13 @@
             return true;
         }
 
+        function formatDrawSmiles(smiles) {
+            if (!smiles) return '';
+            return smiles
+                .replace(/\[O\]\[H\]/g, '[OH]')
+                .replace(/\[H\]\[O\]/g, '[OH]');
+        }
+
         function setExpectedSmiles(value) {
             const input = document.getElementById('draw-expected-smiles');
             if (!input) return;
@@ -219,7 +227,7 @@
                 const value = input.value.trim();
                 if (value) return value;
             }
-            return drawTarget?.smiles || '';
+            return drawTargetSmiles || drawTarget?.smiles || '';
         }
 
         function jsmeOnLoad() {
@@ -444,6 +452,7 @@
             const filtered = getFilteredAminoAcids();
             if (filtered.length === 0) {
                 drawTarget = null;
+                drawTargetSmiles = '';
                 document.getElementById('draw-target-name').textContent = 'No Match';
                 document.getElementById('draw-feedback').textContent = 'No amino acids match this filter.';
                 document.getElementById('draw-user-smiles').textContent = '-';
@@ -455,10 +464,11 @@
                 return;
             }
             drawTarget = filtered[Math.floor(Math.random() * filtered.length)];
+            drawTargetSmiles = formatDrawSmiles(drawTarget.smiles);
             document.getElementById('draw-target-name').textContent = drawTarget.name;
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
             document.getElementById('draw-user-smiles').textContent = '-';
-            setExpectedSmiles(drawTarget.smiles);
+            setExpectedSmiles(drawTargetSmiles);
             hideExpectedSmiles();
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
             document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
@@ -563,12 +573,9 @@
             const namesMatch = detectedName && targetName && detectedName.toLowerCase() === targetName.toLowerCase();
             const successSuffix = targetName ? ` You drew: ${targetName}.` : detectedSuffix;
 
-            if (recognition?.found && namesMatch) {
-                if (recognition.stereoOk === false) {
-                    feedback.textContent = `Correct connectivity, but check stereochemistry!${successSuffix}`;
-                    feedback.className = 'text-lg font-bold text-amber-600';
-                    return;
-                }
+            const stereoMismatch = recognition?.found && namesMatch && recognition.stereoOk === false;
+
+            if (recognition?.found && namesMatch && recognition.stereoOk !== false) {
                 feedback.textContent = `Correct structure!${successSuffix}`;
                 feedback.className = 'text-lg font-bold text-emerald-600';
                 return;
@@ -586,7 +593,13 @@
             const idExpectedNoStereo = getIdCodeNoStereo(expectedMol);
 
             if (idUserNoStereo && idExpectedNoStereo && idUserNoStereo === idExpectedNoStereo) {
-                feedback.textContent = `Correct connectivity, but check stereochemistry!${successSuffix}`;
+                feedback.textContent = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
+                feedback.className = 'text-lg font-bold text-amber-600';
+                return;
+            }
+
+            if (stereoMismatch) {
+                feedback.textContent = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
                 feedback.className = 'text-lg font-bold text-amber-600';
                 return;
             }
