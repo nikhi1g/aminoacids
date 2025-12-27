@@ -48,6 +48,8 @@ const AminoAcidRecognizer = (() => {
   function normalizeSmiles(smiles) {
     if (!smiles) return "";
     return smiles
+      .replace(/\[O\]\[H\]/g, "[OH]")
+      .replace(/\[H\]\[O\]/g, "[OH]")
       .replace(/\[NH3\+\]/g, "N")
       .replace(/\[NH2\+\]/g, "N")
       .replace(/\[NH\+\]/g, "N")
@@ -348,6 +350,11 @@ const AminoAcidRecognizer = (() => {
 
   function fromJSME(jsmeInstance) {
     if (!jsmeInstance) return { found: false };
+    const smiles = getJSMEValue(jsmeInstance, ["smiles", "SMILES", "getSmiles", "getSMILES"]);
+    if (smiles) {
+      const result = identify(smiles);
+      if (result?.found) return result;
+    }
     const molfile = getJSMEMolfile(jsmeInstance);
     if (molfile && isOclReady()) {
       try {
@@ -358,9 +365,7 @@ const AminoAcidRecognizer = (() => {
         return { found: false };
       }
     }
-    const smiles = getJSMEValue(jsmeInstance, ["smiles", "SMILES", "getSmiles", "getSMILES"]);
-    if (!smiles) return { found: false };
-    return identify(smiles);
+    return { found: false };
   }
 
   return {

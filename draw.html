@@ -205,6 +205,45 @@
                 .replace(/\[H\]\[O\]/g, '[OH]');
         }
 
+        function normalizeSmiles(smiles) {
+            if (!smiles) return '';
+            return smiles
+                .replace(/\[O\]\[H\]/g, '[OH]')
+                .replace(/\[H\]\[O\]/g, '[OH]')
+                .replace(/\[NH3\+\]/g, 'N')
+                .replace(/\[NH2\+\]/g, 'N')
+                .replace(/\[NH\+\]/g, 'N')
+                .replace(/\[O-\]/g, 'O')
+                .replace(/\[S-\]/g, 'S')
+                .replace(/\+/g, '')
+                .replace(/\-/g, '')
+                .trim();
+        }
+
+        function parseSmilesToMol(smiles) {
+            if (!window.OCL || !smiles) return null;
+            const normalized = normalizeSmiles(smiles);
+            if (!normalized) return null;
+            try {
+                const mol = OCL.Molecule.fromSmiles(normalized);
+                normalizeMolecule(mol);
+                return mol;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function parseMolfileToMol(molfile) {
+            if (!window.OCL || !molfile) return null;
+            try {
+                const mol = OCL.Molecule.fromMolfile(molfile);
+                normalizeMolecule(mol);
+                return mol;
+            } catch (err) {
+                return null;
+            }
+        }
+
         function setExpectedSmiles(value) {
             const input = document.getElementById('draw-expected-smiles');
             if (!input) return;
@@ -407,37 +446,21 @@
                 return { mol: null, display: display || 'Structure detected.', reason: 'ocl' };
             }
             let mol = null;
-            if (exportData.molfile) {
-                try {
-                    mol = OCL.Molecule.fromMolfile(exportData.molfile);
-                } catch (err) {
-                    mol = null;
-                }
+            if (hasSmiles) {
+                mol = parseSmilesToMol(exportData.smiles);
             }
-            if (!mol && hasSmiles) {
-                try {
-                    mol = OCL.Molecule.fromSmiles(exportData.smiles);
-                } catch (err) {
-                    mol = null;
-                }
+            if (!mol && exportData.molfile) {
+                mol = parseMolfileToMol(exportData.molfile);
             }
             if (!mol) {
                 return { mol: null, display: display || 'Structure detected.', reason: 'parse' };
             }
-            normalizeMolecule(mol);
             display = getDisplaySmiles(mol, display);
             return { mol, display, reason: 'ok' };
         }
 
         function parseExpectedMolecule(smiles) {
-            if (!window.OCL || !smiles) return null;
-            try {
-                const mol = OCL.Molecule.fromSmiles(smiles);
-                normalizeMolecule(mol);
-                return mol;
-            } catch (err) {
-                return null;
-            }
+            return parseSmilesToMol(smiles);
         }
 
         function applyTemplateStructure() {
@@ -575,11 +598,6 @@
 
             const stereoMismatch = recognition?.found && namesMatch && recognition.stereoOk === false;
 
-            if (recognition?.found && namesMatch && recognition.stereoOk !== false) {
-                feedback.textContent = `Correct structure!${successSuffix}`;
-                feedback.className = 'text-lg font-bold text-emerald-600';
-                return;
-            }
             const idUser = getIdCode(userResult.mol);
             const idExpected = getIdCode(expectedMol);
 
@@ -591,16 +609,27 @@
 
             const idUserNoStereo = getIdCodeNoStereo(userResult.mol);
             const idExpectedNoStereo = getIdCodeNoStereo(expectedMol);
+            const connectivityMatches = idUserNoStereo && idExpectedNoStereo && idUserNoStereo === idExpectedNoStereo;
 
-            if (idUserNoStereo && idExpectedNoStereo && idUserNoStereo === idExpectedNoStereo) {
-                feedback.textContent = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
-                feedback.className = 'text-lg font-bold text-amber-600';
+            if (connectivityMatches) {
+                if (stereoMismatch) {
+                    feedback.textContent = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
+                    feedback.className = 'text-lg font-bold text-amber-600';
+                    return;
+                }
+                feedback.textContent = `Correct structure!${successSuffix}`;
+                feedback.className = 'text-lg font-bold text-emerald-600';
                 return;
             }
 
-            if (stereoMismatch) {
-                feedback.textContent = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
-                feedback.className = 'text-lg font-bold text-amber-600';
+            if (recognition?.found && namesMatch) {
+                if (recognition.stereoOk === false) {
+                    feedback.textContent = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
+                    feedback.className = 'text-lg font-bold text-amber-600';
+                    return;
+                }
+                feedback.textContent = `Correct structure!${successSuffix}`;
+                feedback.className = 'text-lg font-bold text-emerald-600';
                 return;
             }
 
