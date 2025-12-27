@@ -128,6 +128,30 @@
                 <div id="draw-feedback" class="text-lg font-bold text-slate-600">Draw the structure, then check your answer.</div>
             </div>
         </div>
+
+        <div class="mt-10 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+                <h2 class="text-lg font-bold">Draw Progress</h2>
+                <p class="text-xs text-slate-500">Mastered after 3 consecutive correct draws.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <div class="max-h-[420px] overflow-y-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-slate-50 dark:bg-slate-900/60 text-slate-500">
+                            <tr>
+                                <th class="text-left font-semibold px-6 py-3">Amino Acid</th>
+                                <th class="text-left font-semibold px-6 py-3">Last Draw</th>
+                                <th class="text-left font-semibold px-6 py-3">Streak</th>
+                                <th class="text-left font-semibold px-6 py-3">Mastered</th>
+                            </tr>
+                        </thead>
+                        <tbody id="draw-progress-table" class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 
     
@@ -145,6 +169,16 @@
         let aminoAcidIndexNoStereo = null;
         let lastUserSmiles = '';
         const DRAW_TEMPLATE_SMILES = 'NCC(=O)O';
+        const DRAW_PROGRESS_STORAGE_KEY = 'aa_draw_progress_v1';
+        const DRAW_MASTERY_STREAK = 3;
+        const DRAW_DEFAULT_ITEM = {
+            correctStreak: 0,
+            totalCorrect: 0,
+            totalWrong: 0,
+            lastSeen: null,
+            lastSmiles: '',
+            mastered: false
+        };
 
         function isOCLReady() {
             return !!(window.OCL && OCL.Molecule && typeof OCL.Molecule.fromMolfile === 'function');
@@ -198,6 +232,32 @@
             return true;
         }
 
+        function loadDrawProgress() {
+            try {
+                const raw = localStorage.getItem(DRAW_PROGRESS_STORAGE_KEY);
+                if (!raw) return { version: 1, items: {} };
+                const parsed = JSON.parse(raw);
+                if (!parsed || typeof parsed !== 'object') return { version: 1, items: {} };
+                if (!parsed.items || typeof parsed.items !== 'object') parsed.items = {};
+                return parsed;
+            } catch (err) {
+                return { version: 1, items: {} };
+            }
+        }
+
+        function saveDrawProgress(progress) {
+            localStorage.setItem(DRAW_PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+        }
+
+        function getDrawProgressItem(progress, abbr3) {
+            if (!progress.items[abbr3]) {
+                progress.items[abbr3] = { ...DRAW_DEFAULT_ITEM };
+            } else {
+                progress.items[abbr3] = { ...DRAW_DEFAULT_ITEM, ...progress.items[abbr3] };
+            }
+            return progress.items[abbr3];
+        }
+
         function formatDrawSmiles(smiles) {
             if (!smiles) return '';
             return smiles
@@ -242,6 +302,87 @@
             } catch (err) {
                 return null;
             }
+        }
+
+        function recordDrawProgress(aa, isCorrect, smiles) {
+            if (!aa || !aa.abbr3) return;
+            const progress = loadDrawProgress();
+            const item = getDrawProgressItem(progress, aa.abbr3);
+            const normalizedSmiles = normalizeSmiles(smiles);
+            if (normalizedSmiles) {
+                item.lastSmiles = normalizedSmiles;
+            }
+            item.lastSeen = new Date().toISOString();
+            if (isCorrect) {
+                item.correctStreak += 1;
+                item.totalCorrect += 1;
+                if (item.correctStreak >= DRAW_MASTERY_STREAK) {
+                    item.mastered = true;
+                }
+            } else {
+                item.totalWrong += 1;
+                item.correctStreak = 0;
+            }
+            saveDrawProgress(progress);
+            renderDrawProgress();
+        }
+
+        function renderDrawProgress() {
+            const tbody = document.getElementById('draw-progress-table');
+            if (!tbody || !Array.isArray(aminoAcids)) return;
+            const progress = loadDrawProgress();
+            const rows = aminoAcids.map((aa) => {
+                const item = getDrawProgressItem(progress, aa.abbr3);
+                const canvasId = `draw-progress-canvas-${aa.abbr3.toLowerCase()}`;
+                const streakLabel = `${item.correctStreak}/${DRAW_MASTERY_STREAK}`;
+                const masteredLabel = item.mastered ? 'Yes' : `No (${Math.max(0, DRAW_MASTERY_STREAK - item.correctStreak)} left)`;
+                const masteredClass = item.mastered ? 'text-emerald-600' : 'text-slate-500';
+                const hasSmiles = Boolean(item.lastSmiles);
+                const structureCell = hasSmiles
+                    ? `<div class="min-w-[140px] min-h-[100px] max-w-[200px] bg-slate-50/60 dark:bg-slate-800/30 rounded-lg border border-slate-100 dark:border-slate-800 flex items-center justify-center p-2">
+                            <canvas id="${canvasId}" class="w-full h-full"></canvas>
+                       </div>`
+                    : `<span class="text-xs text-slate-400">No attempts yet</span>`;
+                return {
+                    aa,
+                    item,
+                    canvasId,
+                    masteredClass,
+                    masteredLabel,
+                    streakLabel,
+                    structureCell
+                };
+            });
+
+            tbody.innerHTML = rows.map(({ aa, structureCell, streakLabel, masteredLabel, masteredClass }) => `
+                <tr>
+                    <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100">${aa.name}</td>
+                    <td class="px-6 py-4">${structureCell}</td>
+                    <td class="px-6 py-4 text-slate-500">${streakLabel}</td>
+                    <td class="px-6 py-4 ${masteredClass}">${masteredLabel}</td>
+                </tr>
+            `).join('');
+
+            requestAnimationFrame(() => {
+                drawProgressStructures(rows);
+            });
+        }
+
+        function drawProgressStructures(rows) {
+            if (!rows || !rows.length) return;
+            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+            rows.forEach(({ item, canvasId }) => {
+                if (!item.lastSmiles) return;
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: 200, height: 140, bondThickness: 1.4 });
+                try {
+                    const displaySmiles = formatDrawSmiles(item.lastSmiles);
+                    smilesDrawer.draw(displaySmiles, `#${canvasId}`, isDarkMode ? 'dark' : 'light');
+                } catch (err) {
+                    // skip draw failures
+                }
+            });
         }
 
         function setExpectedSmiles(value) {
@@ -600,41 +741,42 @@
 
             const idUser = getIdCode(userResult.mol);
             const idExpected = getIdCode(expectedMol);
-
-            if (idUser && idExpected && idUser === idExpected) {
-                feedback.textContent = `Correct structure!${successSuffix}`;
-                feedback.className = 'text-lg font-bold text-emerald-600';
-                return;
-            }
-
             const idUserNoStereo = getIdCodeNoStereo(userResult.mol);
             const idExpectedNoStereo = getIdCodeNoStereo(expectedMol);
+            const exactMatch = idUser && idExpected && idUser === idExpected;
             const connectivityMatches = idUserNoStereo && idExpectedNoStereo && idUserNoStereo === idExpectedNoStereo;
 
-            if (connectivityMatches) {
+            let resultText = `Not quite. Compare your structure with the expected one.${detectedSuffix}`;
+            let resultClass = 'text-lg font-bold text-red-600';
+            let isCorrect = false;
+
+            if (exactMatch) {
+                resultText = `Correct structure!${successSuffix}`;
+                resultClass = 'text-lg font-bold text-emerald-600';
+                isCorrect = true;
+            } else if (connectivityMatches) {
                 if (stereoMismatch) {
-                    feedback.textContent = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
-                    feedback.className = 'text-lg font-bold text-amber-600';
-                    return;
+                    resultText = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
+                    resultClass = 'text-lg font-bold text-amber-600';
+                } else {
+                    resultText = `Correct structure!${successSuffix}`;
+                    resultClass = 'text-lg font-bold text-emerald-600';
+                    isCorrect = true;
                 }
-                feedback.textContent = `Correct structure!${successSuffix}`;
-                feedback.className = 'text-lg font-bold text-emerald-600';
-                return;
-            }
-
-            if (recognition?.found && namesMatch) {
+            } else if (recognition?.found && namesMatch) {
                 if (recognition.stereoOk === false) {
-                    feedback.textContent = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
-                    feedback.className = 'text-lg font-bold text-amber-600';
-                    return;
+                    resultText = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
+                    resultClass = 'text-lg font-bold text-amber-600';
+                } else {
+                    resultText = `Correct structure!${successSuffix}`;
+                    resultClass = 'text-lg font-bold text-emerald-600';
+                    isCorrect = true;
                 }
-                feedback.textContent = `Correct structure!${successSuffix}`;
-                feedback.className = 'text-lg font-bold text-emerald-600';
-                return;
             }
 
-            feedback.textContent = `Not quite. Compare your structure with the expected one.${detectedSuffix}`;
-            feedback.className = 'text-lg font-bold text-red-600';
+            recordDrawProgress(drawTarget, isCorrect, userSmiles);
+            feedback.textContent = resultText;
+            feedback.className = resultClass;
         }
 
         function clearDrawing() {
@@ -664,6 +806,7 @@
             document.getElementById('check-answer-btn').addEventListener('click', checkAnswer);
             document.getElementById('new-target-btn').addEventListener('click', pickNewTarget);
             document.getElementById('clear-drawing-btn').addEventListener('click', clearDrawing);
+            renderDrawProgress();
         });
 
         window.addEventListener('themeChanged', () => {
@@ -673,10 +816,17 @@
             if (lastUserSmiles && !document.getElementById('draw-user-structure-wrapper').classList.contains('hidden')) {
                 updateUserStructure(lastUserSmiles);
             }
+            renderDrawProgress();
         });
 
         window.addEventListener('filterChanged', () => {
             pickNewTarget();
+        });
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === DRAW_PROGRESS_STORAGE_KEY) {
+                renderDrawProgress();
+            }
         });
     </script>
 </body>
