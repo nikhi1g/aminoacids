@@ -189,6 +189,7 @@
         let drawTarget = null;
         let drawTargetSmiles = '';
         let drawAttemptState = 'unanswered';
+        let drawPromptStartMs = Date.now();
         let chemistryReady = false;
         let aminoAcidIndex = null;
         let aminoAcidIndexNoStereo = null;
@@ -196,13 +197,36 @@
         const DRAW_TEMPLATE_SMILES = 'NCC(=O)O';
         const DRAW_PROGRESS_STORAGE_KEY = 'aa_draw_progress_v1';
         const DRAW_MASTERY_STREAK = 3;
+        const DRAW_EASE_START = 2.5;
+        const DRAW_EASE_MIN = 1.3;
+        const DRAW_EASE_MAX = 3.0;
+        const DRAW_LEARNING_STEPS_MS = [
+            60000,
+            5 * 60000,
+            20 * 60000
+        ];
+        const DRAW_GRADUATING_INTERVAL_MS = 24 * 60 * 60000;
+        const DRAW_EASY_INTERVAL_MS = 3 * 24 * 60 * 60000;
+        const DRAW_REVIEW_MIN_INTERVAL_MS = 10 * 60000;
+        const DRAW_REVIEW_MAX_INTERVAL_MS = 365 * 24 * 60 * 60000;
+        const DRAW_FAST_MS = 25000;
+        const DRAW_OK_MS = 60000;
         const DRAW_DEFAULT_ITEM = {
             correctStreak: 0,
             totalCorrect: 0,
             totalWrong: 0,
             lastSeen: null,
             lastSmiles: '',
-            mastered: false
+            mastered: false,
+            dueAtMs: 0,
+            intervalMs: 0,
+            ease: DRAW_EASE_START,
+            learningStep: 0,
+            reps: 0,
+            lapses: 0,
+            lastGrade: null,
+            lastTimeMs: null,
+            avgTimeMs: null
         };
 
         function isOCLReady() {
@@ -302,6 +326,95 @@
             wrongEl.textContent = String(item.totalWrong || 0);
         }
 
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        function formatDuration(ms) {
+            const seconds = Math.max(1, Math.round(ms / 1000));
+            if (seconds < 60) return `${seconds}s`;
+            const minutes = Math.round(seconds / 60);
+            if (minutes < 60) return `${minutes}m`;
+            const hours = Math.round(minutes / 60);
+            if (hours < 48) return `${hours}h`;
+            const days = Math.round(hours / 24);
+            return `${days}d`;
+        }
+
+        function formatDueLabel(item, nowMs) {
+            const dueAt = typeof item.dueAtMs === 'number' ? item.dueAtMs : 0;
+            if (!dueAt || dueAt <= nowMs) return 'Due: now';
+            return `Due in: ${formatDuration(dueAt - nowMs)}`;
+        }
+
+        function inferDrawGrade(isCorrect, elapsedMs) {
+            if (!isCorrect) return 0;
+            if (elapsedMs <= DRAW_FAST_MS) return 3;
+            if (elapsedMs <= DRAW_OK_MS) return 2;
+            return 1;
+        }
+
+        function scheduleNext(item, grade, nowMs) {
+            item.reps = (item.reps ?? 0) + 1;
+            item.lastGrade = grade;
+
+            if (typeof item.lastTimeMs === 'number') {
+                const alpha = 0.2;
+                item.avgTimeMs = (typeof item.avgTimeMs === 'number')
+                    ? Math.round(alpha * item.lastTimeMs + (1 - alpha) * item.avgTimeMs)
+                    : item.lastTimeMs;
+            }
+
+            if (typeof item.ease !== 'number') item.ease = DRAW_EASE_START;
+            item.ease = clamp(item.ease, DRAW_EASE_MIN, DRAW_EASE_MAX);
+            if (typeof item.intervalMs !== 'number') item.intervalMs = 0;
+
+            const inReview = item.learningStep == null;
+
+            if (grade === 0) {
+                item.lapses = (item.lapses ?? 0) + 1;
+                item.learningStep = 0;
+                item.intervalMs = DRAW_LEARNING_STEPS_MS[0];
+                item.dueAtMs = nowMs + item.intervalMs;
+                if (inReview) item.ease = clamp(item.ease - 0.2, DRAW_EASE_MIN, DRAW_EASE_MAX);
+                return;
+            }
+
+            if (item.learningStep != null) {
+                if (grade === 3) {
+                    item.learningStep = null;
+                    item.intervalMs = DRAW_EASY_INTERVAL_MS;
+                    item.dueAtMs = nowMs + item.intervalMs;
+                    return;
+                }
+
+                if (grade === 2) {
+                    item.learningStep += 1;
+                    if (item.learningStep >= DRAW_LEARNING_STEPS_MS.length) {
+                        item.learningStep = null;
+                        item.intervalMs = DRAW_GRADUATING_INTERVAL_MS;
+                        item.dueAtMs = nowMs + item.intervalMs;
+                    } else {
+                        item.intervalMs = DRAW_LEARNING_STEPS_MS[item.learningStep];
+                        item.dueAtMs = nowMs + item.intervalMs;
+                    }
+                    return;
+                }
+
+                item.intervalMs = DRAW_LEARNING_STEPS_MS[item.learningStep];
+                item.dueAtMs = nowMs + item.intervalMs;
+                return;
+            }
+
+            if (grade === 1) item.ease = clamp(item.ease - 0.15, DRAW_EASE_MIN, DRAW_EASE_MAX);
+            if (grade === 3) item.ease = clamp(item.ease + 0.15, DRAW_EASE_MIN, DRAW_EASE_MAX);
+
+            const factor = grade === 1 ? 0.8 : grade === 2 ? 1.0 : 1.3;
+            const next = item.intervalMs * item.ease * factor;
+            item.intervalMs = clamp(Math.round(next), DRAW_REVIEW_MIN_INTERVAL_MS, DRAW_REVIEW_MAX_INTERVAL_MS);
+            item.dueAtMs = nowMs + item.intervalMs;
+        }
+
         function setDrawStatus(state) {
             const badge = document.getElementById('draw-status-badge');
             const path = document.getElementById('draw-status-path');
@@ -387,7 +500,7 @@
             }
         }
 
-        function recordDrawProgress(aa, isCorrect, smiles) {
+        function recordDrawProgress(aa, isCorrect, smiles, elapsedMs) {
             if (!aa || !aa.abbr3) return;
             const progress = loadDrawProgress();
             const item = getDrawProgressItem(progress, aa.abbr3);
@@ -395,7 +508,14 @@
             if (normalizedSmiles) {
                 item.lastSmiles = normalizedSmiles;
             }
-            item.lastSeen = new Date().toISOString();
+            const nowMs = Date.now();
+            const cappedElapsedMs = typeof elapsedMs === 'number'
+                ? Math.min(elapsedMs, 10 * 60 * 1000)
+                : null;
+            item.lastSeen = new Date(nowMs).toISOString();
+            if (typeof cappedElapsedMs === 'number') {
+                item.lastTimeMs = cappedElapsedMs;
+            }
             if (isCorrect) {
                 item.correctStreak += 1;
                 item.totalCorrect += 1;
@@ -406,6 +526,8 @@
                 item.totalWrong += 1;
                 item.correctStreak = 0;
             }
+            const grade = inferDrawGrade(isCorrect, cappedElapsedMs ?? DRAW_OK_MS + 1);
+            scheduleNext(item, grade, nowMs);
             saveDrawProgress(progress);
             renderDrawProgress();
             updateDrawAttemptSummary();
@@ -415,6 +537,7 @@
             const tbody = document.getElementById('draw-progress-table');
             if (!tbody || !Array.isArray(aminoAcids)) return;
             const progress = loadDrawProgress();
+            const nowMs = Date.now();
             const rows = aminoAcids.map((aa) => {
                 const item = getDrawProgressItem(progress, aa.abbr3);
                 const canvasId = `draw-progress-canvas-${aa.abbr3.toLowerCase()}`;
@@ -422,11 +545,23 @@
                 const masteredLabel = item.mastered ? 'Yes' : `No (${Math.max(0, DRAW_MASTERY_STREAK - item.correctStreak)} left)`;
                 const masteredClass = item.mastered ? 'text-emerald-600' : 'text-slate-500';
                 const hasSmiles = Boolean(item.lastSmiles);
+                const dueLabel = formatDueLabel(item, nowMs);
+                const easeValue = typeof item.ease === 'number' ? item.ease : DRAW_EASE_START;
+                const metaLabel = `<div class="mt-2 text-[10px] text-slate-400 flex flex-wrap gap-2">
+                        <span>${dueLabel}</span>
+                        <span>Ease: ${easeValue.toFixed(2)}</span>
+                    </div>`;
                 const structureCell = hasSmiles
-                    ? `<div class="min-w-[140px] min-h-[100px] max-w-[200px] bg-slate-50/60 dark:bg-slate-800/30 rounded-lg border border-slate-100 dark:border-slate-800 flex items-center justify-center p-2">
-                            <canvas id="${canvasId}" class="w-full h-full"></canvas>
+                    ? `<div class="min-w-[140px] min-h-[100px] max-w-[200px]">
+                            <div class="bg-slate-50/60 dark:bg-slate-800/30 rounded-lg border border-slate-100 dark:border-slate-800 flex items-center justify-center p-2">
+                                <canvas id="${canvasId}" class="w-full h-full"></canvas>
+                            </div>
+                            ${metaLabel}
                        </div>`
-                    : `<span class="text-xs text-slate-400">No attempts yet</span>`;
+                    : `<div class="text-xs text-slate-400">
+                            <div>No attempts yet</div>
+                            ${metaLabel}
+                       </div>`;
                 return {
                     aa,
                     item,
@@ -696,6 +831,53 @@
             }
         }
 
+        function weightedPick(candidates) {
+            if (!candidates.length) return null;
+            let total = 0;
+            const weights = candidates.map((entry) => {
+                const item = entry.item || {};
+                const timeWeight = typeof item.avgTimeMs === 'number' ? item.avgTimeMs / 60000 : 0;
+                const weight = 1 + (item.lapses || 0) + (item.totalWrong || 0) + timeWeight;
+                total += weight;
+                return { entry, weight };
+            });
+            let roll = Math.random() * total;
+            for (const { entry, weight } of weights) {
+                if (roll <= weight) return entry;
+                roll -= weight;
+            }
+            return weights[weights.length - 1].entry;
+        }
+
+        function selectNextDrawTarget(filtered, nowMs, currentAbbr3) {
+            const progress = loadDrawProgress();
+            const items = filtered.map((aa) => {
+                const item = getDrawProgressItem(progress, aa.abbr3);
+                const dueAt = typeof item.dueAtMs === 'number' ? item.dueAtMs : 0;
+                return { aa, item, dueAt };
+            });
+            const dueItems = items.filter((entry) => (entry.dueAt || 0) <= nowMs);
+            let candidatePool = [];
+            let selected = null;
+
+            if (dueItems.length) {
+                const sortedDue = [...dueItems].sort((a, b) => (a.dueAt || 0) - (b.dueAt || 0));
+                candidatePool = sortedDue;
+                const top = sortedDue.slice(0, Math.min(5, sortedDue.length));
+                selected = weightedPick(top) || sortedDue[0];
+            } else {
+                const sortedItems = [...items].sort((a, b) => (a.dueAt || 0) - (b.dueAt || 0));
+                candidatePool = sortedItems;
+                selected = sortedItems[0];
+            }
+
+            if (selected && currentAbbr3 && selected.aa.abbr3 === currentAbbr3 && candidatePool.length > 1) {
+                const fallback = candidatePool.find((entry) => entry.aa.abbr3 !== currentAbbr3);
+                if (fallback) selected = fallback;
+            }
+            return selected;
+        }
+
         function pickNewTarget() {
             const filtered = getFilteredAminoAcids();
             if (filtered.length === 0) {
@@ -704,6 +886,7 @@
                 drawAttemptState = 'unanswered';
                 setDrawStatus('neutral');
                 updateDrawAttemptSummary();
+                drawPromptStartMs = Date.now();
                 document.getElementById('draw-target-name').textContent = 'No Match';
                 document.getElementById('draw-feedback').textContent = 'No amino acids match this filter.';
                 document.getElementById('draw-user-smiles').textContent = '-';
@@ -714,7 +897,9 @@
                 lastUserSmiles = '';
                 return;
             }
-            drawTarget = filtered[Math.floor(Math.random() * filtered.length)];
+            const nowMs = Date.now();
+            const selection = selectNextDrawTarget(filtered, nowMs, drawTarget?.abbr3 || null);
+            drawTarget = selection ? selection.aa : filtered[Math.floor(Math.random() * filtered.length)];
             drawTargetSmiles = formatDrawSmiles(drawTarget.smiles);
             document.getElementById('draw-target-name').textContent = drawTarget.name;
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
@@ -727,6 +912,7 @@
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
             document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
             lastUserSmiles = '';
+            drawPromptStartMs = Date.now();
             if (jsmeApplet) {
                 jsmeApplet.reset();
                 applyTemplateStructure();
@@ -883,7 +1069,8 @@
             } else {
                 drawAttemptState = 'incorrect';
             }
-            recordDrawProgress(drawTarget, isCorrect, userSmiles);
+            const elapsedMs = Date.now() - drawPromptStartMs;
+            recordDrawProgress(drawTarget, isCorrect, userSmiles, elapsedMs);
             setDrawStatus(statusState);
             feedback.textContent = resultText;
             feedback.className = resultClass;
