@@ -104,7 +104,7 @@
                         <p class="text-xs uppercase tracking-widest text-slate-400">Your SMILES</p>
                         <p id="draw-user-smiles" class="text-xs font-mono text-slate-600 dark:text-slate-300 break-all">-</p>
                     </div>
-                    <div class="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                    <div id="draw-expected-smiles-wrapper" class="hidden bg-slate-50 dark:bg-slate-800/40 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
                         <p class="text-xs uppercase tracking-widest text-slate-400">Expected SMILES</p>
                         <textarea id="draw-expected-smiles" rows="3" class="mt-2 w-full text-xs font-mono text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-1 min-h-[60px] resize-none" spellcheck="false" placeholder="-"></textarea>
                     </div>
@@ -201,6 +201,16 @@
             const input = document.getElementById('draw-expected-smiles');
             if (!input) return;
             input.value = value || '';
+        }
+
+        function hideExpectedSmiles() {
+            const wrapper = document.getElementById('draw-expected-smiles-wrapper');
+            if (wrapper) wrapper.classList.add('hidden');
+        }
+
+        function showExpectedSmiles() {
+            const wrapper = document.getElementById('draw-expected-smiles-wrapper');
+            if (wrapper) wrapper.classList.remove('hidden');
         }
 
         function getExpectedSmiles() {
@@ -438,6 +448,7 @@
                 document.getElementById('draw-feedback').textContent = 'No amino acids match this filter.';
                 document.getElementById('draw-user-smiles').textContent = '-';
                 setExpectedSmiles('');
+                hideExpectedSmiles();
                 document.getElementById('draw-expected-wrapper').classList.add('hidden');
                 document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
                 lastUserSmiles = '';
@@ -448,6 +459,7 @@
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
             document.getElementById('draw-user-smiles').textContent = '-';
             setExpectedSmiles(drawTarget.smiles);
+            hideExpectedSmiles();
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
             document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
             lastUserSmiles = '';
@@ -530,6 +542,7 @@
 
             const expectedMol = parseExpectedMolecule(expectedSmiles);
             setExpectedSmiles(expectedSmiles);
+            showExpectedSmiles();
             revealExpectedStructure();
             const userSmiles = userResult.display || getDisplaySmiles(userResult.mol, '');
             revealUserStructure(userSmiles);
@@ -590,6 +603,7 @@
             document.getElementById('draw-user-smiles').textContent = '-';
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
             document.getElementById('draw-feedback').className = 'text-lg font-bold text-slate-600';
+            hideExpectedSmiles();
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
             document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
             lastUserSmiles = '';
