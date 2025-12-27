@@ -335,9 +335,9 @@
                 feedback.className = 'text-lg font-bold text-amber-600';
                 setDrawStatus('warning');
             } else if (drawAttemptState === 'incorrect') {
-                feedback.textContent = 'Already marked incorrect. Click Next for a new prompt.';
-                feedback.className = 'text-lg font-bold text-red-600';
-                setDrawStatus('incorrect');
+                feedback.textContent = 'Correct! Click Next for a new prompt.';
+                feedback.className = 'text-lg font-bold text-slate-500';
+                setDrawStatus('neutral');
             }
         }
 
