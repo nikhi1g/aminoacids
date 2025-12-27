@@ -125,7 +125,14 @@
                     </div>
                 </div>
 
-                <div id="draw-feedback" class="text-lg font-bold text-slate-600">Draw the structure, then check your answer.</div>
+                <div class="flex items-center gap-3">
+                    <div id="draw-status-badge" class="h-9 w-9 rounded-full border border-slate-200 dark:border-slate-700 text-slate-400 flex items-center justify-center transition-colors">
+                        <svg id="draw-status-icon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path id="draw-status-path" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div id="draw-feedback" class="text-lg font-bold text-slate-600">Draw the structure, then check your answer.</div>
+                </div>
             </div>
         </div>
 
@@ -260,6 +267,27 @@
                 progress.items[abbr3] = { ...DRAW_DEFAULT_ITEM, ...progress.items[abbr3] };
             }
             return progress.items[abbr3];
+        }
+
+        function setDrawStatus(state) {
+            const badge = document.getElementById('draw-status-badge');
+            const path = document.getElementById('draw-status-path');
+            if (!badge || !path) return;
+            const base = 'h-9 w-9 rounded-full border flex items-center justify-center transition-colors';
+            let borderClass = 'border-slate-200 dark:border-slate-700 text-slate-400';
+            let iconPath = 'M5 13l4 4L19 7';
+            if (state === 'correct') {
+                borderClass = 'border-emerald-500 dark:border-emerald-400 text-emerald-600';
+                iconPath = 'M5 13l4 4L19 7';
+            } else if (state === 'incorrect') {
+                borderClass = 'border-red-300 dark:border-red-500/50 text-red-500';
+                iconPath = 'M6 6l12 12M18 6l-12 12';
+            } else if (state === 'warning') {
+                borderClass = 'border-amber-400 dark:border-amber-400 text-amber-500';
+                iconPath = 'M12 7v6M12 17h.01';
+            }
+            badge.className = `${base} ${borderClass}`;
+            path.setAttribute('d', iconPath);
         }
 
         function formatDrawSmiles(smiles) {
@@ -621,6 +649,7 @@
             if (filtered.length === 0) {
                 drawTarget = null;
                 drawTargetSmiles = '';
+                setDrawStatus('neutral');
                 document.getElementById('draw-target-name').textContent = 'No Match';
                 document.getElementById('draw-feedback').textContent = 'No amino acids match this filter.';
                 document.getElementById('draw-user-smiles').textContent = '-';
@@ -636,6 +665,7 @@
             document.getElementById('draw-target-name').textContent = drawTarget.name;
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
             document.getElementById('draw-user-smiles').textContent = '-';
+            setDrawStatus('neutral');
             setExpectedSmiles(drawTargetSmiles);
             hideExpectedSmiles();
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
@@ -712,6 +742,7 @@
                     feedback.textContent = 'Could not read your drawing. Try again.';
                     feedback.className = 'text-lg font-bold text-red-600';
                 }
+                setDrawStatus('neutral');
                 document.getElementById('draw-expected-wrapper').classList.add('hidden');
                 document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
                 lastUserSmiles = '';
@@ -752,33 +783,40 @@
 
             let resultText = `Not quite. Compare your structure with the expected one.${detectedSuffix}`;
             let resultClass = 'text-lg font-bold text-red-600';
+            let statusState = 'incorrect';
             let isCorrect = false;
 
             if (exactMatch) {
                 resultText = `Correct structure!${successSuffix}`;
                 resultClass = 'text-lg font-bold text-emerald-600';
+                statusState = 'correct';
                 isCorrect = true;
             } else if (connectivityMatches) {
                 if (stereoMismatch) {
                     resultText = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
                     resultClass = 'text-lg font-bold text-amber-600';
+                    statusState = 'warning';
                 } else {
                     resultText = `Correct structure!${successSuffix}`;
                     resultClass = 'text-lg font-bold text-emerald-600';
+                    statusState = 'correct';
                     isCorrect = true;
                 }
             } else if (recognition?.found && namesMatch) {
                 if (recognition.stereoOk === false) {
                     resultText = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
                     resultClass = 'text-lg font-bold text-amber-600';
+                    statusState = 'warning';
                 } else {
                     resultText = `Correct structure!${successSuffix}`;
                     resultClass = 'text-lg font-bold text-emerald-600';
+                    statusState = 'correct';
                     isCorrect = true;
                 }
             }
 
             recordDrawProgress(drawTarget, isCorrect, userSmiles);
+            setDrawStatus(statusState);
             feedback.textContent = resultText;
             feedback.className = resultClass;
         }
@@ -791,6 +829,7 @@
             document.getElementById('draw-user-smiles').textContent = '-';
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
             document.getElementById('draw-feedback').className = 'text-lg font-bold text-slate-600';
+            setDrawStatus('neutral');
             hideExpectedSmiles();
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
             document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
@@ -810,6 +849,7 @@
             document.getElementById('check-answer-btn').addEventListener('click', checkAnswer);
             document.getElementById('new-target-btn').addEventListener('click', pickNewTarget);
             document.getElementById('clear-drawing-btn').addEventListener('click', clearDrawing);
+            setDrawStatus('neutral');
             renderDrawProgress();
         });
 
