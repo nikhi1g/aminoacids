@@ -146,12 +146,70 @@ function updateFilterUI() {
             }
         }
     });
+
+    document.querySelectorAll('.filter-select').forEach(select => {
+        if (select.value !== currentFilter) {
+            select.value = currentFilter;
+        }
+    });
 }
 
 function getFilteredAminoAcids() {
     return currentFilter === 'all' 
         ? aminoAcids 
         : aminoAcids.filter(aa => aa.tags && aa.tags.includes(currentFilter));
+}
+
+function setHeaderHidden(hidden) {
+    const header = document.querySelector('header');
+    if (!header) return;
+    header.classList.toggle('header-hidden-mobile', hidden);
+}
+
+function initMobileHeaderAutoHide() {
+    const header = document.querySelector('header');
+    if (!header) return;
+    const mobileQuery = window.matchMedia('(max-width: 640px)');
+    let lastScrollY = window.scrollY;
+
+    const onScroll = () => {
+        if (!mobileQuery.matches) {
+            setHeaderHidden(false);
+            lastScrollY = window.scrollY;
+            return;
+        }
+        const current = window.scrollY;
+        if (current <= 0) {
+            setHeaderHidden(false);
+            lastScrollY = current;
+            return;
+        }
+        if (current > lastScrollY + 6) {
+            setHeaderHidden(true);
+        } else if (current < lastScrollY - 6) {
+            setHeaderHidden(false);
+        }
+        lastScrollY = current;
+    };
+
+    const onTopTap = (event) => {
+        if (!mobileQuery.matches) return;
+        const touch = event.touches && event.touches[0];
+        const y = touch ? touch.clientY : event.clientY;
+        if (y <= 24) {
+            setHeaderHidden(false);
+        }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', () => {
+        if (!mobileQuery.matches) {
+            setHeaderHidden(false);
+        }
+        lastScrollY = window.scrollY;
+    });
+    document.addEventListener('touchstart', onTopTap, { passive: true });
+    document.addEventListener('pointerdown', onTopTap, { passive: true });
 }
 
 async function fetchLocalCommitMeta() {
@@ -451,4 +509,5 @@ window.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
     updateFilterUI();
     initCommitWatcher();
+    initMobileHeaderAutoHide();
 });

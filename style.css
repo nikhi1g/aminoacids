@@ -63,6 +63,10 @@ canvas {
     color: #3b82f6;
 }
 
+.header-hidden-mobile {
+    transform: translateY(-100%);
+}
+
 .smiles-input {
     flex-grow: 1;
     background: transparent;
