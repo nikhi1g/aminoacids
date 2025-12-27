@@ -154,6 +154,74 @@ function getFilteredAminoAcids() {
         : aminoAcids.filter(aa => aa.tags && aa.tags.includes(currentFilter));
 }
 
+let headerPatternTimer = null;
+
+function buildHeaderPattern() {
+    const header = document.querySelector('header');
+    const pattern = document.getElementById('header-pattern');
+    if (!header || !pattern || !Array.isArray(aminoAcids)) return;
+    const SmiDrawer = window.SmiDrawer || (window.SmilesDrawer && SmilesDrawer.SmiDrawer);
+    if (!SmiDrawer) return;
+
+    const width = header.offsetWidth || 0;
+    const height = header.offsetHeight || 0;
+    const columns = Math.max(6, Math.floor(width / 140));
+    const rows = Math.max(1, Math.floor(height / 90));
+    const count = Math.max(columns * rows, 6);
+
+    pattern.innerHTML = '';
+    pattern.style.display = 'grid';
+    pattern.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
+    pattern.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+    pattern.style.alignItems = 'center';
+    pattern.style.justifyItems = 'center';
+    pattern.style.gap = '12px';
+    pattern.style.padding = '12px 24px';
+
+    const drawer = new SmiDrawer({
+        ...mainStrategy,
+        width: 120,
+        height: 80,
+        bondThickness: 1.1,
+        bondLength: 12,
+        padding: 10,
+        explicitHydrogens: false,
+        terminalCarbons: false,
+        compactDrawing: true
+    });
+
+    for (let i = 0; i < count; i += 1) {
+        const canvasId = `header-pattern-canvas-${i}`;
+        const cell = document.createElement('div');
+        cell.className = 'w-full h-full flex items-center justify-center';
+        const canvas = document.createElement('canvas');
+        canvas.id = canvasId;
+        canvas.width = 120;
+        canvas.height = 80;
+        canvas.className = 'w-full h-full opacity-70';
+        cell.appendChild(canvas);
+        pattern.appendChild(cell);
+
+        const aa = aminoAcids[Math.floor(Math.random() * aminoAcids.length)];
+        try {
+            drawer.draw(aa.smiles, `#${canvasId}`, isDarkMode ? 'dark' : 'light');
+        } catch (err) {
+            // ignore draw failures
+        }
+    }
+}
+
+function initHeaderPattern() {
+    buildHeaderPattern();
+    window.addEventListener('resize', () => {
+        if (headerPatternTimer) {
+            clearTimeout(headerPatternTimer);
+        }
+        headerPatternTimer = setTimeout(buildHeaderPattern, 200);
+    });
+    window.addEventListener('themeChanged', buildHeaderPattern);
+}
+
 async function fetchLocalCommitMeta() {
     try {
         const response = await fetch(`commit.json?t=${Date.now()}`, { cache: 'no-store' });
@@ -451,4 +519,5 @@ window.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
     updateFilterUI();
     initCommitWatcher();
+    initHeaderPattern();
 });
