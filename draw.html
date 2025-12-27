@@ -110,10 +110,18 @@
                     </div>
                 </div>
 
-                <div id="draw-expected-wrapper" class="hidden bg-slate-50/60 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800 p-4">
-                    <p class="text-xs uppercase tracking-widest text-slate-400 mb-2">Expected Structure</p>
-                    <div class="flex items-center justify-center min-h-[220px]">
-                        <canvas id="draw-expected-canvas" class="w-full h-full"></canvas>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div id="draw-user-structure-wrapper" class="hidden bg-slate-50/60 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+                        <p class="text-xs uppercase tracking-widest text-slate-400 mb-2">Your Structure</p>
+                        <div class="flex items-center justify-center min-h-[220px]">
+                            <canvas id="draw-user-canvas" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                    <div id="draw-expected-wrapper" class="hidden bg-slate-50/60 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+                        <p class="text-xs uppercase tracking-widest text-slate-400 mb-2">Expected Structure</p>
+                        <div class="flex items-center justify-center min-h-[220px]">
+                            <canvas id="draw-expected-canvas" class="w-full h-full"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -134,6 +142,7 @@
         let chemistryReady = false;
         let aminoAcidIndex = null;
         let aminoAcidIndexNoStereo = null;
+        let lastUserSmiles = '';
         const DRAW_TEMPLATE_SMILES = 'NCC(=O)O';
 
         function isOCLReady() {
@@ -415,6 +424,8 @@
                 document.getElementById('draw-user-smiles').textContent = '-';
                 document.getElementById('draw-expected-smiles').textContent = '-';
                 document.getElementById('draw-expected-wrapper').classList.add('hidden');
+                document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
+                lastUserSmiles = '';
                 return;
             }
             drawTarget = filtered[Math.floor(Math.random() * filtered.length)];
@@ -423,6 +434,8 @@
             document.getElementById('draw-user-smiles').textContent = '-';
             document.getElementById('draw-expected-smiles').textContent = '-';
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
+            document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
+            lastUserSmiles = '';
             if (jsmeApplet) {
                 jsmeApplet.reset();
                 applyTemplateStructure();
@@ -436,12 +449,33 @@
             smilesDrawer.draw(drawTarget.smiles, '#draw-expected-canvas', isDarkMode ? 'dark' : 'light');
         }
 
+        function updateUserStructure(smiles) {
+            if (!smiles) return;
+            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+            const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: 600, height: 420, bondThickness: 2.6 });
+            smilesDrawer.draw(smiles, '#draw-user-canvas', isDarkMode ? 'dark' : 'light');
+        }
+
         function revealExpectedStructure() {
             const wrapper = document.getElementById('draw-expected-wrapper');
             if (!wrapper) return;
             wrapper.classList.remove('hidden');
             requestAnimationFrame(() => {
                 updateExpectedStructure();
+            });
+        }
+
+        function revealUserStructure(smiles) {
+            const wrapper = document.getElementById('draw-user-structure-wrapper');
+            if (!wrapper) return;
+            if (!smiles) {
+                wrapper.classList.add('hidden');
+                return;
+            }
+            lastUserSmiles = smiles;
+            wrapper.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                updateUserStructure(smiles);
             });
         }
 
@@ -473,12 +507,16 @@
                     feedback.className = 'text-lg font-bold text-red-600';
                 }
                 document.getElementById('draw-expected-wrapper').classList.add('hidden');
+                document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
+                lastUserSmiles = '';
                 return;
             }
 
             const expectedMol = parseExpectedMolecule(expectedSmiles);
             document.getElementById('draw-expected-smiles').textContent = expectedSmiles;
             revealExpectedStructure();
+            const userSmiles = userResult.display || getDisplaySmiles(userResult.mol, '');
+            revealUserStructure(userSmiles);
 
             if (!expectedMol) {
                 feedback.textContent = 'Error loading expected structure.';
@@ -537,6 +575,8 @@
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
             document.getElementById('draw-feedback').className = 'text-lg font-bold text-slate-600';
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
+            document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
+            lastUserSmiles = '';
         }
 
         window.addEventListener('load', () => {
@@ -557,6 +597,9 @@
         window.addEventListener('themeChanged', () => {
             if (!document.getElementById('draw-expected-wrapper').classList.contains('hidden')) {
                 updateExpectedStructure();
+            }
+            if (lastUserSmiles && !document.getElementById('draw-user-structure-wrapper').classList.contains('hidden')) {
+                updateUserStructure(lastUserSmiles);
             }
         });
 
