@@ -188,6 +188,7 @@
         let jsmeApplet = null;
         let drawTarget = null;
         let drawTargetSmiles = '';
+        let drawAttemptState = 'unanswered';
         let chemistryReady = false;
         let aminoAcidIndex = null;
         let aminoAcidIndexNoStereo = null;
@@ -320,6 +321,24 @@
             }
             badge.className = `${base} ${borderClass}`;
             path.setAttribute('d', iconPath);
+        }
+
+        function applyLockedAttemptMessage() {
+            const feedback = document.getElementById('draw-feedback');
+            if (!feedback) return;
+            if (drawAttemptState === 'correct') {
+                feedback.textContent = 'Already marked correct. Click Next for a new prompt.';
+                feedback.className = 'text-lg font-bold text-emerald-600';
+                setDrawStatus('correct');
+            } else if (drawAttemptState === 'warning') {
+                feedback.textContent = 'Already marked with a stereochemistry warning. Click Next for a new prompt.';
+                feedback.className = 'text-lg font-bold text-amber-600';
+                setDrawStatus('warning');
+            } else if (drawAttemptState === 'incorrect') {
+                feedback.textContent = 'Already marked incorrect. Click Next for a new prompt.';
+                feedback.className = 'text-lg font-bold text-red-600';
+                setDrawStatus('incorrect');
+            }
         }
 
         function formatDrawSmiles(smiles) {
@@ -682,6 +701,7 @@
             if (filtered.length === 0) {
                 drawTarget = null;
                 drawTargetSmiles = '';
+                drawAttemptState = 'unanswered';
                 setDrawStatus('neutral');
                 updateDrawAttemptSummary();
                 document.getElementById('draw-target-name').textContent = 'No Match';
@@ -699,6 +719,7 @@
             document.getElementById('draw-target-name').textContent = drawTarget.name;
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
             document.getElementById('draw-user-smiles').textContent = '-';
+            drawAttemptState = 'unanswered';
             setDrawStatus('neutral');
             updateDrawAttemptSummary();
             setExpectedSmiles(drawTargetSmiles);
@@ -797,6 +818,11 @@
                 return;
             }
 
+            if (drawAttemptState !== 'unanswered') {
+                applyLockedAttemptMessage();
+                return;
+            }
+
             const recognition = (window.AminoAcidRecognizer && typeof AminoAcidRecognizer.fromJSME === 'function')
                 ? AminoAcidRecognizer.fromJSME(jsmeApplet)
                 : null;
@@ -850,6 +876,13 @@
                 }
             }
 
+            if (statusState === 'correct') {
+                drawAttemptState = 'correct';
+            } else if (statusState === 'warning') {
+                drawAttemptState = 'warning';
+            } else {
+                drawAttemptState = 'incorrect';
+            }
             recordDrawProgress(drawTarget, isCorrect, userSmiles);
             setDrawStatus(statusState);
             feedback.textContent = resultText;
@@ -864,7 +897,11 @@
             document.getElementById('draw-user-smiles').textContent = '-';
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
             document.getElementById('draw-feedback').className = 'text-lg font-bold text-slate-600';
-            setDrawStatus('neutral');
+            if (drawAttemptState === 'unanswered') {
+                setDrawStatus('neutral');
+            } else {
+                applyLockedAttemptMessage();
+            }
             hideExpectedSmiles();
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
             document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
