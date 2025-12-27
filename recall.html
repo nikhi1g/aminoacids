@@ -45,7 +45,6 @@
                             <a href="learn.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Learn</a>
                             <a href="recall.html" class="nav-link active py-5 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Recall</a>
                             <a href="draw.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Draw</a>
-                            <a href="progress.html" class="nav-link py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Progress</a>
                         </nav>
 
                         <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0" title="Toggle Dark/Light Mode">
@@ -74,7 +73,8 @@
         </div>
     </header>
 
-    <main class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow flex flex-col justify-center">
+    <main class="flex-grow w-full">
+        <section class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col justify-center">
         <!-- Score Board -->
         <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
             <div class="flex items-center gap-2">
@@ -122,6 +122,55 @@
                 </div>
             </div>
         </div>
+        </section>
+
+        <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 w-full">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                    <p class="text-xs uppercase tracking-widest text-slate-400">Mastered</p>
+                    <p id="progress-mastered" class="text-4xl font-black text-blue-600">0</p>
+                    <p id="progress-total" class="text-sm text-slate-500">of 20 amino acids</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                    <p class="text-xs uppercase tracking-widest text-slate-400">Accuracy</p>
+                    <p id="progress-accuracy" class="text-4xl font-black text-emerald-600">0%</p>
+                    <p id="progress-answers" class="text-sm text-slate-500">0 correct / 0 wrong</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                    <p class="text-xs uppercase tracking-widest text-slate-400">Current Filter</p>
+                    <p id="progress-filter" class="text-2xl font-bold text-slate-700 dark:text-slate-200 capitalize">all</p>
+                    <p class="text-sm text-slate-500">Progress shown for all amino acids</p>
+                </div>
+            </div>
+            <div class="flex justify-end mb-8">
+                <button id="clear-progress-btn" class="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors font-semibold">
+                    Clear Progress
+                </button>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+                    <h2 class="text-lg font-bold">Recall Progress</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-slate-50 dark:bg-slate-900/60 text-slate-500">
+                            <tr>
+                                <th class="text-left font-semibold px-6 py-3">Amino Acid</th>
+                                <th class="text-left font-semibold px-6 py-3">Abbr</th>
+                                <th class="text-left font-semibold px-6 py-3">Streak</th>
+                                <th class="text-left font-semibold px-6 py-3">Correct</th>
+                                <th class="text-left font-semibold px-6 py-3">Wrong</th>
+                                <th class="text-left font-semibold px-6 py-3">Mastered</th>
+                            </tr>
+                        </thead>
+                        <tbody id="progress-table" class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer class="mt-12 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
@@ -138,6 +187,7 @@
     <script>
         const MASTERY_STREAK = 3;
         const ACTIVE_SET_SIZE = 7;
+        const CLEAR_STORAGE_KEY = 'aa_progress_v1';
 
         const recallState = {
             streak: 0,
@@ -147,6 +197,60 @@
             remainingPool: [],
             progress: loadProgress()
         };
+
+        function formatAccuracy(correct, wrong) {
+            const total = correct + wrong;
+            if (total === 0) return '0%';
+            return Math.round((correct / total) * 100) + '%';
+        }
+
+        function renderProgress() {
+            const progress = loadProgress();
+            const rows = aminoAcids.map((aa) => {
+                const item = getProgressItem(progress, aa.abbr3);
+                return { aa, item };
+            });
+
+            const masteredCount = rows.filter(row => row.item.mastered).length;
+            const totalCorrect = rows.reduce((sum, row) => sum + row.item.totalCorrect, 0);
+            const totalWrong = rows.reduce((sum, row) => sum + row.item.totalWrong, 0);
+
+            document.getElementById('progress-mastered').textContent = masteredCount;
+            document.getElementById('progress-total').textContent = `of ${rows.length} amino acids`;
+            document.getElementById('progress-accuracy').textContent = formatAccuracy(totalCorrect, totalWrong);
+            document.getElementById('progress-answers').textContent = `${totalCorrect} correct / ${totalWrong} wrong`;
+            document.getElementById('progress-filter').textContent = currentFilter;
+
+            const tbody = document.getElementById('progress-table');
+            tbody.innerHTML = rows.map(({ aa, item }) => {
+                const masteredLabel = item.mastered ? 'Yes' : `No (need ${Math.max(0, MASTERY_STREAK - item.correctStreak)})`;
+                const masteredClass = item.mastered ? 'text-emerald-600' : 'text-slate-500';
+                return `
+                    <tr>
+                        <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100">${aa.name}</td>
+                        <td class="px-6 py-4 text-slate-500">${aa.abbr3}</td>
+                        <td class="px-6 py-4 text-slate-500">${item.correctStreak}</td>
+                        <td class="px-6 py-4 text-slate-500">${item.totalCorrect}</td>
+                        <td class="px-6 py-4 text-slate-500">${item.totalWrong}</td>
+                        <td class="px-6 py-4 ${masteredClass}">${masteredLabel}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openClearModal() {
+            document.getElementById('clear-modal').classList.remove('hidden');
+        }
+
+        function closeClearModal() {
+            document.getElementById('clear-modal').classList.add('hidden');
+        }
+
+        function clearProgress() {
+            localStorage.removeItem(CLEAR_STORAGE_KEY);
+            renderProgress();
+            closeClearModal();
+        }
 
         function shuffleArray(items) {
             const copy = [...items];
@@ -335,6 +439,7 @@
             }
 
             saveProgress(recallState.progress);
+            renderProgress();
             recallState.isWaitingForNext = true;
         }
 
@@ -347,6 +452,11 @@
         window.addEventListener('load', () => {
             buildRecallPools();
             nextRecallQuestion();
+            renderProgress();
+            document.getElementById('clear-progress-btn').addEventListener('click', openClearModal);
+            document.getElementById('clear-cancel').addEventListener('click', closeClearModal);
+            document.getElementById('clear-confirm').addEventListener('click', clearProgress);
+            document.getElementById('clear-backdrop').addEventListener('click', closeClearModal);
         });
 
         window.addEventListener('themeChanged', () => {
@@ -367,7 +477,28 @@
         window.addEventListener('filterChanged', () => {
             buildRecallPools();
             nextRecallQuestion();
+            renderProgress();
+        });
+
+        window.addEventListener('storage', () => {
+            renderProgress();
         });
     </script>
+
+    <div id="clear-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div id="clear-backdrop" class="absolute inset-0 bg-slate-900/60"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 w-full max-w-md mx-4">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">Reset progress?</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">This clears all recall progress stored on this device. This cannot be undone.</p>
+            <div class="mt-6 flex justify-end gap-3">
+                <button id="clear-cancel" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors font-semibold">
+                    Cancel
+                </button>
+                <button id="clear-confirm" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors">
+                    Yes, clear
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
