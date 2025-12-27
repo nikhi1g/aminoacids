@@ -96,7 +96,17 @@
                 <div>
                     <p class="text-xs uppercase tracking-widest text-slate-400">Prompt</p>
                     <h3 id="draw-target-name" class="text-3xl font-black text-slate-800 dark:text-white">Loading...</h3>
-                    <p class="text-sm text-slate-500">Draw the amino acid above using the editor.</p>
+                    <div id="draw-attempts" class="text-sm text-slate-500 flex flex-wrap items-center gap-3">
+                        <span class="text-slate-500">Seen <span id="draw-attempts-total">0</span></span>
+                        <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                            <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+                            <span id="draw-attempts-correct">0</span> correct
+                        </span>
+                        <span class="inline-flex items-center gap-1 text-red-500 font-semibold">
+                            <span class="inline-block h-2 w-2 rounded-full bg-red-500"></span>
+                            <span id="draw-attempts-wrong">0</span> incorrect
+                        </span>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -269,6 +279,25 @@
             return progress.items[abbr3];
         }
 
+        function updateDrawAttemptSummary() {
+            const totalEl = document.getElementById('draw-attempts-total');
+            const correctEl = document.getElementById('draw-attempts-correct');
+            const wrongEl = document.getElementById('draw-attempts-wrong');
+            if (!totalEl || !correctEl || !wrongEl) return;
+            if (!drawTarget || !drawTarget.abbr3) {
+                totalEl.textContent = '0';
+                correctEl.textContent = '0';
+                wrongEl.textContent = '0';
+                return;
+            }
+            const progress = loadDrawProgress();
+            const item = getDrawProgressItem(progress, drawTarget.abbr3);
+            const total = (item.totalCorrect || 0) + (item.totalWrong || 0);
+            totalEl.textContent = String(total);
+            correctEl.textContent = String(item.totalCorrect || 0);
+            wrongEl.textContent = String(item.totalWrong || 0);
+        }
+
         function setDrawStatus(state) {
             const badge = document.getElementById('draw-status-badge');
             const path = document.getElementById('draw-status-path');
@@ -357,6 +386,7 @@
             }
             saveDrawProgress(progress);
             renderDrawProgress();
+            updateDrawAttemptSummary();
         }
 
         function renderDrawProgress() {
@@ -650,6 +680,7 @@
                 drawTarget = null;
                 drawTargetSmiles = '';
                 setDrawStatus('neutral');
+                updateDrawAttemptSummary();
                 document.getElementById('draw-target-name').textContent = 'No Match';
                 document.getElementById('draw-feedback').textContent = 'No amino acids match this filter.';
                 document.getElementById('draw-user-smiles').textContent = '-';
@@ -666,6 +697,7 @@
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
             document.getElementById('draw-user-smiles').textContent = '-';
             setDrawStatus('neutral');
+            updateDrawAttemptSummary();
             setExpectedSmiles(drawTargetSmiles);
             hideExpectedSmiles();
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
@@ -850,6 +882,7 @@
             document.getElementById('new-target-btn').addEventListener('click', pickNewTarget);
             document.getElementById('clear-drawing-btn').addEventListener('click', clearDrawing);
             setDrawStatus('neutral');
+            updateDrawAttemptSummary();
             renderDrawProgress();
         });
 
@@ -870,6 +903,7 @@
         window.addEventListener('storage', (event) => {
             if (event.key === DRAW_PROGRESS_STORAGE_KEY) {
                 renderDrawProgress();
+                updateDrawAttemptSummary();
             }
         });
     </script>
