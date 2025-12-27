@@ -106,7 +106,7 @@
                     </div>
                     <div class="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
                         <p class="text-xs uppercase tracking-widest text-slate-400">Expected SMILES</p>
-                        <p id="draw-expected-smiles" class="text-xs font-mono text-slate-600 dark:text-slate-300 break-all">-</p>
+                        <textarea id="draw-expected-smiles" rows="3" class="mt-2 w-full text-xs font-mono text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-1 min-h-[60px] resize-none" spellcheck="false" placeholder="-"></textarea>
                     </div>
                 </div>
 
@@ -195,6 +195,21 @@
             buildAminoAcidIndex();
             setChemistryReady(true);
             return true;
+        }
+
+        function setExpectedSmiles(value) {
+            const input = document.getElementById('draw-expected-smiles');
+            if (!input) return;
+            input.value = value || '';
+        }
+
+        function getExpectedSmiles() {
+            const input = document.getElementById('draw-expected-smiles');
+            if (input && typeof input.value === 'string') {
+                const value = input.value.trim();
+                if (value) return value;
+            }
+            return drawTarget?.smiles || '';
         }
 
         function jsmeOnLoad() {
@@ -422,7 +437,7 @@
                 document.getElementById('draw-target-name').textContent = 'No Match';
                 document.getElementById('draw-feedback').textContent = 'No amino acids match this filter.';
                 document.getElementById('draw-user-smiles').textContent = '-';
-                document.getElementById('draw-expected-smiles').textContent = '-';
+                setExpectedSmiles('');
                 document.getElementById('draw-expected-wrapper').classList.add('hidden');
                 document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
                 lastUserSmiles = '';
@@ -432,7 +447,7 @@
             document.getElementById('draw-target-name').textContent = drawTarget.name;
             document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
             document.getElementById('draw-user-smiles').textContent = '-';
-            document.getElementById('draw-expected-smiles').textContent = '-';
+            setExpectedSmiles(drawTarget.smiles);
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
             document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
             lastUserSmiles = '';
@@ -443,10 +458,11 @@
         }
 
         function updateExpectedStructure() {
-            if (!drawTarget) return;
+            const expectedSmiles = getExpectedSmiles();
+            if (!expectedSmiles) return;
             const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
             const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: 600, height: 420, bondThickness: 2.6 });
-            smilesDrawer.draw(drawTarget.smiles, '#draw-expected-canvas', isDarkMode ? 'dark' : 'light');
+            smilesDrawer.draw(expectedSmiles, '#draw-expected-canvas', isDarkMode ? 'dark' : 'light');
         }
 
         function updateUserStructure(smiles) {
@@ -481,7 +497,7 @@
 
         function checkAnswer() {
             if (!drawTarget || !jsmeApplet) return;
-            const expectedSmiles = drawTarget.smiles;
+            const expectedSmiles = getExpectedSmiles();
             const feedback = document.getElementById('draw-feedback');
             if (!ensureChemistryReady()) {
                 feedback.textContent = 'Chemistry engine is still loading. Try again in a moment.';
@@ -513,7 +529,7 @@
             }
 
             const expectedMol = parseExpectedMolecule(expectedSmiles);
-            document.getElementById('draw-expected-smiles').textContent = expectedSmiles;
+            setExpectedSmiles(expectedSmiles);
             revealExpectedStructure();
             const userSmiles = userResult.display || getDisplaySmiles(userResult.mol, '');
             revealUserStructure(userSmiles);
