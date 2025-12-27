@@ -92,6 +92,7 @@
                 <div id="jsme-container" class="jsme-container"></div>
                 <div class="mt-4 flex items-center gap-3">
                     <button id="check-answer-btn" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">Check Answer</button>
+                    <button id="away-btn" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 font-semibold">Away</button>
                     <button id="clear-drawing-btn" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 font-semibold">Clear</button>
                 </div>
             </div>
@@ -190,6 +191,9 @@
         let drawTargetSmiles = '';
         let drawAttemptState = 'unanswered';
         let drawPromptStartMs = Date.now();
+        let drawTimerPaused = false;
+        let drawPauseStartMs = null;
+        let drawPausedTotalMs = 0;
         let chemistryReady = false;
         let aminoAcidIndex = null;
         let aminoAcidIndexNoStereo = null;
@@ -324,6 +328,61 @@
             totalEl.textContent = String(total);
             correctEl.textContent = String(item.totalCorrect || 0);
             wrongEl.textContent = String(item.totalWrong || 0);
+        }
+
+        function updateAwayButton() {
+            const btn = document.getElementById('away-btn');
+            if (!btn) return;
+            if (drawTimerPaused) {
+                btn.textContent = 'Resume';
+                btn.classList.add('bg-amber-50', 'text-amber-700', 'border-amber-200');
+                btn.classList.remove('text-slate-600', 'border-slate-200', 'hover:bg-slate-50');
+            } else {
+                btn.textContent = 'Away';
+                btn.classList.remove('bg-amber-50', 'text-amber-700', 'border-amber-200');
+                btn.classList.add('text-slate-600', 'border-slate-200', 'hover:bg-slate-50');
+            }
+        }
+
+        function resetDrawTimer() {
+            drawPromptStartMs = Date.now();
+            drawPausedTotalMs = 0;
+            drawPauseStartMs = null;
+            drawTimerPaused = false;
+            updateAwayButton();
+        }
+
+        function pauseDrawTimer() {
+            if (drawTimerPaused) return;
+            drawTimerPaused = true;
+            drawPauseStartMs = Date.now();
+            updateAwayButton();
+        }
+
+        function resumeDrawTimer() {
+            if (!drawTimerPaused) return;
+            drawTimerPaused = false;
+            if (drawPauseStartMs) {
+                drawPausedTotalMs += Date.now() - drawPauseStartMs;
+            }
+            drawPauseStartMs = null;
+            updateAwayButton();
+        }
+
+        function toggleDrawTimer() {
+            if (drawTimerPaused) {
+                resumeDrawTimer();
+            } else {
+                pauseDrawTimer();
+            }
+        }
+
+        function getElapsedMs() {
+            const activePause = drawTimerPaused && drawPauseStartMs
+                ? Date.now() - drawPauseStartMs
+                : 0;
+            const elapsed = Date.now() - drawPromptStartMs - drawPausedTotalMs - activePause;
+            return Math.max(0, elapsed);
         }
 
         function clamp(value, min, max) {
@@ -886,7 +945,7 @@
                 drawAttemptState = 'unanswered';
                 setDrawStatus('neutral');
                 updateDrawAttemptSummary();
-                drawPromptStartMs = Date.now();
+                resetDrawTimer();
                 document.getElementById('draw-target-name').textContent = 'No Match';
                 document.getElementById('draw-feedback').textContent = 'No amino acids match this filter.';
                 document.getElementById('draw-user-smiles').textContent = '-';
@@ -912,7 +971,7 @@
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
             document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
             lastUserSmiles = '';
-            drawPromptStartMs = Date.now();
+            resetDrawTimer();
             if (jsmeApplet) {
                 jsmeApplet.reset();
                 applyTemplateStructure();
@@ -1069,7 +1128,7 @@
             } else {
                 drawAttemptState = 'incorrect';
             }
-            const elapsedMs = Date.now() - drawPromptStartMs;
+            const elapsedMs = getElapsedMs();
             recordDrawProgress(drawTarget, isCorrect, userSmiles, elapsedMs);
             setDrawStatus(statusState);
             feedback.textContent = resultText;
@@ -1110,10 +1169,23 @@
                 clearDrawing();
                 pickNewTarget();
             });
+            document.getElementById('away-btn').addEventListener('click', toggleDrawTimer);
             document.getElementById('clear-drawing-btn').addEventListener('click', clearDrawing);
             setDrawStatus('neutral');
             updateDrawAttemptSummary();
+            updateAwayButton();
             renderDrawProgress();
+
+            const jsmeContainer = document.getElementById('jsme-container');
+            if (jsmeContainer) {
+                ['pointerdown', 'mousedown', 'touchstart'].forEach((eventName) => {
+                    jsmeContainer.addEventListener(eventName, () => {
+                        if (drawTimerPaused) {
+                            resumeDrawTimer();
+                        }
+                    }, { passive: true });
+                });
+            }
         });
 
         window.addEventListener('themeChanged', () => {
