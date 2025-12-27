@@ -269,7 +269,11 @@
                 ],
                 [[], [false], [true]]
             );
-            return { molfile };
+            const smiles = getJSMEValue(
+                ['smiles', 'SMILES', 'getSmiles', 'getSMILES'],
+                [[], [true], [false]]
+            );
+            return { molfile, smiles };
         }
 
         function cloneMolecule(mol) {
@@ -348,26 +352,39 @@
         function parseUserMolecule() {
             const exportData = getJSMEExport();
             const hasMolecule = typeof jsmeApplet?.hasMolecule === 'function' ? jsmeApplet.hasMolecule() : null;
-            if (!exportData.molfile) {
+            const hasSmiles = Boolean(exportData.smiles);
+            let display = exportData.smiles || '';
+
+            if (!exportData.molfile && !hasSmiles) {
                 if (hasMolecule) {
                     return { mol: null, display: 'Structure detected.', reason: 'molfile' };
                 }
                 return { mol: null, display: 'No structure drawn.', reason: 'empty' };
             }
             if (!window.OCL) {
-                return { mol: null, display: 'Structure detected.', reason: 'ocl' };
+                return { mol: null, display: display || 'Structure detected.', reason: 'ocl' };
             }
             let mol = null;
-            try {
-                mol = OCL.Molecule.fromMolfile(exportData.molfile);
-            } catch (err) {
-                mol = null;
+            if (exportData.molfile) {
+                try {
+                    mol = OCL.Molecule.fromMolfile(exportData.molfile);
+                } catch (err) {
+                    mol = null;
+                }
+            }
+            if (!mol && hasSmiles) {
+                try {
+                    mol = OCL.Molecule.fromSmiles(exportData.smiles);
+                } catch (err) {
+                    mol = null;
+                }
             }
             if (!mol) {
-                return { mol: null, display: 'Structure detected.', reason: 'parse' };
+                return { mol: null, display: display || 'Structure detected.', reason: 'parse' };
             }
             normalizeMolecule(mol);
-            return { mol, display: getDisplaySmiles(mol, ''), reason: 'ok' };
+            display = getDisplaySmiles(mol, display);
+            return { mol, display, reason: 'ok' };
         }
 
         function parseExpectedMolecule(smiles) {
