@@ -114,13 +114,13 @@
                     <div id="draw-user-structure-wrapper" class="hidden bg-slate-50/60 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800 p-4">
                         <p class="text-xs uppercase tracking-widest text-slate-400 mb-2">Your Structure</p>
                         <div class="flex items-center justify-center min-h-[220px]">
-                            <div id="draw-user-svg" class="w-full h-full"></div>
+                            <canvas id="draw-user-canvas" class="w-full h-full"></canvas>
                         </div>
                     </div>
                     <div id="draw-expected-wrapper" class="hidden bg-slate-50/60 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800 p-4">
                         <p class="text-xs uppercase tracking-widest text-slate-400 mb-2">Expected Structure</p>
                         <div class="flex items-center justify-center min-h-[220px]">
-                            <div id="draw-expected-svg" class="w-full h-full"></div>
+                            <canvas id="draw-expected-canvas" class="w-full h-full"></canvas>
                         </div>
                     </div>
                 </div>
@@ -142,7 +142,7 @@
         let chemistryReady = false;
         let aminoAcidIndex = null;
         let aminoAcidIndexNoStereo = null;
-        let lastUserMol = null;
+        let lastUserSmiles = '';
         const DRAW_TEMPLATE_SMILES = 'NCC(=O)O';
 
         function isOCLReady() {
@@ -425,7 +425,7 @@
                 document.getElementById('draw-expected-smiles').textContent = '-';
                 document.getElementById('draw-expected-wrapper').classList.add('hidden');
                 document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
-                lastUserMol = null;
+                lastUserSmiles = '';
                 return;
             }
             drawTarget = filtered[Math.floor(Math.random() * filtered.length)];
@@ -435,7 +435,7 @@
             document.getElementById('draw-expected-smiles').textContent = '-';
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
             document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
-            lastUserMol = null;
+            lastUserSmiles = '';
             if (jsmeApplet) {
                 jsmeApplet.reset();
                 applyTemplateStructure();
@@ -443,55 +443,17 @@
         }
 
         function updateExpectedStructure() {
-            if (!drawTarget || !window.OCL) return;
-            const mol = parseExpectedMolecule(drawTarget.smiles);
-            const svg = buildStructureSvg(mol);
-            renderStructureSvg('draw-expected-svg', svg);
+            if (!drawTarget) return;
+            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+            const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: 600, height: 420, bondThickness: 2.6 });
+            smilesDrawer.draw(drawTarget.smiles, '#draw-expected-canvas', isDarkMode ? 'dark' : 'light');
         }
 
-        function cloneMoleculeForDisplay(mol) {
-            if (!mol) return null;
-            if (typeof mol.getCopy === 'function') return mol.getCopy();
-            if (typeof mol.getCompactCopy === 'function') return mol.getCompactCopy();
-            if (typeof mol.getIDCode === 'function' && window.OCL && typeof OCL.Molecule.fromIDCode === 'function') {
-                try {
-                    return OCL.Molecule.fromIDCode(mol.getIDCode());
-                } catch (err) {
-                    return mol;
-                }
-            }
-            return mol;
-        }
-
-        function buildStructureSvg(mol) {
-            if (!mol || typeof mol.toSVG !== 'function') return '';
-            const displayMol = cloneMoleculeForDisplay(mol);
-            if (!displayMol) return '';
-            if (typeof displayMol.addImplicitHydrogens === 'function') {
-                try {
-                    displayMol.addImplicitHydrogens();
-                } catch (err) {
-                    // ignore hydrogen expansion failures
-                }
-            }
-            return displayMol.toSVG(600, 420, '');
-        }
-
-        function renderStructureSvg(targetId, svg) {
-            const container = document.getElementById(targetId);
-            if (!container) return;
-            container.innerHTML = svg || '';
-            const svgEl = container.querySelector('svg');
-            if (!svgEl) return;
-            svgEl.setAttribute('width', '100%');
-            svgEl.setAttribute('height', '100%');
-            svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-        }
-
-        function updateUserStructure(mol) {
-            if (!mol) return;
-            const svg = buildStructureSvg(mol);
-            renderStructureSvg('draw-user-svg', svg);
+        function updateUserStructure(smiles) {
+            if (!smiles) return;
+            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+            const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: 600, height: 420, bondThickness: 2.6 });
+            smilesDrawer.draw(smiles, '#draw-user-canvas', isDarkMode ? 'dark' : 'light');
         }
 
         function revealExpectedStructure() {
@@ -503,17 +465,17 @@
             });
         }
 
-        function revealUserStructure(mol) {
+        function revealUserStructure(smiles) {
             const wrapper = document.getElementById('draw-user-structure-wrapper');
             if (!wrapper) return;
-            if (!mol) {
+            if (!smiles) {
                 wrapper.classList.add('hidden');
                 return;
             }
-            lastUserMol = mol;
+            lastUserSmiles = smiles;
             wrapper.classList.remove('hidden');
             requestAnimationFrame(() => {
-                updateUserStructure(mol);
+                updateUserStructure(smiles);
             });
         }
 
@@ -546,14 +508,15 @@
                 }
                 document.getElementById('draw-expected-wrapper').classList.add('hidden');
                 document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
-                lastUserMol = null;
+                lastUserSmiles = '';
                 return;
             }
 
             const expectedMol = parseExpectedMolecule(expectedSmiles);
             document.getElementById('draw-expected-smiles').textContent = expectedSmiles;
             revealExpectedStructure();
-            revealUserStructure(userResult.mol);
+            const userSmiles = userResult.display || getDisplaySmiles(userResult.mol, '');
+            revealUserStructure(userSmiles);
 
             if (!expectedMol) {
                 feedback.textContent = 'Error loading expected structure.';
@@ -613,7 +576,7 @@
             document.getElementById('draw-feedback').className = 'text-lg font-bold text-slate-600';
             document.getElementById('draw-expected-wrapper').classList.add('hidden');
             document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
-            lastUserMol = null;
+            lastUserSmiles = '';
         }
 
         window.addEventListener('load', () => {
@@ -635,8 +598,8 @@
             if (!document.getElementById('draw-expected-wrapper').classList.contains('hidden')) {
                 updateExpectedStructure();
             }
-            if (lastUserMol && !document.getElementById('draw-user-structure-wrapper').classList.contains('hidden')) {
-                updateUserStructure(lastUserMol);
+            if (lastUserSmiles && !document.getElementById('draw-user-structure-wrapper').classList.contains('hidden')) {
+                updateUserStructure(lastUserSmiles);
             }
         });
 
