@@ -918,7 +918,10 @@
                 }, 250);
             }
             document.getElementById('check-answer-btn').addEventListener('click', checkAnswer);
-            document.getElementById('new-target-btn').addEventListener('click', pickNewTarget);
+            document.getElementById('new-target-btn').addEventListener('click', () => {
+                clearDrawing();
+                pickNewTarget();
+            });
             document.getElementById('clear-drawing-btn').addEventListener('click', clearDrawing);
             setDrawStatus('neutral');
             updateDrawAttemptSummary();
