@@ -127,6 +127,7 @@
     
 
     <script src="script.js"></script>
+    <script src="amino-acid-recognizer.js"></script>
     <script>
         let jsmeApplet = null;
         let drawTarget = null;
@@ -468,14 +469,31 @@
                 return;
             }
 
-            const detected = identifyAminoAcid(userResult.mol);
-            const detectedName = detected?.aminoAcid?.name;
+            const recognition = (window.AminoAcidRecognizer && typeof AminoAcidRecognizer.fromJSME === 'function')
+                ? AminoAcidRecognizer.fromJSME(jsmeApplet)
+                : null;
+            const fallbackDetected = !recognition?.found ? identifyAminoAcid(userResult.mol) : null;
+            const detectedName = recognition?.found ? recognition.name : fallbackDetected?.aminoAcid?.name;
             const detectedSuffix = detectedName ? ` You drew: ${detectedName}.` : '';
+            const targetName = drawTarget?.name || '';
+            const namesMatch = detectedName && targetName && detectedName.toLowerCase() === targetName.toLowerCase();
+            const successSuffix = targetName ? ` You drew: ${targetName}.` : detectedSuffix;
+
+            if (recognition?.found && namesMatch) {
+                if (recognition.stereoOk === false) {
+                    feedback.textContent = `Correct connectivity, but check stereochemistry!${successSuffix}`;
+                    feedback.className = 'text-lg font-bold text-amber-600';
+                    return;
+                }
+                feedback.textContent = `Correct structure!${successSuffix}`;
+                feedback.className = 'text-lg font-bold text-emerald-600';
+                return;
+            }
             const idUser = getIdCode(userResult.mol);
             const idExpected = getIdCode(expectedMol);
 
             if (idUser && idExpected && idUser === idExpected) {
-                feedback.textContent = `Correct structure!${detectedSuffix}`;
+                feedback.textContent = `Correct structure!${successSuffix}`;
                 feedback.className = 'text-lg font-bold text-emerald-600';
                 return;
             }
@@ -484,7 +502,7 @@
             const idExpectedNoStereo = getIdCodeNoStereo(expectedMol);
 
             if (idUserNoStereo && idExpectedNoStereo && idUserNoStereo === idExpectedNoStereo) {
-                feedback.textContent = `Correct connectivity, but check stereochemistry!${detectedSuffix}`;
+                feedback.textContent = `Correct connectivity, but check stereochemistry!${successSuffix}`;
                 feedback.className = 'text-lg font-bold text-amber-600';
                 return;
             }
