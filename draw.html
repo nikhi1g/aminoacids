@@ -209,6 +209,7 @@
         let drawTimerPaused = false;
         let drawPauseStartMs = null;
         let drawPausedTotalMs = 0;
+        let pendingDrawTargetAbbr3 = null;
         let chemistryReady = false;
         let aminoAcidIndex = null;
         let aminoAcidIndexNoStereo = null;
@@ -923,6 +924,46 @@
             return weights[weights.length - 1].entry;
         }
 
+        function findAminoAcidByParam(param) {
+            if (!param || !Array.isArray(aminoAcids)) return null;
+            const key = param.trim().toLowerCase();
+            if (!key) return null;
+            let match = aminoAcids.find((aa) => aa.abbr3 && aa.abbr3.toLowerCase() === key);
+            if (match) return match;
+            match = aminoAcids.find((aa) => aa.name && aa.name.toLowerCase() === key);
+            return match || null;
+        }
+
+        function setPendingDrawTargetFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const raw = params.get('aa');
+            const target = findAminoAcidByParam(raw);
+            if (target) {
+                pendingDrawTargetAbbr3 = target.abbr3;
+            }
+        }
+
+        function applyDrawTarget(target) {
+            drawTarget = target;
+            drawTargetSmiles = formatDrawSmiles(drawTarget.smiles);
+            document.getElementById('draw-target-name').textContent = drawTarget.name;
+            document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
+            document.getElementById('draw-user-smiles').textContent = '-';
+            drawAttemptState = 'unanswered';
+            setDrawStatus('neutral');
+            updateDrawAttemptSummary();
+            setExpectedSmiles(drawTargetSmiles);
+            hideExpectedSmiles();
+            document.getElementById('draw-expected-wrapper').classList.add('hidden');
+            document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
+            lastUserSmiles = '';
+            resetDrawTimer();
+            if (jsmeApplet) {
+                jsmeApplet.reset();
+                applyTemplateStructure();
+            }
+        }
+
         function selectNextDrawTarget(filtered, nowMs, currentAbbr3) {
             const progress = loadDrawProgress();
             const items = filtered.map((aa) => {
@@ -953,6 +994,20 @@
         }
 
         function pickNewTarget() {
+            if (pendingDrawTargetAbbr3) {
+                const requested = aminoAcids.find((aa) => aa.abbr3 === pendingDrawTargetAbbr3);
+                if (requested) {
+                    const matchesFilter = currentFilter === 'all' || (requested.tags && requested.tags.includes(currentFilter));
+                    if (!matchesFilter && currentFilter !== 'all') {
+                        applyFilter('all');
+                        return;
+                    }
+                    pendingDrawTargetAbbr3 = null;
+                    applyDrawTarget(requested);
+                    return;
+                }
+                pendingDrawTargetAbbr3 = null;
+            }
             const filtered = getFilteredAminoAcids();
             if (filtered.length === 0) {
                 drawTarget = null;
@@ -973,24 +1028,8 @@
             }
             const nowMs = Date.now();
             const selection = selectNextDrawTarget(filtered, nowMs, drawTarget?.abbr3 || null);
-            drawTarget = selection ? selection.aa : filtered[Math.floor(Math.random() * filtered.length)];
-            drawTargetSmiles = formatDrawSmiles(drawTarget.smiles);
-            document.getElementById('draw-target-name').textContent = drawTarget.name;
-            document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
-            document.getElementById('draw-user-smiles').textContent = '-';
-            drawAttemptState = 'unanswered';
-            setDrawStatus('neutral');
-            updateDrawAttemptSummary();
-            setExpectedSmiles(drawTargetSmiles);
-            hideExpectedSmiles();
-            document.getElementById('draw-expected-wrapper').classList.add('hidden');
-            document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
-            lastUserSmiles = '';
-            resetDrawTimer();
-            if (jsmeApplet) {
-                jsmeApplet.reset();
-                applyTemplateStructure();
-            }
+            const nextTarget = selection ? selection.aa : filtered[Math.floor(Math.random() * filtered.length)];
+            applyDrawTarget(nextTarget);
         }
 
         function updateExpectedStructure() {
@@ -1170,6 +1209,7 @@
         }
 
         window.addEventListener('load', () => {
+            setPendingDrawTargetFromUrl();
             pickNewTarget();
             setChemistryReady(false);
             if (!ensureChemistryReady()) {

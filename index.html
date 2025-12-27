@@ -148,7 +148,8 @@
                 const uniqueIdx = aminoAcids.indexOf(aa); 
                 
                 const card = document.createElement('div');
-                card.className = `molecule-card bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-4 m-1 shadow-sm`;
+                card.className = `molecule-card group relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-4 m-1 shadow-sm`;
+                const drawLink = `draw.html?aa=${encodeURIComponent(aa.abbr3)}`;
 
                 // Generate Tag Badges
                 let tagsHtml = '';
@@ -174,6 +175,9 @@
                 }
 
                 card.innerHTML = `
+                    <div class="absolute top-3 right-3 z-10 opacity-100 pointer-events-auto sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto sm:group-focus-within:opacity-100 sm:group-focus-within:pointer-events-auto transition-opacity">
+                        <a href="${drawLink}" class="px-2.5 py-1.5 rounded-full bg-slate-900/90 text-white text-[11px] font-semibold shadow-md hover:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">Draw</a>
+                    </div>
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <h3 class="text-lg font-bold text-slate-900 dark:text-white">${aa.name}</h3>
