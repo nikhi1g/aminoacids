@@ -424,11 +424,35 @@ function showVersionInfo(meta) {
 
         
 
-        details.innerHTML = `
+            details.innerHTML = `
 
-            <a href="https://github.com/nikhi1g/mcat/commit/${meta.commit}" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 dark:text-blue-400 hover:underline select-all break-all">${meta.commit}</a>
+        
 
-            <div class="text-slate-500 dark:text-slate-400 border-l border-slate-300 dark:border-slate-600 pl-3 hidden sm:block">${meta.commit_date || 'Unknown'}</div>
+                <div class="flex items-center gap-2">
+
+        
+
+                    <span class="font-mono text-slate-600 dark:text-slate-300 select-all">${meta.commit}</span>
+
+        
+
+                    <a href="https://github.com/nikhi1g/mcat/commit/${meta.commit}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center p-1 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors" title="View Commit">
+
+        
+
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+
+        
+
+                    </a>
+
+        
+
+                </div>
+
+        
+
+                <div class="text-slate-500 dark:text-slate-400 border-l border-slate-300 dark:border-slate-600 pl-3 hidden sm:block">${meta.commit_date || 'Unknown'}</div>
 
             ${meta.message ? `
 
