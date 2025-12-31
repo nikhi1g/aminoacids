@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amino Acid Explorer</title>
+    <link rel="preconnect" href="https://api.github.com" crossorigin>
+    <link rel="dns-prefetch" href="https://api.github.com">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script>
+        // Apply theme immediately to prevent flash
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+
+    <header class="bg-white dark:bg-slate-900 border-b dark:border-slate-800 sticky top-0 z-20 shadow-sm transition-colors transition-transform duration-300">
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col space-y-2 sm:space-y-4 py-2 sm:py-4">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 sm:h-16">
+                    <div class="flex items-center justify-center sm:justify-start w-full sm:w-auto">
+                        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 px-2 py-1.5 sm:px-3 sm:py-2 text-center sm:text-left">
+                            <div class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-800 dark:text-slate-100 text-center sm:text-left">Amino Acid Explorer</div>
+                            <div class="mt-0.5 sm:mt-1 flex flex-wrap items-center gap-2 text-[9px] sm:text-[10px] text-slate-500 justify-center sm:justify-start">
+                                <span id="commit-hash">loading...</span>
+
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto">
+                        <nav class="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-8">
+                            <a href="index.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Home</a>
+                            <a href="cards.html" class="nav-link active py-2 sm:py-5 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Show</a>
+                            <a href="learn.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Learn</a>
+                            <a href="recall.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Recall</a>
+                            <a href="draw.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Draw</a>
+                        </nav>
+
+                        <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0" title="Toggle Dark/Light Mode">
+                            <svg id="sun-icon" class="hidden dark:block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path>
+                            </svg>
+                            <svg id="moon-icon" class="block dark:hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="pb-1 sm:pb-2 space-y-1 sm:space-y-2">
+                    <div class="sm:hidden">
+                        <select class="filter-select w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-200" onchange="applyFilter(this.value)">
+                            <option value="all">All</option>
+                            <option value="nonpolar">Non-polar</option>
+                            <option value="polar">Polar</option>
+                            <option value="aliphatic">Aliphatic</option>
+                            <option value="aromatic">Aromatic</option>
+                            <option value="acidic">Acidic</option>
+                            <option value="basic">Basic</option>
+                            <option value="hydroxyl">Hydroxyl</option>
+                            <option value="sulfur">Sulfur</option>
+                        </select>
+                    </div>
+                    <div class="hidden sm:flex flex-wrap gap-2 justify-center">
+                        <button onclick="applyFilter('all')" class="filter-btn active px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:opacity-80">All</button>
+                        <button onclick="applyFilter('nonpolar')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-gray-400 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900/30">Non-polar</button>
+                        <button onclick="applyFilter('polar')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-cyan-400 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30">Polar</button>
+                        <button onclick="applyFilter('aliphatic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-amber-400 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30">Aliphatic</button>
+                        <button onclick="applyFilter('aromatic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-purple-400 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30">Aromatic</button>
+                        <button onclick="applyFilter('acidic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30">Acidic</button>
+                        <button onclick="applyFilter('basic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-blue-400 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30">Basic</button>
+                        <button onclick="applyFilter('hydroxyl')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-teal-400 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30">Hydroxyl</button>
+                        <button onclick="applyFilter('sulfur')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-yellow-400 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/30">Sulfur</button>
+                        <div class="flex items-center space-x-2 ml-4 border-l pl-4 border-slate-300 dark:border-slate-700">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cols</span>
+                            <button onclick="changeColumns(-1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-bold transition-colors shadow-sm text-xs">-</button>
+                            <span id="col-display" class="text-xs font-bold text-slate-600 dark:text-slate-400 w-4 text-center">4</span>
+                            <button onclick="changeColumns(1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-bold transition-colors shadow-sm text-xs">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full px-2 py-4">
+        <div id="molecule-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <!-- Molecule Cards will be injected here -->
+        </div>
+    </main>
+
+    <footer class="mt-12 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <p class="text-xs text-slate-500">colored drawings powered by <a href="https://github.com/reymond-group/smilesDrawer" class="underline underline-offset-2 hover:text-slate-700 dark:hover:text-slate-200" target="_blank" rel="noopener noreferrer">smiles</a>; drawing software from <a href="https://jsme-editor.github.io/" class="underline underline-offset-2 hover:text-slate-700 dark:hover:text-slate-200" target="_blank" rel="noopener noreferrer">JSME</a></p>
+        </div>
+    </footer>
+
+    
+
+    
+
+    <script src="script.js"></script>
+    <script>
+        let gridColumns = window.matchMedia('(max-width: 640px)').matches ? 1 : 4;
+        const colDisplay = document.getElementById('col-display');
+        if (colDisplay) {
+            colDisplay.textContent = gridColumns;
+        }
+
+        function changeColumns(delta) {
+            gridColumns += delta;
+            if (gridColumns < 1) gridColumns = 1;
+            if (gridColumns > 8) gridColumns = 8;
+            document.getElementById('col-display').textContent = gridColumns;
+            renderGrid();
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('molecule-grid');
+            if (!grid) return;
+            
+            // Apply grid column class dynamically
+            grid.className = `grid grid-cols-${gridColumns} gap-3 transition-all duration-300`;
+            grid.innerHTML = '';
+            
+            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+            const filteredAA = getFilteredAminoAcids();
+
+            if (filteredAA.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-slate-500 py-10">No amino acids match this filter.</div>';
+                return;
+            }
+
+            // Phase 1: Create Elements
+            filteredAA.forEach((aa) => {
+                const uniqueIdx = aminoAcids.indexOf(aa); 
+                
+                const card = document.createElement('div');
+                card.className = `molecule-card group relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-4 m-1 shadow-sm`;
+                const drawLink = `draw.html?aa=${encodeURIComponent(aa.abbr3)}`;
+
+                // Generate Tag Badges
+                let tagsHtml = '';
+                if (aa.tags) {
+                    tagsHtml = `<div class="mt-3 flex flex-wrap gap-1 justify-center">`;
+                    aa.tags.forEach(tag => {
+                        const colorClass = tagColors[tag] || 'border-slate-200 text-slate-500';
+                        const bgMap = {
+                            'nonpolar': 'bg-gray-100 dark:bg-gray-800',
+                            'polar': 'bg-cyan-50 dark:bg-cyan-900/20',
+                            'aliphatic': 'bg-amber-50 dark:bg-amber-900/20',
+                            'aromatic': 'bg-purple-50 dark:bg-purple-900/20',
+                            'acidic': 'bg-red-50 dark:bg-red-900/20',
+                            'basic': 'bg-blue-50 dark:bg-blue-900/20',
+                            'hydroxyl': 'bg-teal-50 dark:bg-teal-900/20',
+                            'sulfur': 'bg-yellow-50 dark:bg-yellow-900/20'
+                        };
+                        const bgClass = bgMap[tag] || 'bg-slate-100 dark:bg-slate-800';
+                        
+                        tagsHtml += `<span class="${bgClass} ${colorClass} text-[10px] px-2 py-0.5 rounded-full font-semibold border border-opacity-20">${tag}</span>`;
+                    });
+                    tagsHtml += `</div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="absolute top-3 left-1/2 -translate-x-1/2 z-10 opacity-100 pointer-events-auto sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto sm:group-focus-within:opacity-100 sm:group-focus-within:pointer-events-auto transition-opacity">
+                        <a href="${drawLink}" class="px-2.5 py-1.5 rounded-full bg-slate-900/90 text-white text-[11px] font-semibold shadow-md hover:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">Draw</a>
+                    </div>
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">${aa.name}</h3>
+                            <div class="flex space-x-2 mt-1">
+                                <span class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] px-2 py-0.5 rounded font-bold border border-blue-100 dark:border-blue-800/50">${aa.abbr3}</span>
+                                <span class="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] px-2 py-0.5 rounded font-bold border border-green-100 dark:border-green-800/50">${aa.abbr1}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="flex flex-col items-end space-y-1">
+                                <span class="pka-badge bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">α-C: ${aa.pka1}</span>
+                                <span class="pka-badge bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">α-N: ${aa.pka2}</span>
+                                ${aa.pkaR ? `<span class="pka-badge bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-800/50">R: ${aa.pkaR}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-grow flex items-center justify-center py-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg my-2 border border-slate-100 dark:border-slate-800 canvas-container aspect-[3/2] w-full">
+                        <canvas id="canvas-${uniqueIdx}" class="w-full h-full object-contain"></canvas>
+                    </div>
+                    ${tagsHtml}
+                    <div class="mt-3 flex items-center gap-1">
+                        <input id="input-${uniqueIdx}" type="text" class="smiles-input text-slate-400 dark:text-slate-500" value="${aa.smiles}" spellcheck="false" oninput="handleSmilesEdit(${uniqueIdx}, this.value)" title="Edit structure" />
+                        <button onclick="resetSmiles(${uniqueIdx})" class="reset-btn" title="Reset structure">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            
+            // Phase 2: Draw after layout
+            requestAnimationFrame(() => {
+                filteredAA.forEach((aa) => {
+                    const uniqueIdx = aminoAcids.indexOf(aa);
+                    const canvas = document.getElementById(`canvas-${uniqueIdx}`);
+                    if(!canvas) return;
+                    
+                    const container = canvas.parentElement;
+                    const rect = container.getBoundingClientRect();
+                    const width = rect.width;
+                    const height = rect.height;
+                    
+                    // Use reduced padding to fill the box
+                    const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: width, height: height, padding: 10 });
+                    smilesDrawer.draw(aa.smiles, `#canvas-${uniqueIdx}`, isDarkMode ? 'dark' : 'light');
+                });
+            });
+        }
+
+        window.addEventListener('load', renderGrid);
+        window.addEventListener('themeChanged', renderGrid);
+        window.addEventListener('filterChanged', renderGrid);
+        window.addEventListener('resize', renderGrid);
+    </script>
+</body>
+</html>

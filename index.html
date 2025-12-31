@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amino Acid Explorer</title>
+    <title>MCAT Prep - Amino Acid Explorer</title>
     <link rel="preconnect" href="https://api.github.com" crossorigin>
     <link rel="dns-prefetch" href="https://api.github.com">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,29 +20,27 @@
             document.documentElement.classList.remove('dark');
         }
     </script>
-    <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col min-h-screen">
 
     <header class="bg-white dark:bg-slate-900 border-b dark:border-slate-800 sticky top-0 z-20 shadow-sm transition-colors transition-transform duration-300">
-
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col space-y-2 sm:space-y-4 py-2 sm:py-4">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 sm:h-16">
                     <div class="flex items-center justify-center sm:justify-start w-full sm:w-auto">
-                        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 px-2 py-1.5 sm:px-3 sm:py-2 text-center sm:text-left">
-                            <div class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-800 dark:text-slate-100 text-center sm:text-left">Amino Acid Explorer</div>
+                        <a href="index.html" class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 px-2 py-1.5 sm:px-3 sm:py-2 text-center sm:text-left block hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            <div class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-800 dark:text-slate-100 text-center sm:text-left">MCAT Prep</div>
                             <div class="mt-0.5 sm:mt-1 flex flex-wrap items-center gap-2 text-[9px] sm:text-[10px] text-slate-500 justify-center sm:justify-start">
                                 <span id="commit-hash">loading...</span>
-
                             </div>
-                        </div>
+                        </a>
                     </div>
                     
                     <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto">
                         <nav class="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-8">
-                            <a href="index.html" class="nav-link active py-2 sm:py-5 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Show</a>
+                            <a href="index.html" class="nav-link active py-2 sm:py-5 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Home</a>
+                            <a href="cards.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Show</a>
                             <a href="learn.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Learn</a>
                             <a href="recall.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Recall</a>
                             <a href="draw.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Draw</a>
@@ -58,179 +56,61 @@
                         </button>
                     </div>
                 </div>
-                
-                <div class="pb-1 sm:pb-2 space-y-1 sm:space-y-2">
-                    <div class="sm:hidden">
-                        <select class="filter-select w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-200" onchange="applyFilter(this.value)">
-                            <option value="all">All</option>
-                            <option value="nonpolar">Non-polar</option>
-                            <option value="polar">Polar</option>
-                            <option value="aliphatic">Aliphatic</option>
-                            <option value="aromatic">Aromatic</option>
-                            <option value="acidic">Acidic</option>
-                            <option value="basic">Basic</option>
-                            <option value="hydroxyl">Hydroxyl</option>
-                            <option value="sulfur">Sulfur</option>
-                        </select>
-                    </div>
-                    <div class="hidden sm:flex flex-wrap gap-2 justify-center">
-                        <button onclick="applyFilter('all')" class="filter-btn active px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:opacity-80">All</button>
-                        <button onclick="applyFilter('nonpolar')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-gray-400 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900/30">Non-polar</button>
-                        <button onclick="applyFilter('polar')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-cyan-400 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30">Polar</button>
-                        <button onclick="applyFilter('aliphatic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-amber-400 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30">Aliphatic</button>
-                        <button onclick="applyFilter('aromatic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-purple-400 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30">Aromatic</button>
-                        <button onclick="applyFilter('acidic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30">Acidic</button>
-                        <button onclick="applyFilter('basic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-blue-400 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30">Basic</button>
-                        <button onclick="applyFilter('hydroxyl')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-teal-400 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30">Hydroxyl</button>
-                        <button onclick="applyFilter('sulfur')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-yellow-400 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/30">Sulfur</button>
-                        <div class="flex items-center space-x-2 ml-4 border-l pl-4 border-slate-300 dark:border-slate-700">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cols</span>
-                            <button onclick="changeColumns(-1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-bold transition-colors shadow-sm text-xs">-</button>
-                            <span id="col-display" class="text-xs font-bold text-slate-600 dark:text-slate-400 w-4 text-center">4</span>
-                            <button onclick="changeColumns(1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-bold transition-colors shadow-sm text-xs">+</button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </header>
 
-    <main class="w-full px-2 py-4">
-        <div id="molecule-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            <!-- Molecule Cards will be injected here -->
+    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white sm:text-4xl">MCAT Exam Sections</h1>
+            <p class="mt-3 max-w-2xl mx-auto text-xl text-slate-500 dark:text-slate-400">Select a section to explore resources.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Section 1 -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 hover:shadow-md transition-shadow">
+                <div class="h-12 w-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-4 text-blue-600 dark:text-blue-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Chemical and Physical Foundations of Biological Systems</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm">Foundational concepts in chemistry and physics applied to biological systems.</p>
+            </div>
+
+            <!-- Section 2 -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 hover:shadow-md transition-shadow">
+                <div class="h-12 w-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mb-4 text-purple-600 dark:text-purple-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Critical Analysis and Reasoning Skills (CARS)</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm">Analysis and reasoning skills using text from the humanities and social sciences.</p>
+            </div>
+
+            <!-- Section 3 -->
+            <a href="cards.html" class="group bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer">
+                <div class="h-12 w-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center mb-4 text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400">Biological and Biochemical Foundations of Living Systems</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm">Concepts in biology and biochemistry. <span class="text-blue-600 dark:text-blue-400 font-semibold">(Amino Acids here)</span></p>
+            </a>
+
+            <!-- Section 4 -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 hover:shadow-md transition-shadow">
+                <div class="h-12 w-12 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center mb-4 text-orange-600 dark:text-orange-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Psychological, Social, and Biological Foundations of Behavior</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm">Psychology, sociology, and biology concepts related to behavior and social interactions.</p>
+            </div>
         </div>
     </main>
 
-    <footer class="mt-12 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
+    <footer class="mt-auto bg-white dark:bg-slate-900 border-t dark:border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <p class="text-xs text-slate-500">colored drawings powered by <a href="https://github.com/reymond-group/smilesDrawer" class="underline underline-offset-2 hover:text-slate-700 dark:hover:text-slate-200" target="_blank" rel="noopener noreferrer">smiles</a>; drawing software from <a href="https://jsme-editor.github.io/" class="underline underline-offset-2 hover:text-slate-700 dark:hover:text-slate-200" target="_blank" rel="noopener noreferrer">JSME</a></p>
+            <p class="text-xs text-slate-500 text-center">MCAT Preparation Resources</p>
         </div>
     </footer>
 
-    
-
-    
-
     <script src="script.js"></script>
-    <script>
-        let gridColumns = window.matchMedia('(max-width: 640px)').matches ? 1 : 4;
-        const colDisplay = document.getElementById('col-display');
-        if (colDisplay) {
-            colDisplay.textContent = gridColumns;
-        }
-
-        function changeColumns(delta) {
-            gridColumns += delta;
-            if (gridColumns < 1) gridColumns = 1;
-            if (gridColumns > 8) gridColumns = 8;
-            document.getElementById('col-display').textContent = gridColumns;
-            renderGrid();
-        }
-
-        function renderGrid() {
-            const grid = document.getElementById('molecule-grid');
-            if (!grid) return;
-            
-            // Apply grid column class dynamically
-            grid.className = `grid grid-cols-${gridColumns} gap-3 transition-all duration-300`;
-            grid.innerHTML = '';
-            
-            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
-            const filteredAA = getFilteredAminoAcids();
-
-            if (filteredAA.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center text-slate-500 py-10">No amino acids match this filter.</div>';
-                return;
-            }
-
-            // Phase 1: Create Elements
-            filteredAA.forEach((aa) => {
-                const uniqueIdx = aminoAcids.indexOf(aa); 
-                
-                const card = document.createElement('div');
-                card.className = `molecule-card group relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-4 m-1 shadow-sm`;
-                const drawLink = `draw.html?aa=${encodeURIComponent(aa.abbr3)}`;
-
-                // Generate Tag Badges
-                let tagsHtml = '';
-                if (aa.tags) {
-                    tagsHtml = `<div class="mt-3 flex flex-wrap gap-1 justify-center">`;
-                    aa.tags.forEach(tag => {
-                        const colorClass = tagColors[tag] || 'border-slate-200 text-slate-500';
-                        const bgMap = {
-                            'nonpolar': 'bg-gray-100 dark:bg-gray-800',
-                            'polar': 'bg-cyan-50 dark:bg-cyan-900/20',
-                            'aliphatic': 'bg-amber-50 dark:bg-amber-900/20',
-                            'aromatic': 'bg-purple-50 dark:bg-purple-900/20',
-                            'acidic': 'bg-red-50 dark:bg-red-900/20',
-                            'basic': 'bg-blue-50 dark:bg-blue-900/20',
-                            'hydroxyl': 'bg-teal-50 dark:bg-teal-900/20',
-                            'sulfur': 'bg-yellow-50 dark:bg-yellow-900/20'
-                        };
-                        const bgClass = bgMap[tag] || 'bg-slate-100 dark:bg-slate-800';
-                        
-                        tagsHtml += `<span class="${bgClass} ${colorClass} text-[10px] px-2 py-0.5 rounded-full font-semibold border border-opacity-20">${tag}</span>`;
-                    });
-                    tagsHtml += `</div>`;
-                }
-
-                card.innerHTML = `
-                    <div class="absolute top-3 left-1/2 -translate-x-1/2 z-10 opacity-100 pointer-events-auto sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto sm:group-focus-within:opacity-100 sm:group-focus-within:pointer-events-auto transition-opacity">
-                        <a href="${drawLink}" class="px-2.5 py-1.5 rounded-full bg-slate-900/90 text-white text-[11px] font-semibold shadow-md hover:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">Draw</a>
-                    </div>
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">${aa.name}</h3>
-                            <div class="flex space-x-2 mt-1">
-                                <span class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] px-2 py-0.5 rounded font-bold border border-blue-100 dark:border-blue-800/50">${aa.abbr3}</span>
-                                <span class="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] px-2 py-0.5 rounded font-bold border border-green-100 dark:border-green-800/50">${aa.abbr1}</span>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="flex flex-col items-end space-y-1">
-                                <span class="pka-badge bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">α-C: ${aa.pka1}</span>
-                                <span class="pka-badge bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">α-N: ${aa.pka2}</span>
-                                ${aa.pkaR ? `<span class="pka-badge bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-800/50">R: ${aa.pkaR}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex-grow flex items-center justify-center py-4 bg-slate-50/50 dark:bg-slate-800/30 rounded-lg my-2 border border-slate-100 dark:border-slate-800 canvas-container aspect-[3/2] w-full">
-                        <canvas id="canvas-${uniqueIdx}" class="w-full h-full object-contain"></canvas>
-                    </div>
-                    ${tagsHtml}
-                    <div class="mt-3 flex items-center gap-1">
-                        <input id="input-${uniqueIdx}" type="text" class="smiles-input text-slate-400 dark:text-slate-500" value="${aa.smiles}" spellcheck="false" oninput="handleSmilesEdit(${uniqueIdx}, this.value)" title="Edit structure" />
-                        <button onclick="resetSmiles(${uniqueIdx})" class="reset-btn" title="Reset structure">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                        </button>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-            
-            // Phase 2: Draw after layout
-            requestAnimationFrame(() => {
-                filteredAA.forEach((aa) => {
-                    const uniqueIdx = aminoAcids.indexOf(aa);
-                    const canvas = document.getElementById(`canvas-${uniqueIdx}`);
-                    if(!canvas) return;
-                    
-                    const container = canvas.parentElement;
-                    const rect = container.getBoundingClientRect();
-                    const width = rect.width;
-                    const height = rect.height;
-                    
-                    // Use reduced padding to fill the box
-                    const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: width, height: height, padding: 10 });
-                    smilesDrawer.draw(aa.smiles, `#canvas-${uniqueIdx}`, isDarkMode ? 'dark' : 'light');
-                });
-            });
-        }
-
-        window.addEventListener('load', renderGrid);
-        window.addEventListener('themeChanged', renderGrid);
-        window.addEventListener('filterChanged', renderGrid);
-        window.addEventListener('resize', renderGrid);
-    </script>
 </body>
 </html>
