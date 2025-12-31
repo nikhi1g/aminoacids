@@ -1,7 +1,7 @@
 # Project Goal
 Help users memorize all amino acids through repeated exposure and recall practice. The app must be fully client-side with no accounts. Users can optionally save and restore their progress using a local JSON file.
 
-# Coding Practices
+#  Coding Practices
 - Keep everything client-side and deterministic; avoid any auth or backend dependencies.
 - Keep the core data source in `script.js` and treat it as the single source of truth.
 - Prefer small, pure helper functions for selection/scoring logic so behavior is easy to test and reason about.
