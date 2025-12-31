@@ -420,21 +420,21 @@ function showVersionInfo(meta) {
 
     // Horizontal layout, borders, font size
 
-    details.className = 'flex items-center gap-4 text-[10px] pl-3 border-l border-slate-200 dark:border-slate-700 animate-fade-in whitespace-nowrap overflow-hidden';
+        details.className = 'flex items-center gap-4 text-[10px] pl-3 border-l border-slate-300 dark:border-slate-600 animate-fade-in whitespace-nowrap overflow-hidden';
 
-    
+        
 
-    details.innerHTML = `
+        details.innerHTML = `
 
-        <a href="https://github.com/nikhi1g/mcat/commit/${meta.commit}" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 dark:text-blue-400 hover:underline select-all break-all">${meta.commit}</a>
+            <a href="https://github.com/nikhi1g/mcat/commit/${meta.commit}" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 dark:text-blue-400 hover:underline select-all break-all">${meta.commit}</a>
 
-        <div class="text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-800 pl-3 hidden sm:block">${meta.commit_date || 'Unknown'}</div>
+            <div class="text-slate-500 dark:text-slate-400 border-l border-slate-300 dark:border-slate-600 pl-3 hidden sm:block">${meta.commit_date || 'Unknown'}</div>
 
-        ${meta.message ? `
+            ${meta.message ? `
 
-        <div class="text-slate-400 dark:text-slate-500 italic max-w-[150px] md:max-w-[250px] truncate border-l border-slate-200 dark:border-slate-800 pl-3 hidden md:block" title="${meta.message}">${meta.message}</div>
+            <div class="text-slate-400 dark:text-slate-500 italic max-w-[150px] md:max-w-[250px] truncate border-l border-slate-300 dark:border-slate-600 pl-3 hidden md:block" title="${meta.message}">${meta.message}</div>
 
-        ` : ''}
+            ` : ''}
 
     `;
 
