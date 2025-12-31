@@ -367,23 +367,13 @@ function showVersionInfo(meta) {
     popover.style.left = `${rect.left + window.scrollX}px`;
 
     popover.innerHTML = `
-        <div class="space-y-3">
-            <div>
-                <p class="font-bold text-slate-400 uppercase tracking-widest mb-0.5 text-[9px]">Commit</p>
-                <p class="font-mono text-slate-600 dark:text-slate-300 select-all break-all">${meta.commit}</p>
-            </div>
-            <div>
-                <p class="font-bold text-slate-400 uppercase tracking-widest mb-0.5 text-[9px]">Build Time</p>
-                <p class="text-slate-600 dark:text-slate-300">${meta.commit_date || 'Unknown'}</p>
-            </div>
-            ${meta.message ? `
-            <div>
-                <p class="font-bold text-slate-400 uppercase tracking-widest mb-0.5 text-[9px]">Message</p>
-                <p class="text-slate-600 dark:text-slate-300 leading-relaxed max-h-32 overflow-y-auto scrollbar-thin">${meta.message}</p>
-            </div>
-            ` : ''}
-        </div>
-    `;
+                    <div class="space-y-3">
+                        <div class="font-mono text-slate-600 dark:text-slate-300 select-all break-all">${meta.commit}</div>
+                        <div class="text-slate-600 dark:text-slate-300">${meta.commit_date || 'Unknown'}</div>
+                        ${meta.message ? `
+                        <div class="text-slate-600 dark:text-slate-300 leading-relaxed max-h-32 overflow-y-auto scrollbar-thin">${meta.message}</div>
+                        ` : ''}
+                    </div>    `;
 
     document.body.appendChild(popover);
 
