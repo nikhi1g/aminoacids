@@ -331,7 +331,11 @@ function updateHeaderCommit(meta) {
         if (hash !== 'unknown') {
             el.title = meta && meta.message ? meta.message : 'View version info';
             el.style.cursor = 'pointer';
-            el.onclick = () => showVersionInfo(meta);
+            el.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                showVersionInfo(meta);
+            };
             el.classList.add('underline', 'decoration-dotted', 'decoration-slate-400', 'underline-offset-4');
         } else {
             el.style.cursor = 'default';
