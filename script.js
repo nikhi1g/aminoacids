@@ -426,7 +426,7 @@ function showVersionInfo(meta) {
 
     details.innerHTML = `
 
-        <div class="font-mono text-slate-600 dark:text-slate-300">${meta.commit}</div>
+        <a href="https://github.com/nikhi1g/mcat/commit/${meta.commit}" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 dark:text-blue-400 hover:underline select-all break-all">${meta.commit}</a>
 
         <div class="text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-800 pl-3 hidden sm:block">${meta.commit_date || 'Unknown'}</div>
 
