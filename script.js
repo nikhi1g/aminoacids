@@ -347,65 +347,197 @@ function updateHeaderCommit(meta) {
 }
 
 function showVersionInfo(meta) {
-    const existing = document.getElementById('version-popover');
-    if (existing) {
-        closeVersionInfo();
-        return;
-    }
 
     const hashEl = document.getElementById('commit-hash');
+
     if (!hashEl) return;
+
     const trigger = hashEl.closest('.rounded-xl') || hashEl.parentElement;
-    const rect = trigger.getBoundingClientRect();
 
-    const popover = document.createElement('div');
-    popover.id = 'version-popover';
-    popover.className = 'absolute z-50 mt-1 w-72 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden p-4 text-xs shadow-slate-200/50 dark:shadow-black/50 origin-top-left transition-all';
     
-    // Position directly below the trigger
-    popover.style.top = `${rect.bottom + window.scrollY + 4}px`;
-    popover.style.left = `${rect.left + window.scrollX}px`;
 
-    popover.innerHTML = `
-                    <div class="space-y-3">
-                        <div class="font-mono text-slate-600 dark:text-slate-300 select-all break-all">${meta.commit}</div>
-                        <div class="text-slate-600 dark:text-slate-300">${meta.commit_date || 'Unknown'}</div>
-                        ${meta.message ? `
-                        <div class="text-slate-600 dark:text-slate-300 leading-relaxed max-h-32 overflow-y-auto scrollbar-thin">${meta.message}</div>
-                        ` : ''}
-                    </div>    `;
+    // Check if already expanded
 
-    document.body.appendChild(popover);
+    const existing = document.getElementById('version-details');
+
+    if (existing) {
+
+        closeVersionInfo();
+
+        return;
+
+    }
+
+
+
+    // Mark trigger as expanded for styling if needed
+
+    trigger.classList.add('expanded');
+
+    trigger.style.zIndex = '50';
+
+    trigger.style.position = 'relative'; // Ensure z-index works
+
+
+
+    // Adjust parent header height to allow growth
+
+    // The header row usually has 'sm:h-16' which limits height. We need to find it.
+
+    // Structure: header > div > div > div (trigger is here)
+
+    // We look for the flex-row container.
+
+    let headerRow = trigger.closest('.sm\\:h-16'); 
+
+    if (headerRow) {
+
+        headerRow.classList.remove('sm:h-16');
+
+        headerRow.classList.add('min-h-[4rem]'); // Keep minimum height but allow growth
+
+        headerRow.dataset.wasFixed = 'true';
+
+    }
+
+
+
+    const details = document.createElement('div');
+
+    details.id = 'version-details';
+
+    details.className = 'mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-xs space-y-1 animate-fade-in text-left';
+
+    
+
+    details.innerHTML = `
+
+        <div class="font-mono text-slate-600 dark:text-slate-300 select-all break-all">${meta.commit}</div>
+
+        <div class="text-slate-600 dark:text-slate-300">${meta.commit_date || 'Unknown'}</div>
+
+        ${meta.message ? `
+
+        <div class="text-slate-600 dark:text-slate-300 leading-relaxed max-h-32 overflow-y-auto scrollbar-thin mt-1">${meta.message}</div>
+
+        ` : ''}
+
+    `;
+
+
+
+    // Prevent navigation if trigger is an <a> tag
+
+    details.onclick = (e) => {
+
+        e.preventDefault();
+
+        e.stopPropagation();
+
+    };
+
+
+
+    trigger.appendChild(details);
+
+
 
     // Add listeners to close
+
     window.addEventListener('scroll', closeVersionInfo, { capture: true, once: true });
+
     window.addEventListener('resize', closeVersionInfo, { capture: true, once: true });
+
     
-    // Slight delay to prevent immediate closing if the click event bubbles up
+
+    // Slight delay to prevent immediate closing
+
     setTimeout(() => {
+
         document.addEventListener('click', closeVersionInfoOutside);
+
     }, 10);
+
 }
+
+
 
 function closeVersionInfo() {
-    const el = document.getElementById('version-popover');
-    if (el) el.remove();
+
+    const details = document.getElementById('version-details');
+
+    if (!details) return;
+
+    
+
+    const trigger = details.parentElement;
+
+    if (trigger) {
+
+        trigger.classList.remove('expanded');
+
+        trigger.style.zIndex = '';
+
+        trigger.style.position = '';
+
+        
+
+        // Restore header row height
+
+        let headerRow = trigger.closest('.min-h-\\[4rem\\]'); // Look for the class we added
+
+        if (headerRow && headerRow.dataset.wasFixed === 'true') {
+
+            headerRow.classList.remove('min-h-[4rem]');
+
+            headerRow.classList.add('sm:h-16');
+
+            delete headerRow.dataset.wasFixed;
+
+        }
+
+    }
+
+    
+
+    details.remove();
+
     cleanupVersionListeners();
+
 }
+
+
 
 function closeVersionInfoOutside(e) {
-    const popover = document.getElementById('version-popover');
+
+    const details = document.getElementById('version-details');
+
     const hashEl = document.getElementById('commit-hash');
-    // If click is not inside popover and not on the hash element (trigger)
-    if (popover && !popover.contains(e.target) && hashEl && !hashEl.contains(e.target)) {
+
+    const trigger = hashEl ? (hashEl.closest('.rounded-xl') || hashEl.parentElement) : null;
+
+    
+
+    // If click is not inside the trigger container
+
+    if (trigger && !trigger.contains(e.target)) {
+
         closeVersionInfo();
+
     }
+
 }
 
+
+
 function cleanupVersionListeners() {
+
     window.removeEventListener('scroll', closeVersionInfo, { capture: true });
+
     window.removeEventListener('resize', closeVersionInfo, { capture: true });
+
     document.removeEventListener('click', closeVersionInfoOutside);
+
 }
 
 function showInlineCommitUpdate(oldMeta, newMeta) {
