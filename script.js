@@ -347,47 +347,75 @@ function updateHeaderCommit(meta) {
 }
 
 function showVersionInfo(meta) {
-    const existing = document.getElementById('version-modal');
-    if (existing) { existing.remove(); return; }
+    const existing = document.getElementById('version-popover');
+    if (existing) {
+        closeVersionInfo();
+        return;
+    }
 
-    const modal = document.createElement('div');
-    modal.id = 'version-modal';
-    modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in cursor-pointer';
-    modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
+    const hashEl = document.getElementById('commit-hash');
+    if (!hashEl) return;
+    const trigger = hashEl.closest('.rounded-xl') || hashEl.parentElement;
+    const rect = trigger.getBoundingClientRect();
+
+    const popover = document.createElement('div');
+    popover.id = 'version-popover';
+    popover.className = 'absolute z-50 mt-1 w-72 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden p-4 text-xs shadow-slate-200/50 dark:shadow-black/50 origin-top-left transition-all';
     
-    modal.innerHTML = `
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 transform transition-all scale-100 cursor-default">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">mcat</h3>
-                    <button onclick="document.getElementById('version-modal').remove()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-                
-                <div class="space-y-4">
-                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Commit Hash</p>
-                        <p class="text-sm font-mono text-slate-600 dark:text-slate-300 select-all">${meta.commit}</p>
-                    </div>
+    // Position directly below the trigger
+    popover.style.top = `${rect.bottom + window.scrollY + 4}px`;
+    popover.style.left = `${rect.left + window.scrollX}px`;
 
-                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Build Time</p>
-                        <p class="text-sm font-mono text-slate-600 dark:text-slate-300">${meta.commit_date || 'Unknown'}</p>
-                    </div>
-
-                    ${meta.message ? `
-                    <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Changelog</p>
-                        <p class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">${meta.message}</p>
-                    </div>
-                    ` : ''}
-                </div>
+    popover.innerHTML = `
+        <div class="space-y-3">
+            <div>
+                <p class="font-bold text-slate-400 uppercase tracking-widest mb-0.5 text-[9px]">Commit</p>
+                <p class="font-mono text-slate-600 dark:text-slate-300 select-all break-all">${meta.commit}</p>
             </div>
+            <div>
+                <p class="font-bold text-slate-400 uppercase tracking-widest mb-0.5 text-[9px]">Build Time</p>
+                <p class="text-slate-600 dark:text-slate-300">${meta.commit_date || 'Unknown'}</p>
+            </div>
+            ${meta.message ? `
+            <div>
+                <p class="font-bold text-slate-400 uppercase tracking-widest mb-0.5 text-[9px]">Message</p>
+                <p class="text-slate-600 dark:text-slate-300 leading-relaxed max-h-32 overflow-y-auto scrollbar-thin">${meta.message}</p>
+            </div>
+            ` : ''}
         </div>
     `;
+
+    document.body.appendChild(popover);
+
+    // Add listeners to close
+    window.addEventListener('scroll', closeVersionInfo, { capture: true, once: true });
+    window.addEventListener('resize', closeVersionInfo, { capture: true, once: true });
     
-    document.body.appendChild(modal);
+    // Slight delay to prevent immediate closing if the click event bubbles up
+    setTimeout(() => {
+        document.addEventListener('click', closeVersionInfoOutside);
+    }, 10);
+}
+
+function closeVersionInfo() {
+    const el = document.getElementById('version-popover');
+    if (el) el.remove();
+    cleanupVersionListeners();
+}
+
+function closeVersionInfoOutside(e) {
+    const popover = document.getElementById('version-popover');
+    const hashEl = document.getElementById('commit-hash');
+    // If click is not inside popover and not on the hash element (trigger)
+    if (popover && !popover.contains(e.target) && hashEl && !hashEl.contains(e.target)) {
+        closeVersionInfo();
+    }
+}
+
+function cleanupVersionListeners() {
+    window.removeEventListener('scroll', closeVersionInfo, { capture: true });
+    window.removeEventListener('resize', closeVersionInfo, { capture: true });
+    document.removeEventListener('click', closeVersionInfoOutside);
 }
 
 function showInlineCommitUpdate(oldMeta, newMeta) {
