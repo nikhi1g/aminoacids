@@ -370,35 +370,47 @@ function showVersionInfo(meta) {
 
 
 
-    // Mark trigger as expanded for styling if needed
+    // Wrap existing content to maintain vertical stack if not already wrapped
 
-    trigger.classList.add('expanded');
+    // We look for a wrapper. If the first child is a text node or the div structure matches, we check.
 
-    trigger.style.zIndex = '50';
+    // The current structure is <a> -> [div(mcat), div(hash)].
 
-    trigger.style.position = 'relative'; // Ensure z-index works
+    // We want <a> -> [Wrapper -> [div(mcat), div(hash)]], [Details]
 
+    
 
+    let wrapper = trigger.querySelector('.trigger-content-wrapper');
 
-    // Adjust parent header height to allow growth
+    if (!wrapper) {
 
-    // The header row usually has 'sm:h-16' which limits height. We need to find it.
+        // Create wrapper and move existing children into it
 
-    // Structure: header > div > div > div (trigger is here)
+        wrapper = document.createElement('div');
 
-    // We look for the flex-row container.
+        wrapper.className = 'trigger-content-wrapper flex flex-col justify-center';
 
-    let headerRow = trigger.closest('.sm\\:h-16'); 
+        while (trigger.firstChild) {
 
-    if (headerRow) {
+            wrapper.appendChild(trigger.firstChild);
 
-        headerRow.classList.remove('sm:h-16');
+        }
 
-        headerRow.classList.add('min-h-[4rem]'); // Keep minimum height but allow growth
-
-        headerRow.dataset.wasFixed = 'true';
+        trigger.appendChild(wrapper);
 
     }
+
+
+
+    // Styling for expansion
+
+    trigger.classList.add('expanded', 'flex', 'flex-row', 'items-center', 'gap-3', 'pr-4', 'transition-all', 'duration-300', 'ease-out');
+
+    // Ensure relative positioning for z-index
+
+    trigger.style.position = 'relative';
+
+    trigger.style.zIndex = '50';
 
 
 
@@ -406,19 +418,21 @@ function showVersionInfo(meta) {
 
     details.id = 'version-details';
 
-    details.className = 'mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-xs space-y-1 animate-fade-in text-left';
+    // Horizontal layout, borders, font size
+
+    details.className = 'flex items-center gap-4 text-[10px] pl-3 border-l border-slate-200 dark:border-slate-700 animate-fade-in whitespace-nowrap overflow-hidden';
 
     
 
     details.innerHTML = `
 
-        <div class="font-mono text-slate-600 dark:text-slate-300 select-all break-all">${meta.commit}</div>
+        <div class="font-mono text-slate-600 dark:text-slate-300">${meta.commit}</div>
 
-        <div class="text-slate-600 dark:text-slate-300">${meta.commit_date || 'Unknown'}</div>
+        <div class="text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-800 pl-3 hidden sm:block">${meta.commit_date || 'Unknown'}</div>
 
         ${meta.message ? `
 
-        <div class="text-slate-600 dark:text-slate-300 leading-relaxed max-h-32 overflow-y-auto scrollbar-thin mt-1">${meta.message}</div>
+        <div class="text-slate-400 dark:text-slate-500 italic max-w-[150px] md:max-w-[250px] truncate border-l border-slate-200 dark:border-slate-800 pl-3 hidden md:block" title="${meta.message}">${meta.message}</div>
 
         ` : ''}
 
@@ -426,7 +440,7 @@ function showVersionInfo(meta) {
 
 
 
-    // Prevent navigation if trigger is an <a> tag
+    // Prevent navigation
 
     details.onclick = (e) => {
 
@@ -450,8 +464,6 @@ function showVersionInfo(meta) {
 
     
 
-    // Slight delay to prevent immediate closing
-
     setTimeout(() => {
 
         document.addEventListener('click', closeVersionInfoOutside);
@@ -474,27 +486,13 @@ function closeVersionInfo() {
 
     if (trigger) {
 
-        trigger.classList.remove('expanded');
+        trigger.classList.remove('expanded', 'pr-4');
 
         trigger.style.zIndex = '';
 
         trigger.style.position = '';
 
-        
-
-        // Restore header row height
-
-        let headerRow = trigger.closest('.min-h-\\[4rem\\]'); // Look for the class we added
-
-        if (headerRow && headerRow.dataset.wasFixed === 'true') {
-
-            headerRow.classList.remove('min-h-[4rem]');
-
-            headerRow.classList.add('sm:h-16');
-
-            delete headerRow.dataset.wasFixed;
-
-        }
+        // We keep the wrapper structure as it's harmless and cleaner than unwrapping
 
     }
 
@@ -517,8 +515,6 @@ function closeVersionInfoOutside(e) {
     const trigger = hashEl ? (hashEl.closest('.rounded-xl') || hashEl.parentElement) : null;
 
     
-
-    // If click is not inside the trigger container
 
     if (trigger && !trigger.contains(e.target)) {
 
