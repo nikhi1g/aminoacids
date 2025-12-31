@@ -159,7 +159,7 @@ canvas {
     background-color: #3b82f6;
     transform: scaleX(0);
     transform-origin: bottom right;
-    transition: transform 0.4s cubic-bezier(0.86, 0, 0.07, 1);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .link-grow:hover::after {
