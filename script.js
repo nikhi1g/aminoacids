@@ -355,7 +355,7 @@ function showVersionInfo(meta) {
         <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 transform transition-all scale-100 cursor-default">
             <div class="p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Current Version</h3>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">mcat</h3>
                     <button onclick="document.getElementById('version-modal').remove()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
