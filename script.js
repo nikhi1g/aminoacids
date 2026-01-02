@@ -464,15 +464,39 @@ function showVersionInfo(meta) {
 
 
 
-    // Prevent navigation
+        // Prevent navigation of the parent trigger, but allow internal links
 
-    details.onclick = (e) => {
 
-        e.preventDefault();
 
-        e.stopPropagation();
+        details.onclick = (e) => {
 
-    };
+
+
+            e.stopPropagation();
+
+
+
+            // If the user clicked a link inside the details (e.g. the commit hash), let it proceed
+
+
+
+            if (e.target.closest('a')) {
+
+
+
+                return;
+
+
+
+            }
+
+
+
+            e.preventDefault();
+
+
+
+        };
 
 
 
