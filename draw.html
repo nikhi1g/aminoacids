@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draw - Amino Acid Explorer</title>
+    <link rel="preconnect" href="https://api.github.com" crossorigin>
+    <link rel="dns-prefetch" href="https://api.github.com">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script>
+        // Apply theme immediately to prevent flash
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script src="https://unpkg.com/jsme-editor@latest/jsme.nocache.js"></script>
+    <script type="module" src="ocl-loader.js"></script>
+    <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col min-h-screen">
+
+    <header class="bg-white dark:bg-slate-900 border-b dark:border-slate-800 sticky top-0 z-20 shadow-sm transition-colors transition-transform duration-300">
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col space-y-2 sm:space-y-4 py-2 sm:py-4">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 sm:h-16">
+                    <div class="flex items-center justify-center sm:justify-start w-full sm:w-auto">
+                        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 px-2 py-1.5 sm:px-3 sm:py-2 text-center sm:text-left">
+                            <div class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-800 dark:text-slate-100 text-center sm:text-left">mcat</div>
+                            <div class="mt-0.5 sm:mt-1 flex flex-wrap items-center gap-2 text-[9px] sm:text-[10px] text-slate-500 justify-center sm:justify-start">
+                                <span id="commit-hash">loading...</span>
+
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto">
+                        <nav class="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-8">
+                            <a href="index.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200" title="Home">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                            </a>
+                            <a href="cards.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Show</a>
+                            <a href="learn.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Learn</a>
+                            <a href="recall.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Recall</a>
+                            <a href="draw.html" class="nav-link active py-2 sm:py-5 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Draw</a>
+                            <a href="biomolecules.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Biomolecules</a>
+                        </nav>
+
+                        <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0" title="Toggle Dark/Light Mode">
+                            <svg id="sun-icon" class="hidden dark:block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path>
+                            </svg>
+                            <svg id="moon-icon" class="block dark:hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="pb-1 sm:pb-2 space-y-1 sm:space-y-2">
+    <div class="sm:hidden">
+        <select class="filter-select w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-200" onchange="applyFilter(this.value)">
+            <option value="all">All</option>
+            <option value="nonpolar">Non-polar</option>
+            <option value="polar">Polar</option>
+            <option value="aliphatic">Aliphatic</option>
+            <option value="aromatic">Aromatic</option>
+            <option value="acidic">Acidic</option>
+            <option value="basic">Basic</option>
+            <option value="hydroxyl">Hydroxyl</option>
+            <option value="sulfur">Sulfur</option>
+        </select>
+    </div>
+    <div class="hidden sm:flex flex-wrap gap-2 justify-center">
+        <button onclick="applyFilter('all')" class="filter-btn active px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:opacity-80">All</button>
+        <button onclick="applyFilter('nonpolar')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-gray-400 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-900/30">Non-polar</button>
+        <button onclick="applyFilter('polar')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-cyan-400 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30">Polar</button>
+        <button onclick="applyFilter('aliphatic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-amber-400 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30">Aliphatic</button>
+        <button onclick="applyFilter('aromatic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-purple-400 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30">Aromatic</button>
+        <button onclick="applyFilter('acidic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30">Acidic</button>
+        <button onclick="applyFilter('basic')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-blue-400 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30">Basic</button>
+        <button onclick="applyFilter('hydroxyl')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-teal-400 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30">Hydroxyl</button>
+        <button onclick="applyFilter('sulfur')" class="filter-btn px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border bg-white dark:bg-slate-900 border-yellow-400 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/30">Sulfur</button>
+        <div class="flex items-center space-x-2 ml-4 border-l pl-4 border-slate-300 dark:border-slate-700">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cols</span>
+            <button onclick="changeColumns(-1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-bold transition-colors shadow-sm text-xs">-</button>
+            <span id="col-display" class="text-xs font-bold text-slate-600 dark:text-slate-400 w-4 text-center">4</span>
+            <button onclick="changeColumns(1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 font-bold transition-colors shadow-sm text-xs">+</button>
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold">Draw</h2>
+                    <button id="new-target-btn" class="px-3 py-2 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-semibold text-sm hover:scale-105 transition-transform inline-flex items-center gap-2">
+                        Next
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M5 12h14"></path>
+                            <path d="m13 5 6 7-6 7"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="jsme-container" class="jsme-container"></div>
+                <div class="mt-4 flex items-center gap-3">
+                    <button id="check-answer-btn" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">Check Answer</button>
+                    <button id="away-btn" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 font-semibold">Away</button>
+                    <button id="clear-drawing-btn" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 font-semibold">Clear</button>
+                </div>
+                <p class="mt-2 text-xs text-slate-400">having difficulties drawing? try pressing 'clear' in between drawings</p>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg p-6 space-y-6">
+                <div>
+                    <h3 id="draw-target-name" class="text-3xl font-black text-slate-800 dark:text-white">Loading...</h3>
+                    <div id="draw-attempts" class="text-sm text-slate-500 flex flex-wrap items-center gap-3">
+                        <span class="text-slate-500">Seen <span id="draw-attempts-total">0</span></span>
+                        <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                            <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+                            <span id="draw-attempts-correct">0</span> correct
+                        </span>
+                        <span class="inline-flex items-center gap-1 text-red-500 font-semibold">
+                            <span class="inline-block h-2 w-2 rounded-full bg-red-500"></span>
+                            <span id="draw-attempts-wrong">0</span> incorrect
+                        </span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs uppercase tracking-widest text-slate-400">Your SMILES</p>
+                        <p id="draw-user-smiles" class="text-xs font-mono text-slate-600 dark:text-slate-300 break-all">-</p>
+                    </div>
+                    <div id="draw-expected-smiles-wrapper" class="hidden bg-slate-50 dark:bg-slate-800/40 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs uppercase tracking-widest text-slate-400">Expected SMILES</p>
+                        <textarea id="draw-expected-smiles" rows="3" class="mt-2 w-full text-xs font-mono text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-1 min-h-[60px] resize-none" spellcheck="false" placeholder="-"></textarea>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div id="draw-user-structure-wrapper" class="hidden bg-slate-50/60 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+                        <p class="text-xs uppercase tracking-widest text-slate-400 mb-2">Your Structure</p>
+                        <div class="flex items-center justify-center min-h-[220px]">
+                            <canvas id="draw-user-canvas" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                    <div id="draw-expected-wrapper" class="hidden bg-slate-50/60 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+                        <p class="text-xs uppercase tracking-widest text-slate-400 mb-2">Expected Structure</p>
+                        <div class="flex items-center justify-center min-h-[220px]">
+                            <canvas id="draw-expected-canvas" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div id="draw-status-badge" class="h-9 w-9 rounded-full border border-slate-200 dark:border-slate-700 text-slate-400 flex items-center justify-center transition-colors">
+                        <svg id="draw-status-icon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path id="draw-status-path" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div id="draw-feedback" class="text-lg font-bold text-slate-600">Draw the structure, then check your answer.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-10 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+                <h2 class="text-lg font-bold">Draw Progress</h2>
+                <p class="text-xs text-slate-500">Mastered after 3 consecutive correct draws.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-slate-50 dark:bg-slate-900/60 text-slate-500">
+                        <tr>
+                            <th class="text-left font-semibold px-6 py-3">Amino Acid</th>
+                            <th class="text-left font-semibold px-6 py-3">Last Draw</th>
+                            <th class="text-left font-semibold px-6 py-3">Streak</th>
+                            <th class="text-left font-semibold px-6 py-3">Mastered</th>
+                        </tr>
+                    </thead>
+                    <tbody id="draw-progress-table" class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+        <footer class="mt-12 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <p class="text-xs text-slate-500">colored drawings powered by <a href="https://github.com/reymond-group/smilesDrawer" class="underline underline-offset-2 hover:text-slate-700 dark:hover:text-slate-200" target="_blank" rel="noopener noreferrer">smiles</a>; drawing software from <a href="https://jsme-editor.github.io/" class="underline underline-offset-2 hover:text-slate-700 dark:hover:text-slate-200" target="_blank" rel="noopener noreferrer">JSME</a></p>
+        </div>
+    </footer>
+
+    
+
+    
+
+    <script src="amino-data.js"></script>
+    <script src="script.js?v=116866d573c00ab89e92afe5c1df2e26746f0acd"></script>
+    <script src="amino-acid-recognizer.js"></script>
+    <script>
+        let jsmeApplet = null;
+        let drawTarget = null;
+        let drawTargetSmiles = '';
+        let drawAttemptState = 'unanswered';
+        let drawPromptStartMs = Date.now();
+        let drawTimerPaused = false;
+        let drawPauseStartMs = null;
+        let drawPausedTotalMs = 0;
+        let pendingDrawTargetAbbr3 = null;
+        let chemistryReady = false;
+        let aminoAcidIndex = null;
+        let aminoAcidIndexNoStereo = null;
+        let lastUserSmiles = '';
+        const DRAW_TEMPLATE_SMILES = 'NCC(=O)O';
+        const DRAW_PROGRESS_STORAGE_KEY = 'aa_draw_progress_v1';
+        const DRAW_MASTERY_STREAK = 3;
+        const DRAW_EASE_START = 2.5;
+        const DRAW_EASE_MIN = 1.3;
+        const DRAW_EASE_MAX = 3.0;
+        const DRAW_LEARNING_STEPS_MS = [
+            60000,
+            5 * 60000,
+            20 * 60000
+        ];
+        const DRAW_GRADUATING_INTERVAL_MS = 24 * 60 * 60000;
+        const DRAW_EASY_INTERVAL_MS = 3 * 24 * 60 * 60000;
+        const DRAW_REVIEW_MIN_INTERVAL_MS = 10 * 60000;
+        const DRAW_REVIEW_MAX_INTERVAL_MS = 365 * 24 * 60 * 60000;
+        const DRAW_FAST_MS = 25000;
+        const DRAW_OK_MS = 60000;
+        const DRAW_DEFAULT_ITEM = {
+            correctStreak: 0,
+            totalCorrect: 0,
+            totalWrong: 0,
+            lastSeen: null,
+            lastSmiles: '',
+            mastered: false,
+            dueAtMs: 0,
+            intervalMs: 0,
+            ease: DRAW_EASE_START,
+            learningStep: 0,
+            reps: 0,
+            lapses: 0,
+            lastGrade: null,
+            lastTimeMs: null,
+            avgTimeMs: null
+        };
+
+        function isOCLReady() {
+            return !!(window.OCL && OCL.Molecule && typeof OCL.Molecule.fromMolfile === 'function');
+        }
+
+        function setChemistryReady(ready) {
+            chemistryReady = ready;
+            const btn = document.getElementById('check-answer-btn');
+            if (!btn) return;
+            btn.disabled = !ready;
+            btn.setAttribute('aria-disabled', String(!ready));
+            if (ready) {
+                btn.classList.remove('opacity-60', 'cursor-not-allowed');
+                btn.removeAttribute('title');
+            } else {
+                btn.classList.add('opacity-60', 'cursor-not-allowed');
+                btn.setAttribute('title', 'Chemistry engine is loading');
+            }
+        }
+
+        function buildAminoAcidIndex() {
+            if (!isOCLReady() || !Array.isArray(aminoAcids)) return;
+            const index = new Map();
+            const indexNoStereo = new Map();
+            for (const aa of aminoAcids) {
+                if (!aa || !aa.smiles) continue;
+                try {
+                    const mol = OCL.Molecule.fromSmiles(aa.smiles);
+                    normalizeMolecule(mol);
+                    const id = getIdCode(mol);
+                    if (id && !index.has(id)) {
+                        index.set(id, aa);
+                    }
+                    const noStereo = getIdCodeNoStereo(mol);
+                    if (noStereo && !indexNoStereo.has(noStereo)) {
+                        indexNoStereo.set(noStereo, aa);
+                    }
+                } catch (err) {
+                    continue;
+                }
+            }
+            aminoAcidIndex = index;
+            aminoAcidIndexNoStereo = indexNoStereo;
+        }
+
+        function ensureChemistryReady() {
+            if (chemistryReady) return true;
+            if (!isOCLReady()) return false;
+            buildAminoAcidIndex();
+            setChemistryReady(true);
+            return true;
+        }
+
+        function loadDrawProgress() {
+            try {
+                const raw = localStorage.getItem(DRAW_PROGRESS_STORAGE_KEY);
+                if (!raw) return { version: 1, items: {} };
+                const parsed = JSON.parse(raw);
+                if (!parsed || typeof parsed !== 'object') return { version: 1, items: {} };
+                if (!parsed.items || typeof parsed.items !== 'object') parsed.items = {};
+                return parsed;
+            } catch (err) {
+                return { version: 1, items: {} };
+            }
+        }
+
+        function saveDrawProgress(progress) {
+            localStorage.setItem(DRAW_PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+        }
+
+        function getDrawProgressItem(progress, abbr3) {
+            if (!progress.items[abbr3]) {
+                progress.items[abbr3] = { ...DRAW_DEFAULT_ITEM };
+            } else {
+                progress.items[abbr3] = { ...DRAW_DEFAULT_ITEM, ...progress.items[abbr3] };
+            }
+            return progress.items[abbr3];
+        }
+
+        function updateDrawAttemptSummary() {
+            const totalEl = document.getElementById('draw-attempts-total');
+            const correctEl = document.getElementById('draw-attempts-correct');
+            const wrongEl = document.getElementById('draw-attempts-wrong');
+            if (!totalEl || !correctEl || !wrongEl) return;
+            if (!drawTarget || !drawTarget.abbr3) {
+                totalEl.textContent = '0';
+                correctEl.textContent = '0';
+                wrongEl.textContent = '0';
+                return;
+            }
+            const progress = loadDrawProgress();
+            const item = getDrawProgressItem(progress, drawTarget.abbr3);
+            const total = (item.totalCorrect || 0) + (item.totalWrong || 0);
+            totalEl.textContent = String(total);
+            correctEl.textContent = String(item.totalCorrect || 0);
+            wrongEl.textContent = String(item.totalWrong || 0);
+        }
+
+        function updateAwayButton() {
+            const btn = document.getElementById('away-btn');
+            if (!btn) return;
+            if (drawTimerPaused) {
+                btn.textContent = 'Resume';
+                btn.classList.add('bg-amber-50', 'text-amber-700', 'border-amber-200');
+                btn.classList.remove('text-slate-600', 'border-slate-200', 'hover:bg-slate-50');
+            } else {
+                btn.textContent = 'Away';
+                btn.classList.remove('bg-amber-50', 'text-amber-700', 'border-amber-200');
+                btn.classList.add('text-slate-600', 'border-slate-200', 'hover:bg-slate-50');
+            }
+        }
+
+        function resetDrawTimer() {
+            drawPromptStartMs = Date.now();
+            drawPausedTotalMs = 0;
+            drawPauseStartMs = null;
+            drawTimerPaused = false;
+            updateAwayButton();
+        }
+
+        function pauseDrawTimer() {
+            if (drawTimerPaused) return;
+            drawTimerPaused = true;
+            drawPauseStartMs = Date.now();
+            updateAwayButton();
+        }
+
+        function resumeDrawTimer() {
+            if (!drawTimerPaused) return;
+            drawTimerPaused = false;
+            if (drawPauseStartMs) {
+                drawPausedTotalMs += Date.now() - drawPauseStartMs;
+            }
+            drawPauseStartMs = null;
+            updateAwayButton();
+        }
+
+        function toggleDrawTimer() {
+            if (drawTimerPaused) {
+                resumeDrawTimer();
+            } else {
+                pauseDrawTimer();
+            }
+        }
+
+        function getElapsedMs() {
+            const activePause = drawTimerPaused && drawPauseStartMs
+                ? Date.now() - drawPauseStartMs
+                : 0;
+            const elapsed = Date.now() - drawPromptStartMs - drawPausedTotalMs - activePause;
+            return Math.max(0, elapsed);
+        }
+
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        function formatDuration(ms) {
+            const seconds = Math.max(1, Math.round(ms / 1000));
+            if (seconds < 60) return `${seconds}s`;
+            const minutes = Math.round(seconds / 60);
+            if (minutes < 60) return `${minutes}m`;
+            const hours = Math.round(minutes / 60);
+            if (hours < 48) return `${hours}h`;
+            const days = Math.round(hours / 24);
+            return `${days}d`;
+        }
+
+        function formatDueLabel(item, nowMs) {
+            const dueAt = typeof item.dueAtMs === 'number' ? item.dueAtMs : 0;
+            if (!dueAt || dueAt <= nowMs) return 'Due: now';
+            return `Due in: ${formatDuration(dueAt - nowMs)}`;
+        }
+
+        function inferDrawGrade(isCorrect, elapsedMs) {
+            if (!isCorrect) return 0;
+            if (elapsedMs <= DRAW_FAST_MS) return 3;
+            if (elapsedMs <= DRAW_OK_MS) return 2;
+            return 1;
+        }
+
+        function scheduleNext(item, grade, nowMs) {
+            item.reps = (item.reps ?? 0) + 1;
+            item.lastGrade = grade;
+
+            if (typeof item.lastTimeMs === 'number') {
+                const alpha = 0.2;
+                item.avgTimeMs = (typeof item.avgTimeMs === 'number')
+                    ? Math.round(alpha * item.lastTimeMs + (1 - alpha) * item.avgTimeMs)
+                    : item.lastTimeMs;
+            }
+
+            if (typeof item.ease !== 'number') item.ease = DRAW_EASE_START;
+            item.ease = clamp(item.ease, DRAW_EASE_MIN, DRAW_EASE_MAX);
+            if (typeof item.intervalMs !== 'number') item.intervalMs = 0;
+
+            const inReview = item.learningStep == null;
+
+            if (grade === 0) {
+                item.lapses = (item.lapses ?? 0) + 1;
+                item.learningStep = 0;
+                item.intervalMs = DRAW_LEARNING_STEPS_MS[0];
+                item.dueAtMs = nowMs + item.intervalMs;
+                if (inReview) item.ease = clamp(item.ease - 0.2, DRAW_EASE_MIN, DRAW_EASE_MAX);
+                return;
+            }
+
+            if (item.learningStep != null) {
+                if (grade === 3) {
+                    item.learningStep = null;
+                    item.intervalMs = DRAW_EASY_INTERVAL_MS;
+                    item.dueAtMs = nowMs + item.intervalMs;
+                    return;
+                }
+
+                if (grade === 2) {
+                    item.learningStep += 1;
+                    if (item.learningStep >= DRAW_LEARNING_STEPS_MS.length) {
+                        item.learningStep = null;
+                        item.intervalMs = DRAW_GRADUATING_INTERVAL_MS;
+                        item.dueAtMs = nowMs + item.intervalMs;
+                    } else {
+                        item.intervalMs = DRAW_LEARNING_STEPS_MS[item.learningStep];
+                        item.dueAtMs = nowMs + item.intervalMs;
+                    }
+                    return;
+                }
+
+                item.intervalMs = DRAW_LEARNING_STEPS_MS[item.learningStep];
+                item.dueAtMs = nowMs + item.intervalMs;
+                return;
+            }
+
+            if (grade === 1) item.ease = clamp(item.ease - 0.15, DRAW_EASE_MIN, DRAW_EASE_MAX);
+            if (grade === 3) item.ease = clamp(item.ease + 0.15, DRAW_EASE_MIN, DRAW_EASE_MAX);
+
+            const factor = grade === 1 ? 0.8 : grade === 2 ? 1.0 : 1.3;
+            const next = item.intervalMs * item.ease * factor;
+            item.intervalMs = clamp(Math.round(next), DRAW_REVIEW_MIN_INTERVAL_MS, DRAW_REVIEW_MAX_INTERVAL_MS);
+            item.dueAtMs = nowMs + item.intervalMs;
+        }
+
+        function setDrawStatus(state) {
+            const badge = document.getElementById('draw-status-badge');
+            const path = document.getElementById('draw-status-path');
+            if (!badge || !path) return;
+            const base = 'h-9 w-9 rounded-full border flex items-center justify-center transition-colors';
+            let borderClass = 'border-slate-200 dark:border-slate-700 text-slate-400';
+            let iconPath = 'M5 13l4 4L19 7';
+            if (state === 'correct') {
+                borderClass = 'border-emerald-500 dark:border-emerald-400 text-emerald-600';
+                iconPath = 'M5 13l4 4L19 7';
+            } else if (state === 'incorrect') {
+                borderClass = 'border-red-300 dark:border-red-500/50 text-red-500';
+                iconPath = 'M6 6l12 12M18 6l-12 12';
+            } else if (state === 'warning') {
+                borderClass = 'border-amber-400 dark:border-amber-400 text-amber-500';
+                iconPath = 'M12 7v6M12 17h.01';
+            }
+            badge.className = `${base} ${borderClass}`;
+            path.setAttribute('d', iconPath);
+        }
+
+        function applyLockedAttemptMessage() {
+            const feedback = document.getElementById('draw-feedback');
+            if (!feedback) return;
+            if (drawAttemptState === 'correct') {
+                feedback.textContent = 'Already marked correct. Click Next for a new prompt.';
+                feedback.className = 'text-lg font-bold text-emerald-600';
+                setDrawStatus('correct');
+            } else if (drawAttemptState === 'warning') {
+                feedback.textContent = 'Already marked with a stereochemistry warning. Click Next for a new prompt.';
+                feedback.className = 'text-lg font-bold text-amber-600';
+                setDrawStatus('warning');
+            } else if (drawAttemptState === 'incorrect') {
+                feedback.textContent = 'Correct! Click Next for a new prompt.';
+                feedback.className = 'text-lg font-bold text-slate-500';
+                setDrawStatus('neutral');
+            }
+        }
+
+        function formatDrawSmiles(smiles) {
+            if (!smiles) return '';
+            return smiles
+                .replace(/\[O\]\[H\]/g, '[OH]')
+                .replace(/\[H\]\[O\]/g, '[OH]');
+        }
+
+        function normalizeSmiles(smiles) {
+            if (!smiles) return '';
+            return smiles
+                .replace(/\[O\]\[H\]/g, '[OH]')
+                .replace(/\[H\]\[O\]/g, '[OH]')
+                .replace(/\[NH3\+\]/g, 'N')
+                .replace(/\[NH2\+\]/g, 'N')
+                .replace(/\[NH\+\]/g, 'N')
+                .replace(/\[O-\]/g, 'O')
+                .replace(/\[S-\]/g, 'S')
+                .replace(/\+/g, '')
+                .replace(/\-/g, '')
+                .trim();
+        }
+
+        function parseSmilesToMol(smiles) {
+            if (!window.OCL || !smiles) return null;
+            const normalized = normalizeSmiles(smiles);
+            if (!normalized) return null;
+            try {
+                const mol = OCL.Molecule.fromSmiles(normalized);
+                normalizeMolecule(mol);
+                return mol;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function parseMolfileToMol(molfile) {
+            if (!window.OCL || !molfile) return null;
+            try {
+                const mol = OCL.Molecule.fromMolfile(molfile);
+                normalizeMolecule(mol);
+                return mol;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function recordDrawProgress(aa, isCorrect, smiles, elapsedMs) {
+            if (!aa || !aa.abbr3) return;
+            const progress = loadDrawProgress();
+            const item = getDrawProgressItem(progress, aa.abbr3);
+            const normalizedSmiles = normalizeSmiles(smiles);
+            if (normalizedSmiles) {
+                item.lastSmiles = normalizedSmiles;
+            }
+            const nowMs = Date.now();
+            const cappedElapsedMs = typeof elapsedMs === 'number'
+                ? Math.min(elapsedMs, 10 * 60 * 1000)
+                : null;
+            item.lastSeen = new Date(nowMs).toISOString();
+            if (typeof cappedElapsedMs === 'number') {
+                item.lastTimeMs = cappedElapsedMs;
+            }
+            if (isCorrect) {
+                item.correctStreak += 1;
+                item.totalCorrect += 1;
+                if (item.correctStreak >= DRAW_MASTERY_STREAK) {
+                    item.mastered = true;
+                }
+            } else {
+                item.totalWrong += 1;
+                item.correctStreak = 0;
+            }
+            const grade = inferDrawGrade(isCorrect, cappedElapsedMs ?? DRAW_OK_MS + 1);
+            scheduleNext(item, grade, nowMs);
+            saveDrawProgress(progress);
+            renderDrawProgress();
+            updateDrawAttemptSummary();
+        }
+
+        function renderDrawProgress() {
+            const tbody = document.getElementById('draw-progress-table');
+            if (!tbody || !Array.isArray(aminoAcids)) return;
+            const progress = loadDrawProgress();
+            const nowMs = Date.now();
+            const rows = aminoAcids.map((aa) => {
+                const item = getDrawProgressItem(progress, aa.abbr3);
+                const canvasId = `draw-progress-canvas-${aa.abbr3.toLowerCase()}`;
+                const streakLabel = `${item.correctStreak}/${DRAW_MASTERY_STREAK}`;
+                const masteredLabel = item.mastered ? 'Yes' : `No (${Math.max(0, DRAW_MASTERY_STREAK - item.correctStreak)} left)`;
+                const masteredClass = item.mastered ? 'text-emerald-600' : 'text-slate-500';
+                const hasSmiles = Boolean(item.lastSmiles);
+                const dueLabel = formatDueLabel(item, nowMs);
+                const easeValue = typeof item.ease === 'number' ? item.ease : DRAW_EASE_START;
+                const metaLabel = `<div class="mt-2 text-[10px] text-slate-400 flex flex-wrap gap-2">
+                        <span>${dueLabel}</span>
+                        <span>Ease: ${easeValue.toFixed(2)}</span>
+                    </div>`;
+                const structureCell = hasSmiles
+                    ? `<div class="min-w-[140px] min-h-[100px] max-w-[200px]">
+                            <div class="bg-slate-50/60 dark:bg-slate-800/30 rounded-lg border border-slate-100 dark:border-slate-800 flex items-center justify-center p-2">
+                                <canvas id="${canvasId}" class="w-full h-full"></canvas>
+                            </div>
+                            ${metaLabel}
+                       </div>`
+                    : `<div class="text-xs text-slate-400">
+                            <div>No attempts yet</div>
+                            ${metaLabel}
+                       </div>`;
+                return {
+                    aa,
+                    item,
+                    canvasId,
+                    masteredClass,
+                    masteredLabel,
+                    streakLabel,
+                    structureCell
+                };
+            });
+
+            tbody.innerHTML = rows.map(({ aa, structureCell, streakLabel, masteredLabel, masteredClass }) => `
+                <tr>
+                    <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100">${aa.name}</td>
+                    <td class="px-6 py-4">${structureCell}</td>
+                    <td class="px-6 py-4 text-slate-500">${streakLabel}</td>
+                    <td class="px-6 py-4 ${masteredClass}">${masteredLabel}</td>
+                </tr>
+            `).join('');
+
+            requestAnimationFrame(() => {
+                drawProgressStructures(rows);
+            });
+        }
+
+        function drawProgressStructures(rows) {
+            if (!rows || !rows.length) return;
+            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+            rows.forEach(({ item, canvasId }) => {
+                if (!item.lastSmiles) return;
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: 200, height: 140, bondThickness: 1.4 });
+                try {
+                    const displaySmiles = formatDrawSmiles(item.lastSmiles);
+                    smilesDrawer.draw(displaySmiles, `#${canvasId}`, isDarkMode ? 'dark' : 'light');
+                } catch (err) {
+                    // skip draw failures
+                }
+            });
+        }
+
+        function setExpectedSmiles(value) {
+            const input = document.getElementById('draw-expected-smiles');
+            if (!input) return;
+            input.value = value || '';
+        }
+
+        function hideExpectedSmiles() {
+            const wrapper = document.getElementById('draw-expected-smiles-wrapper');
+            if (wrapper) wrapper.classList.add('hidden');
+        }
+
+        function showExpectedSmiles() {
+            const wrapper = document.getElementById('draw-expected-smiles-wrapper');
+            if (wrapper) wrapper.classList.remove('hidden');
+        }
+
+        function getExpectedSmiles() {
+            const input = document.getElementById('draw-expected-smiles');
+            if (input && typeof input.value === 'string') {
+                const value = input.value.trim();
+                if (value) return value;
+            }
+            return drawTargetSmiles || drawTarget?.smiles || '';
+        }
+
+        function jsmeOnLoad() {
+            jsmeApplet = new JSApplet.JSME("jsme-container", "100%", "100%");
+            applyTemplateStructure();
+            if (drawTarget && !document.getElementById('draw-expected-wrapper').classList.contains('hidden')) {
+                updateExpectedStructure();
+            }
+        }
+
+        function setJSMEStructureFromSmiles(smiles) {
+            if (!jsmeApplet || !smiles) return false;
+            const directMethods = [
+                'readSmiles',
+                'readSMILES',
+                'setSmiles',
+                'setSMILES',
+                'readGenericMolecule',
+                'readMolecule',
+                'setMolecule',
+                'loadSmiles',
+                'loadSMILES'
+            ];
+            for (const method of directMethods) {
+                if (typeof jsmeApplet[method] === 'function') {
+                    try {
+                        jsmeApplet[method](smiles);
+                        return true;
+                    } catch (err) {
+                        continue;
+                    }
+                }
+            }
+            if (window.OCL && typeof OCL.Molecule.fromSmiles === 'function') {
+                try {
+                    const molfile = OCL.Molecule.fromSmiles(smiles).toMolfile();
+                    const molMethods = ['readMolFile', 'readMolfile', 'setMolFile', 'setMolfile', 'readMol'];
+                    for (const method of molMethods) {
+                        if (typeof jsmeApplet[method] === 'function') {
+                            jsmeApplet[method](molfile);
+                            return true;
+                        }
+                    }
+                } catch (err) {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        function getJSMEValue(methods, argsList = [[]]) {
+            if (!jsmeApplet) return '';
+            for (const method of methods) {
+                if (typeof jsmeApplet[method] === 'function') {
+                    for (const args of argsList) {
+                        try {
+                            const value = jsmeApplet[method](...args);
+                            if (typeof value === 'string' && value.trim()) {
+                                return value.trim();
+                            }
+                        } catch (err) {
+                            continue;
+                        }
+                    }
+                }
+            }
+            return '';
+        }
+
+        function getJSMEExport() {
+            const molfile = getJSMEValue(
+                [
+                    'molFile',
+                    'molfile',
+                    'getMolFile',
+                    'getMolfile',
+                    'getMolfileV3',
+                    'getMolfileV2',
+                    'getMolfileV2000',
+                    'getMolfileV3000'
+                ],
+                [[], [false], [true]]
+            );
+            const smiles = getJSMEValue(
+                ['smiles', 'SMILES', 'getSmiles', 'getSMILES'],
+                [[], [true], [false]]
+            );
+            return { molfile, smiles };
+        }
+
+        function cloneMolecule(mol) {
+            if (!mol) return null;
+            if (typeof mol.getCompactCopy === 'function') return mol.getCompactCopy();
+            if (typeof mol.getCopy === 'function') return mol.getCopy();
+            if (typeof mol.getIDCode === 'function' && window.OCL && typeof OCL.Molecule.fromIDCode === 'function') {
+                try {
+                    return OCL.Molecule.fromIDCode(mol.getIDCode());
+                } catch (err) {
+                    return mol;
+                }
+            }
+            return mol;
+        }
+
+        function normalizeMolecule(mol) {
+            if (!mol) return null;
+            if (typeof mol.removeExplicitHydrogens === 'function') {
+                try {
+                    mol.removeExplicitHydrogens();
+                } catch (err) {
+                    // ignore normalization failure
+                }
+            }
+            return mol;
+        }
+
+        function getIdCode(mol) {
+            if (!mol || typeof mol.getIDCode !== 'function') return null;
+            try {
+                return mol.getIDCode();
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function getIdCodeNoStereo(mol) {
+            const copy = cloneMolecule(mol);
+            if (!copy) return null;
+            if (typeof copy.stripStereoInformation === 'function') {
+                try {
+                    copy.stripStereoInformation();
+                } catch (err) {
+                    return null;
+                }
+            }
+            return getIdCode(copy);
+        }
+
+        function getDisplaySmiles(mol, fallback) {
+            if (mol && typeof mol.toSmiles === 'function') {
+                try {
+                    const value = mol.toSmiles();
+                    if (value) return value;
+                } catch (err) {
+                    return fallback || '';
+                }
+            }
+            return fallback || '';
+        }
+
+        function identifyAminoAcid(mol) {
+            if (!mol || !aminoAcidIndex) return null;
+            const id = getIdCode(mol);
+            if (id && aminoAcidIndex.has(id)) {
+                return { aminoAcid: aminoAcidIndex.get(id), match: 'exact' };
+            }
+            const idNoStereo = getIdCodeNoStereo(mol);
+            if (idNoStereo && aminoAcidIndexNoStereo && aminoAcidIndexNoStereo.has(idNoStereo)) {
+                return { aminoAcid: aminoAcidIndexNoStereo.get(idNoStereo), match: 'nostereo' };
+            }
+            return null;
+        }
+
+        function parseUserMolecule() {
+            const exportData = getJSMEExport();
+            const hasMolecule = typeof jsmeApplet?.hasMolecule === 'function' ? jsmeApplet.hasMolecule() : null;
+            const hasSmiles = Boolean(exportData.smiles);
+            let display = exportData.smiles || '';
+
+            if (!exportData.molfile && !hasSmiles) {
+                if (hasMolecule) {
+                    return { mol: null, display: 'Structure detected.', reason: 'molfile' };
+                }
+                return { mol: null, display: 'No structure drawn.', reason: 'empty' };
+            }
+            if (!window.OCL) {
+                return { mol: null, display: display || 'Structure detected.', reason: 'ocl' };
+            }
+            let mol = null;
+            if (hasSmiles) {
+                mol = parseSmilesToMol(exportData.smiles);
+            }
+            if (!mol && exportData.molfile) {
+                mol = parseMolfileToMol(exportData.molfile);
+            }
+            if (!mol) {
+                return { mol: null, display: display || 'Structure detected.', reason: 'parse' };
+            }
+            display = getDisplaySmiles(mol, display);
+            return { mol, display, reason: 'ok' };
+        }
+
+        function parseExpectedMolecule(smiles) {
+            return parseSmilesToMol(smiles);
+        }
+
+        function applyTemplateStructure() {
+            if (!jsmeApplet) return;
+            const loaded = setJSMEStructureFromSmiles(DRAW_TEMPLATE_SMILES);
+            if (!loaded) {
+                jsmeApplet.reset();
+            }
+        }
+
+        function weightedPick(candidates) {
+            if (!candidates.length) return null;
+            let total = 0;
+            const weights = candidates.map((entry) => {
+                const item = entry.item || {};
+                const timeWeight = typeof item.avgTimeMs === 'number' ? item.avgTimeMs / 60000 : 0;
+                const weight = 1 + (item.lapses || 0) + (item.totalWrong || 0) + timeWeight;
+                total += weight;
+                return { entry, weight };
+            });
+            let roll = Math.random() * total;
+            for (const { entry, weight } of weights) {
+                if (roll <= weight) return entry;
+                roll -= weight;
+            }
+            return weights[weights.length - 1].entry;
+        }
+
+        function findAminoAcidByParam(param) {
+            if (!param || !Array.isArray(aminoAcids)) return null;
+            const key = param.trim().toLowerCase();
+            if (!key) return null;
+            let match = aminoAcids.find((aa) => aa.abbr3 && aa.abbr3.toLowerCase() === key);
+            if (match) return match;
+            match = aminoAcids.find((aa) => aa.name && aa.name.toLowerCase() === key);
+            return match || null;
+        }
+
+        function setPendingDrawTargetFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const raw = params.get('aa');
+            const target = findAminoAcidByParam(raw);
+            if (target) {
+                pendingDrawTargetAbbr3 = target.abbr3;
+            }
+        }
+
+        function applyDrawTarget(target) {
+            drawTarget = target;
+            drawTargetSmiles = formatDrawSmiles(drawTarget.smiles);
+            document.getElementById('draw-target-name').textContent = drawTarget.name;
+            document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
+            document.getElementById('draw-user-smiles').textContent = '-';
+            drawAttemptState = 'unanswered';
+            setDrawStatus('neutral');
+            updateDrawAttemptSummary();
+            setExpectedSmiles(drawTargetSmiles);
+            hideExpectedSmiles();
+            document.getElementById('draw-expected-wrapper').classList.add('hidden');
+            document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
+            lastUserSmiles = '';
+            resetDrawTimer();
+            if (jsmeApplet) {
+                jsmeApplet.reset();
+                applyTemplateStructure();
+            }
+        }
+
+        function selectNextDrawTarget(filtered, nowMs, currentAbbr3) {
+            const progress = loadDrawProgress();
+            const items = filtered.map((aa) => {
+                const item = getDrawProgressItem(progress, aa.abbr3);
+                const dueAt = typeof item.dueAtMs === 'number' ? item.dueAtMs : 0;
+                return { aa, item, dueAt };
+            });
+            const dueItems = items.filter((entry) => (entry.dueAt || 0) <= nowMs);
+            let candidatePool = [];
+            let selected = null;
+
+            if (dueItems.length) {
+                const sortedDue = [...dueItems].sort((a, b) => (a.dueAt || 0) - (b.dueAt || 0));
+                candidatePool = sortedDue;
+                const top = sortedDue.slice(0, Math.min(5, sortedDue.length));
+                selected = weightedPick(top) || sortedDue[0];
+            } else {
+                const sortedItems = [...items].sort((a, b) => (a.dueAt || 0) - (b.dueAt || 0));
+                candidatePool = sortedItems;
+                selected = sortedItems[0];
+            }
+
+            if (selected && currentAbbr3 && selected.aa.abbr3 === currentAbbr3 && candidatePool.length > 1) {
+                const fallback = candidatePool.find((entry) => entry.aa.abbr3 !== currentAbbr3);
+                if (fallback) selected = fallback;
+            }
+            return selected;
+        }
+
+        function pickNewTarget() {
+            if (pendingDrawTargetAbbr3) {
+                const requested = aminoAcids.find((aa) => aa.abbr3 === pendingDrawTargetAbbr3);
+                if (requested) {
+                    const matchesFilter = currentFilter === 'all' || (requested.tags && requested.tags.includes(currentFilter));
+                    if (!matchesFilter && currentFilter !== 'all') {
+                        applyFilter('all');
+                        return;
+                    }
+                    pendingDrawTargetAbbr3 = null;
+                    applyDrawTarget(requested);
+                    return;
+                }
+                pendingDrawTargetAbbr3 = null;
+            }
+            const filtered = getFilteredAminoAcids();
+            if (filtered.length === 0) {
+                drawTarget = null;
+                drawTargetSmiles = '';
+                drawAttemptState = 'unanswered';
+                setDrawStatus('neutral');
+                updateDrawAttemptSummary();
+                resetDrawTimer();
+                document.getElementById('draw-target-name').textContent = 'No Match';
+                document.getElementById('draw-feedback').textContent = 'No amino acids match this filter.';
+                document.getElementById('draw-user-smiles').textContent = '-';
+                setExpectedSmiles('');
+                hideExpectedSmiles();
+                document.getElementById('draw-expected-wrapper').classList.add('hidden');
+                document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
+                lastUserSmiles = '';
+                return;
+            }
+            const nowMs = Date.now();
+            const selection = selectNextDrawTarget(filtered, nowMs, drawTarget?.abbr3 || null);
+            const nextTarget = selection ? selection.aa : filtered[Math.floor(Math.random() * filtered.length)];
+            applyDrawTarget(nextTarget);
+        }
+
+        function updateExpectedStructure() {
+            const expectedSmiles = getExpectedSmiles();
+            if (!expectedSmiles) return;
+            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+            const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: 600, height: 420, bondThickness: 2.6 });
+            smilesDrawer.draw(expectedSmiles, '#draw-expected-canvas', isDarkMode ? 'dark' : 'light');
+        }
+
+        function updateUserStructure(smiles) {
+            if (!smiles) return;
+            const SmiDrawer = window.SmiDrawer || SmilesDrawer.SmiDrawer;
+            const smilesDrawer = new SmiDrawer({ ...mainStrategy, width: 600, height: 420, bondThickness: 2.6 });
+            smilesDrawer.draw(smiles, '#draw-user-canvas', isDarkMode ? 'dark' : 'light');
+        }
+
+        function revealExpectedStructure() {
+            const wrapper = document.getElementById('draw-expected-wrapper');
+            if (!wrapper) return;
+            wrapper.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                updateExpectedStructure();
+            });
+        }
+
+        function revealUserStructure(smiles) {
+            const wrapper = document.getElementById('draw-user-structure-wrapper');
+            if (!wrapper) return;
+            if (!smiles) {
+                wrapper.classList.add('hidden');
+                return;
+            }
+            lastUserSmiles = smiles;
+            wrapper.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                updateUserStructure(smiles);
+            });
+        }
+
+        function checkAnswer() {
+            if (!drawTarget || !jsmeApplet) return;
+            const expectedSmiles = getExpectedSmiles();
+            const feedback = document.getElementById('draw-feedback');
+            if (!ensureChemistryReady()) {
+                feedback.textContent = 'Chemistry engine is still loading. Try again in a moment.';
+                feedback.className = 'text-lg font-bold text-slate-600';
+                return;
+            }
+            const userResult = parseUserMolecule();
+
+            document.getElementById('draw-user-smiles').textContent = userResult.display || '-';
+
+            if (!userResult.mol) {
+                if (userResult.reason === 'empty') {
+                    feedback.textContent = 'Please draw a structure first.';
+                    feedback.className = 'text-lg font-bold text-slate-600';
+                } else if (userResult.reason === 'ocl') {
+                    feedback.textContent = 'Chemistry engine is still loading. Try again in a moment.';
+                    feedback.className = 'text-lg font-bold text-slate-600';
+                } else if (userResult.reason === 'molfile') {
+                    feedback.textContent = 'Could not export MOL from the editor. Try again.';
+                    feedback.className = 'text-lg font-bold text-red-600';
+                } else {
+                    feedback.textContent = 'Could not read your drawing. Try again.';
+                    feedback.className = 'text-lg font-bold text-red-600';
+                }
+                setDrawStatus('neutral');
+                document.getElementById('draw-expected-wrapper').classList.add('hidden');
+                document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
+                lastUserSmiles = '';
+                return;
+            }
+
+            const expectedMol = parseExpectedMolecule(expectedSmiles);
+            setExpectedSmiles(expectedSmiles);
+            showExpectedSmiles();
+            revealExpectedStructure();
+            const userSmiles = userResult.display || getDisplaySmiles(userResult.mol, '');
+            revealUserStructure(userSmiles);
+
+            if (!expectedMol) {
+                feedback.textContent = 'Error loading expected structure.';
+                feedback.className = 'text-lg font-bold text-red-600';
+                return;
+            }
+
+            if (drawAttemptState !== 'unanswered') {
+                applyLockedAttemptMessage();
+                return;
+            }
+
+            const recognition = (window.AminoAcidRecognizer && typeof AminoAcidRecognizer.fromJSME === 'function')
+                ? AminoAcidRecognizer.fromJSME(jsmeApplet)
+                : null;
+            const fallbackDetected = !recognition?.found ? identifyAminoAcid(userResult.mol) : null;
+            const detectedName = recognition?.found ? recognition.name : fallbackDetected?.aminoAcid?.name;
+            const detectedSuffix = detectedName ? ` You drew: ${detectedName}.` : '';
+            const targetName = drawTarget?.name || '';
+            const namesMatch = detectedName && targetName && detectedName.toLowerCase() === targetName.toLowerCase();
+            const successSuffix = targetName ? ` You drew: ${targetName}.` : detectedSuffix;
+
+            const stereoMismatch = recognition?.found && namesMatch && recognition.stereoOk === false;
+
+            const idUser = getIdCode(userResult.mol);
+            const idExpected = getIdCode(expectedMol);
+            const idUserNoStereo = getIdCodeNoStereo(userResult.mol);
+            const idExpectedNoStereo = getIdCodeNoStereo(expectedMol);
+            const exactMatch = idUser && idExpected && idUser === idExpected;
+            const connectivityMatches = idUserNoStereo && idExpectedNoStereo && idUserNoStereo === idExpectedNoStereo;
+
+            let resultText = `Not quite. Compare your structure with the expected one.${detectedSuffix}`;
+            let resultClass = 'text-lg font-bold text-red-600';
+            let statusState = 'incorrect';
+            let isCorrect = false;
+
+            if (exactMatch) {
+                resultText = `Correct structure!${successSuffix}`;
+                resultClass = 'text-lg font-bold text-emerald-600';
+                statusState = 'correct';
+                isCorrect = true;
+            } else if (connectivityMatches) {
+                if (stereoMismatch) {
+                    resultText = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
+                    resultClass = 'text-lg font-bold text-amber-600';
+                    statusState = 'warning';
+                } else {
+                    resultText = `Correct structure!${successSuffix}`;
+                    resultClass = 'text-lg font-bold text-emerald-600';
+                    statusState = 'correct';
+                    isCorrect = true;
+                }
+            } else if (recognition?.found && namesMatch) {
+                if (recognition.stereoOk === false) {
+                    resultText = `Correct connectivity (conformation-independent), but check stereochemistry!${successSuffix}`;
+                    resultClass = 'text-lg font-bold text-amber-600';
+                    statusState = 'warning';
+                } else {
+                    resultText = `Correct structure!${successSuffix}`;
+                    resultClass = 'text-lg font-bold text-emerald-600';
+                    statusState = 'correct';
+                    isCorrect = true;
+                }
+            }
+
+            if (statusState === 'correct') {
+                drawAttemptState = 'correct';
+            } else if (statusState === 'warning') {
+                drawAttemptState = 'warning';
+            } else {
+                drawAttemptState = 'incorrect';
+            }
+            const elapsedMs = getElapsedMs();
+            recordDrawProgress(drawTarget, isCorrect, userSmiles, elapsedMs);
+            setDrawStatus(statusState);
+            feedback.textContent = resultText;
+            feedback.className = resultClass;
+        }
+
+        function clearDrawing() {
+            if (jsmeApplet) {
+                jsmeApplet.reset();
+                applyTemplateStructure();
+            }
+            document.getElementById('draw-user-smiles').textContent = '-';
+            document.getElementById('draw-feedback').textContent = 'Draw the structure, then check your answer.';
+            document.getElementById('draw-feedback').className = 'text-lg font-bold text-slate-600';
+            if (drawAttemptState === 'unanswered') {
+                setDrawStatus('neutral');
+            } else {
+                applyLockedAttemptMessage();
+            }
+            hideExpectedSmiles();
+            document.getElementById('draw-expected-wrapper').classList.add('hidden');
+            document.getElementById('draw-user-structure-wrapper').classList.add('hidden');
+            lastUserSmiles = '';
+        }
+
+        window.addEventListener('load', () => {
+            setPendingDrawTargetFromUrl();
+            pickNewTarget();
+            setChemistryReady(false);
+            if (!ensureChemistryReady()) {
+                const waitForChem = setInterval(() => {
+                    if (ensureChemistryReady()) {
+                        clearInterval(waitForChem);
+                    }
+                }, 250);
+            }
+            document.getElementById('check-answer-btn').addEventListener('click', checkAnswer);
+            document.getElementById('new-target-btn').addEventListener('click', () => {
+                clearDrawing();
+                pickNewTarget();
+            });
+            document.getElementById('away-btn').addEventListener('click', toggleDrawTimer);
+            document.getElementById('clear-drawing-btn').addEventListener('click', clearDrawing);
+            setDrawStatus('neutral');
+            updateDrawAttemptSummary();
+            updateAwayButton();
+            renderDrawProgress();
+
+            const jsmeContainer = document.getElementById('jsme-container');
+            if (jsmeContainer) {
+                ['pointerdown', 'mousedown', 'touchstart'].forEach((eventName) => {
+                    jsmeContainer.addEventListener(eventName, () => {
+                        if (drawTimerPaused) {
+                            resumeDrawTimer();
+                        }
+                    }, { passive: true });
+                });
+            }
+        });
+
+        window.addEventListener('themeChanged', () => {
+            if (!document.getElementById('draw-expected-wrapper').classList.contains('hidden')) {
+                updateExpectedStructure();
+            }
+            if (lastUserSmiles && !document.getElementById('draw-user-structure-wrapper').classList.contains('hidden')) {
+                updateUserStructure(lastUserSmiles);
+            }
+            renderDrawProgress();
+        });
+
+        window.addEventListener('filterChanged', () => {
+            pickNewTarget();
+        });
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === DRAW_PROGRESS_STORAGE_KEY) {
+                renderDrawProgress();
+                updateDrawAttemptSummary();
+            }
+        });
+    </script>
+</body>
+</html>

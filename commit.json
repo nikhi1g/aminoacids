@@ -1,0 +1,1 @@
+{"commit":"116866d573c00ab89e92afe5c1df2e26746f0acd","build_time":"2026-01-02 02:09 UTC","message":"fix(ci): Combine build and deploy jobs to ensure artifacts are available for deployment"}

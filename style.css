@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
+.molecule-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+
+.jsme-container {
+    width: 100%;
+    height: 520px;
+}
+
+@media (max-width: 1024px) {
+    .jsme-container {
+        height: 460px;
+    }
+}
+
+@media (max-width: 640px) {
+    .jsme-container {
+        height: 400px;
+    }
+}
+
+canvas {
+    width: 100%;
+    height: auto;
+    max-width: 240px;
+    margin: 0 auto;
+}
+
+#flashcard-canvas {
+    max-width: none;
+    width: 100%;
+    height: 100%;
+}
+
+.pka-badge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    transition: all 0.3s ease;
+}
+
+.nav-link.active {
+    border-bottom: 2px solid #3b82f6;
+    color: #3b82f6;
+}
+
+.header-hidden-mobile {
+    transform: translateY(-100%);
+}
+
+.smiles-input {
+    flex-grow: 1;
+    background: transparent;
+    border: 1px solid transparent;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 9px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    cursor: text;
+}
+
+.dark .smiles-input:hover {
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+.smiles-input:hover {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.smiles-input:focus {
+    outline: none;
+    background: white;
+    border-color: #bfdbfe;
+    color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.dark .smiles-input:focus {
+    background: #0f172a;
+    border-color: #334155;
+    color: #60a5fa;
+}
+
+.reset-btn {
+    padding: 4px;
+    border-radius: 4px;
+    color: #94a3b8;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reset-btn:hover {
+    background-color: #fee2e2;
+    color: #ef4444;
+}
+
+.dark .reset-btn:hover {
+    background-color: #450a0a;
+    color: #f87171;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.perspective-1000 {
+    perspective: 1000px;
+}
+.transform-style-3d {
+    transform-style: preserve-3d;
+}
+.backface-hidden {
+    backface-visibility: hidden;
+}
+.rotate-y-180 {
+    transform: rotateY(180deg);
+}
+.flipped {
+    transform: rotateY(180deg);
+}

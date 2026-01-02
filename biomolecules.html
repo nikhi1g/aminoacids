@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biomolecules - MCAT Prep</title>
+    <link rel="preconnect" href="https://api.github.com" crossorigin>
+    <link rel="dns-prefetch" href="https://api.github.com">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script>
+        // Apply theme immediately to prevent flash
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col min-h-screen">
+
+    <header class="bg-white dark:bg-slate-900 border-b dark:border-slate-800 sticky top-0 z-20 shadow-sm transition-colors transition-transform duration-300">
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col space-y-2 sm:space-y-4 py-2 sm:py-4">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 sm:h-16">
+                    <div class="flex items-center justify-center sm:justify-start w-full sm:w-auto">
+                        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 px-2 py-1.5 sm:px-3 sm:py-2 text-center sm:text-left">
+                            <div class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-slate-800 dark:text-slate-100 text-center sm:text-left">mcat</div>
+                            <div class="mt-0.5 sm:mt-1 flex flex-wrap items-center gap-2 text-[9px] sm:text-[10px] text-slate-500 justify-center sm:justify-start">
+                                <span id="commit-hash">loading...</span>
+
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto">
+                        <nav class="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-8">
+                            <a href="index.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200" title="Home">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                            </a>
+                            <a href="cards.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Show</a>
+                            <a href="learn.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Learn</a>
+                            <a href="recall.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Recall</a>
+                            <a href="draw.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Draw</a>
+                            <a href="biomolecules.html" class="nav-link active py-2 sm:py-5 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Biomolecules</a>
+                        </nav>
+
+                        <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0" title="Toggle Dark/Light Mode">
+                            <svg id="sun-icon" class="hidden dark:block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path>
+                            </svg>
+                            <svg id="moon-icon" class="block dark:hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full px-2 py-4 flex-grow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="text-2xl font-bold mb-6 text-slate-900 dark:text-white">Biomolecules</h1>
+            <div id="biomolecule-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <!-- Injected by biomolecules-data.js -->
+            </div>
+        </div>
+    </main>
+
+        <footer class="mt-12 bg-white dark:bg-slate-900 border-t dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <p class="text-xs text-slate-500">colored drawings powered by <a href="https://github.com/reymond-group/smilesDrawer" class="underline underline-offset-2 hover:text-slate-700 dark:hover:text-slate-200" target="_blank" rel="noopener noreferrer">smiles</a>; drawing software from <a href="https://jsme-editor.github.io/" class="underline underline-offset-2 hover:text-slate-700 dark:hover:text-slate-200" target="_blank" rel="noopener noreferrer">JSME</a></p>
+        </div>
+    </footer>
+
+    <script src="biomolecules-data.js"></script>
+    <script src="script.js?v=116866d573c00ab89e92afe5c1df2e26746f0acd"></script>
+</body>
+</html>
