@@ -74,11 +74,17 @@
                 <div>
                     <p class="text-xs uppercase tracking-[0.35em] text-slate-400 font-semibold">BioBioChem</p>
                     <h1 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">153B Midterm 1</h1>
-                    <p class="mt-2 text-sm sm:text-base text-slate-500 dark:text-slate-400">Review with spaced repetition. Flip to reveal the answer, then rate the card.</p>
+                    <p class="mt-2 text-sm sm:text-base text-slate-500 dark:text-slate-400">Toggle between Anki scheduling and free browsing. Flip to reveal the answer.</p>
                 </div>
-                <button id="clear-progress-btn" class="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors font-semibold">
-                    Clear Progress
-                </button>
+                <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3">
+                    <div class="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1">
+                        <button id="mode-anki-btn" class="mode-btn px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors">Anki</button>
+                        <button id="mode-free-btn" class="mode-btn px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors">Free</button>
+                    </div>
+                    <button id="clear-progress-btn" class="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors font-semibold">
+                        Clear Progress
+                    </button>
+                </div>
             </div>
 
             <div id="flashcard-container" class="perspective-1000 flex-grow w-full relative mb-6 min-h-[520px]">
@@ -95,7 +101,7 @@
                                     <p class="text-xs text-blue-500 uppercase font-bold tracking-wider mb-2">Answer</p>
                                     <p id="flashcard-answer" class="text-2xl md:text-3xl font-black text-blue-700 dark:text-blue-200"></p>
                                 </div>
-                                <div id="flashcard-image-panel" class="rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 p-4">
+                                <div id="flashcard-image-panel" class="rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 p-4 flex flex-col flex-1 min-h-[240px] overflow-auto no-scrollbar">
                                     <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Images</p>
                                     <div id="flashcard-images" class="mt-3 grid gap-3"></div>
                                 </div>
@@ -106,7 +112,7 @@
                                     <p id="flashcard-prompt" class="text-xl font-black text-indigo-700 dark:text-indigo-200"></p>
                                 </div>
                                 <div class="p-5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50">
-                                    <p class="text-xs text-emerald-500 uppercase font-bold tracking-wider mb-1">Due</p>
+                                    <p id="flashcard-due-label" class="text-xs text-emerald-500 uppercase font-bold tracking-wider mb-1">Due</p>
                                     <p id="flashcard-due" class="text-lg font-black text-emerald-700 dark:text-emerald-200"></p>
                                 </div>
                                 <div class="p-5 rounded-2xl bg-slate-100/60 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
@@ -120,9 +126,14 @@
             </div>
 
             <div class="shrink-0 py-2 flex flex-col items-center gap-4">
-                <div class="flex flex-wrap items-center justify-center gap-3">
-                    <button id="skip-btn" class="px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Skip</button>
+                <div class="flex flex-wrap items-center justify-center gap-4">
+                    <button id="prev-btn" class="p-4 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-lg group" aria-label="Previous card">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-1 transition-transform"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
                     <button id="show-answer-btn" class="px-10 py-4 rounded-2xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-xl">Show Answer</button>
+                    <button id="next-btn" class="p-4 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-lg group" aria-label="Next card">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
                 </div>
                 <div id="rating-controls" class="flex flex-wrap gap-3 justify-center hidden">
                     <button class="rating-btn px-5 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-colors" data-grade="0">Again</button>
@@ -175,11 +186,16 @@
             lapses: 0,
             lastGrade: null
         };
+        const MODE_STORAGE_KEY = 'midterm1_153b_mode_v1';
+        const STUDY_MODE_ANKI = 'anki';
+        const STUDY_MODE_FREE = 'free';
 
         let deckCards = [];
         let currentCard = null;
         let currentCardKey = null;
+        let currentIndex = 0;
         let isFlipped = false;
+        let studyMode = loadStudyMode();
 
         function normalizeDeckCards(rawCards) {
             if (!Array.isArray(rawCards)) return [];
@@ -208,6 +224,11 @@
             if (Number.isFinite(card.index)) return String(card.index);
             if (typeof card.front === 'string' && card.front) return card.front;
             return '';
+        }
+
+        function loadStudyMode() {
+            const stored = localStorage.getItem(MODE_STORAGE_KEY);
+            return stored === STUDY_MODE_FREE ? STUDY_MODE_FREE : STUDY_MODE_ANKI;
         }
 
         function loadReviewProgress() {
@@ -395,24 +416,92 @@
                 return;
             }
             panel.classList.remove('hidden');
-            grid.className = images.length > 1 ? 'mt-3 grid grid-cols-2 gap-3' : 'mt-3 grid grid-cols-1 gap-3';
+            grid.className = images.length > 1
+                ? 'mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 auto-rows-fr'
+                : 'mt-3 grid grid-cols-1 gap-3 flex-1 auto-rows-fr';
+            grid.style.gridAutoRows = 'minmax(0, 1fr)';
+            grid.style.height = '100%';
             images.forEach((src, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 flex items-center justify-center h-full min-h-[220px]';
                 const img = document.createElement('img');
                 img.src = src;
                 img.alt = `${altBase} image ${idx + 1}`;
                 img.loading = 'lazy';
-                img.className = 'w-full h-full object-contain rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2';
-                grid.appendChild(img);
+                img.className = 'max-h-full max-w-full object-contain';
+                wrapper.appendChild(img);
+                grid.appendChild(wrapper);
             });
         }
 
+        function setModeButtonState(button, active) {
+            if (!button) return;
+            const activeClasses = ['bg-slate-900', 'text-white', 'dark:bg-slate-100', 'dark:text-slate-900', 'shadow-sm'];
+            const inactiveClasses = ['text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-slate-200'];
+            activeClasses.forEach((name) => button.classList.toggle(name, active));
+            inactiveClasses.forEach((name) => button.classList.toggle(name, !active));
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        }
+
+        function updateModeUI() {
+            const isAnki = studyMode === STUDY_MODE_ANKI;
+            const ankiBtn = document.getElementById('mode-anki-btn');
+            const freeBtn = document.getElementById('mode-free-btn');
+            setModeButtonState(ankiBtn, isAnki);
+            setModeButtonState(freeBtn, !isAnki);
+
+            const dueLabel = document.getElementById('flashcard-due-label');
+            if (dueLabel) dueLabel.textContent = isAnki ? 'Due' : 'Mode';
+
+            const prevBtn = document.getElementById('prev-btn');
+            if (prevBtn) {
+                prevBtn.disabled = isAnki;
+                prevBtn.setAttribute('aria-disabled', String(isAnki));
+                prevBtn.classList.toggle('opacity-50', isAnki);
+                prevBtn.classList.toggle('cursor-not-allowed', isAnki);
+                prevBtn.title = isAnki ? 'Previous disabled in Anki mode' : 'Previous card';
+            }
+
+            const nextBtn = document.getElementById('next-btn');
+            if (nextBtn) {
+                const label = isAnki ? 'Next due card' : 'Next card';
+                nextBtn.title = label;
+                nextBtn.setAttribute('aria-label', label);
+            }
+
+            updateFlipState();
+        }
+
+        function setStudyMode(mode) {
+            if (mode !== STUDY_MODE_ANKI && mode !== STUDY_MODE_FREE) return;
+            if (studyMode === mode) return;
+            studyMode = mode;
+            localStorage.setItem(MODE_STORAGE_KEY, studyMode);
+            if (currentCardKey) {
+                const idx = deckCards.findIndex((card) => getCardKey(card) === currentCardKey);
+                if (idx >= 0) currentIndex = idx;
+            }
+            const progress = loadReviewProgress();
+            updateModeUI();
+            updateFlashcard(progress);
+            updateDeckStatus(progress);
+        }
+
         function updateDeckStatus(progress) {
+            const message = document.getElementById('deck-message');
+            if (studyMode === STUDY_MODE_FREE) {
+                document.getElementById('deck-due').textContent = '-';
+                document.getElementById('deck-new').textContent = '-';
+                document.getElementById('deck-total').textContent = String(deckCards.length);
+                if (message) message.textContent = 'Free mode: no scheduling or ratings.';
+                return;
+            }
+            const progressState = progress || loadReviewProgress();
             const nowMs = Date.now();
-            const stats = getDeckStats(deckCards, progress, nowMs);
+            const stats = getDeckStats(deckCards, progressState, nowMs);
             document.getElementById('deck-due').textContent = String(stats.due);
             document.getElementById('deck-new').textContent = String(stats.newCount);
             document.getElementById('deck-total').textContent = String(stats.total);
-            const message = document.getElementById('deck-message');
             if (stats.due === 0 && stats.nextDueMs) {
                 message.textContent = `All caught up. Next due in ${formatDuration(stats.nextDueMs - nowMs)}.`;
             } else if (stats.due === 0) {
@@ -423,6 +512,7 @@
         }
 
         function updateFlashcard(progress) {
+            const progressState = progress || loadReviewProgress();
             const questionEl = document.getElementById('flashcard-question');
             const answerEl = document.getElementById('flashcard-answer');
             const promptEl = document.getElementById('flashcard-prompt');
@@ -447,12 +537,12 @@
             }
 
             const key = getCardKey(currentCard);
-            const item = normalizeReviewItem(progress.items[key]);
+            const item = normalizeReviewItem(progressState.items[key]);
             const nowMs = Date.now();
             questionEl.textContent = currentCard.front;
             answerEl.textContent = currentCard.back || 'No answer provided.';
             promptEl.textContent = currentCard.front;
-            dueEl.textContent = formatDueLabel(item, nowMs);
+            dueEl.textContent = studyMode === STUDY_MODE_ANKI ? formatDueLabel(item, nowMs) : 'Free mode';
             idEl.textContent = `#${currentCard.position}`;
             indexEl.textContent = String(currentCard.position);
             totalEl.textContent = String(deckCards.length);
@@ -465,7 +555,7 @@
             const card = document.getElementById('flashcard');
             if (!card) return;
             card.classList.toggle('flipped', isFlipped);
-            document.getElementById('rating-controls').classList.toggle('hidden', !isFlipped);
+            document.getElementById('rating-controls').classList.toggle('hidden', !isFlipped || studyMode !== STUDY_MODE_ANKI);
             const showBtn = document.getElementById('show-answer-btn');
             showBtn.textContent = isFlipped ? 'Hide Answer' : 'Show Answer';
         }
@@ -474,6 +564,7 @@
             if (!deckCards.length) {
                 currentCard = null;
                 currentCardKey = null;
+                currentIndex = 0;
                 isFlipped = false;
                 const progress = loadReviewProgress();
                 updateFlashcard(progress);
@@ -487,6 +578,7 @@
             const next = selection ? selection.card : deckCards[Math.floor(Math.random() * deckCards.length)];
             currentCard = next;
             currentCardKey = getCardKey(next);
+            currentIndex = Math.max(0, deckCards.findIndex((card) => getCardKey(card) === currentCardKey));
             isFlipped = false;
             updateFlashcard(progress);
             updateDeckStatus(progress);
@@ -499,12 +591,38 @@
             updateFlipState();
         }
 
-        function skipCard() {
-            pickNextCard();
+        function setCurrentCardByIndex(index, progress) {
+            if (!deckCards.length) {
+                pickNextCard();
+                return;
+            }
+            const total = deckCards.length;
+            const normalized = ((index % total) + total) % total;
+            currentIndex = normalized;
+            currentCard = deckCards[currentIndex];
+            currentCardKey = getCardKey(currentCard);
+            isFlipped = false;
+            const progressState = progress || loadReviewProgress();
+            updateFlashcard(progressState);
+            updateDeckStatus(progressState);
+            updateFlipState();
+        }
+
+        function nextCardManual() {
+            if (studyMode === STUDY_MODE_ANKI) {
+                pickNextCard();
+                return;
+            }
+            setCurrentCardByIndex(currentIndex + 1);
+        }
+
+        function prevCardManual() {
+            if (studyMode === STUDY_MODE_ANKI) return;
+            setCurrentCardByIndex(currentIndex - 1);
         }
 
         function rateCard(grade) {
-            if (!currentCard || !isFlipped) return;
+            if (studyMode !== STUDY_MODE_ANKI || !currentCard || !isFlipped) return;
             const progress = loadReviewProgress();
             const key = getCardKey(currentCard);
             const item = ensureReviewItem(progress, key);
@@ -537,14 +655,23 @@
         function clearProgress() {
             localStorage.removeItem(MT1_PROGRESS_STORAGE_KEY);
             closeClearModal();
-            pickNextCard();
+            if (studyMode === STUDY_MODE_ANKI) {
+                pickNextCard();
+                return;
+            }
+            updateFlashcard(loadReviewProgress());
+            updateDeckStatus(loadReviewProgress());
+            updateFlipState();
         }
 
         window.addEventListener('load', () => {
             const rawDeck = typeof midterm1Cards !== 'undefined' ? midterm1Cards : [];
             deckCards = normalizeDeckCards(rawDeck);
-            document.getElementById('skip-btn').addEventListener('click', skipCard);
+            document.getElementById('mode-anki-btn').addEventListener('click', () => setStudyMode(STUDY_MODE_ANKI));
+            document.getElementById('mode-free-btn').addEventListener('click', () => setStudyMode(STUDY_MODE_FREE));
+            document.getElementById('prev-btn').addEventListener('click', prevCardManual);
             document.getElementById('show-answer-btn').addEventListener('click', flipCard);
+            document.getElementById('next-btn').addEventListener('click', nextCardManual);
             document.querySelectorAll('.rating-btn').forEach((btn) => {
                 btn.addEventListener('click', () => {
                     const grade = Number(btn.dataset.grade);
@@ -555,7 +682,12 @@
             document.getElementById('clear-cancel').addEventListener('click', closeClearModal);
             document.getElementById('clear-confirm').addEventListener('click', clearProgress);
             document.getElementById('clear-backdrop').addEventListener('click', closeClearModal);
-            pickNextCard();
+            updateModeUI();
+            if (studyMode === STUDY_MODE_ANKI) {
+                pickNextCard();
+            } else {
+                setCurrentCardByIndex(0, loadReviewProgress());
+            }
         });
 
         window.addEventListener('keydown', function(e) {
@@ -571,7 +703,9 @@
             } else if (e.key === '4') {
                 rateCard(3);
             } else if (e.key === 'ArrowRight') {
-                skipCard();
+                nextCardManual();
+            } else if (e.key === 'ArrowLeft') {
+                prevCardManual();
             }
         });
     </script>
