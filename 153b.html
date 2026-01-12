@@ -87,37 +87,37 @@
                 </div>
             </div>
 
-            <div id="flashcard-container" class="perspective-1000 flex-grow w-full relative mb-6 min-h-[520px]">
+            <div id="flashcard-container" class="perspective-1000 flex-grow w-full relative mb-6 min-h-[420px] sm:min-h-[520px]">
                 <div id="flashcard" class="absolute inset-0 w-full h-full transition-transform duration-500 transform-style-3d cursor-pointer" onclick="flipCard()">
-                    <div id="flashcard-front" class="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-3xl border-2 border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col items-center justify-center p-8">
-                        <h2 class="text-xl md:text-2xl font-bold text-blue-500 uppercase tracking-widest mb-10">153B Prompt</h2>
-                        <div id="flashcard-question" class="text-3xl md:text-5xl font-black text-slate-800 dark:text-white text-center tracking-tight leading-tight max-w-4xl"></div>
-                        <p class="mt-12 text-slate-400 text-base md:text-lg font-medium uppercase tracking-[0.3em] animate-pulse">Click to reveal</p>
+                    <div id="flashcard-front" class="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-3xl border-2 border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col items-center justify-center p-6 sm:p-8">
+                        <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-blue-500 uppercase tracking-widest mb-8 sm:mb-10">153B Prompt</h2>
+                        <div id="flashcard-question" class="text-2xl sm:text-3xl md:text-5xl font-black text-slate-800 dark:text-white text-center tracking-tight leading-tight max-w-full sm:max-w-4xl"></div>
+                        <p class="mt-10 sm:mt-12 text-slate-400 text-sm sm:text-base md:text-lg font-medium uppercase tracking-[0.3em] animate-pulse">Click to reveal</p>
                     </div>
-                    <div id="flashcard-back" class="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-3xl border-2 border-blue-500 dark:border-blue-500 shadow-2xl flex p-6 md:p-8 rotate-y-180 overflow-hidden">
-                        <div class="w-full h-full flex flex-col md:flex-row gap-8 items-stretch">
-                            <div class="flex-[3] flex flex-col gap-4">
-                                <div class="p-6 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50">
+                    <div id="flashcard-back" class="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 rounded-3xl border-2 border-blue-500 dark:border-blue-500 shadow-2xl flex p-5 sm:p-6 md:p-8 rotate-y-180 overflow-hidden">
+                        <div class="w-full h-full flex flex-col md:flex-row gap-5 sm:gap-8 items-stretch">
+                            <div class="flex-[3] flex flex-col gap-3 sm:gap-4">
+                                <div class="p-4 sm:p-6 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50">
                                     <p class="text-xs text-blue-500 uppercase font-bold tracking-wider mb-2">Answer</p>
-                                    <p id="flashcard-answer" class="text-2xl md:text-3xl font-black text-blue-700 dark:text-blue-200"></p>
+                                    <p id="flashcard-answer" class="text-lg sm:text-2xl md:text-3xl font-black text-blue-700 dark:text-blue-200"></p>
                                 </div>
-                                <div id="flashcard-image-panel" class="rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 p-4 flex flex-col flex-1 min-h-[240px] overflow-auto no-scrollbar">
+                                <div id="flashcard-image-panel" class="rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 p-3 sm:p-4 flex flex-col flex-1 min-h-[200px] sm:min-h-[240px] overflow-auto no-scrollbar">
                                     <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Images</p>
                                     <div id="flashcard-images" class="mt-3 grid gap-3"></div>
                                 </div>
                             </div>
-                            <div class="flex-1 flex flex-col justify-center gap-4 min-w-[230px]">
-                                <div class="p-5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50">
+                            <div class="flex-1 flex flex-col justify-center gap-3 sm:gap-4 w-full sm:min-w-[230px]">
+                                <div class="p-4 sm:p-5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50">
                                     <p class="text-xs text-indigo-500 uppercase font-bold tracking-wider mb-1">Prompt</p>
-                                    <p id="flashcard-prompt" class="text-xl font-black text-indigo-700 dark:text-indigo-200"></p>
+                                    <p id="flashcard-prompt" class="text-lg sm:text-xl font-black text-indigo-700 dark:text-indigo-200"></p>
                                 </div>
-                                <div class="p-5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50">
+                                <div class="p-4 sm:p-5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50">
                                     <p id="flashcard-due-label" class="text-xs text-emerald-500 uppercase font-bold tracking-wider mb-1">Due</p>
-                                    <p id="flashcard-due" class="text-lg font-black text-emerald-700 dark:text-emerald-200"></p>
+                                    <p id="flashcard-due" class="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-200"></p>
                                 </div>
-                                <div class="p-5 rounded-2xl bg-slate-100/60 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                                <div class="p-4 sm:p-5 rounded-2xl bg-slate-100/60 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
                                     <p class="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Card</p>
-                                    <p id="flashcard-id" class="text-lg font-bold text-slate-700 dark:text-slate-200"></p>
+                                    <p id="flashcard-id" class="text-base sm:text-lg font-bold text-slate-700 dark:text-slate-200"></p>
                                 </div>
                             </div>
                         </div>
@@ -126,20 +126,22 @@
             </div>
 
             <div class="shrink-0 py-2 flex flex-col items-center gap-4">
-                <div class="flex flex-wrap items-center justify-center gap-4">
-                    <button id="prev-btn" class="p-4 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-lg group" aria-label="Previous card">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-1 transition-transform"><path d="m15 18-6-6 6-6"/></svg>
-                    </button>
-                    <button id="show-answer-btn" class="px-10 py-4 rounded-2xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-xl">Show Answer</button>
-                    <button id="next-btn" class="p-4 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-lg group" aria-label="Next card">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
-                    </button>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full">
+                    <button id="show-answer-btn" class="w-full sm:w-auto px-6 sm:px-10 py-3 sm:py-4 rounded-2xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-black text-base sm:text-lg hover:scale-105 active:scale-95 transition-all shadow-xl order-1 sm:order-2">Show Answer</button>
+                    <div class="flex items-center justify-center gap-3 w-full sm:w-auto sm:contents order-2 sm:order-none">
+                        <button id="prev-btn" class="p-3 sm:p-4 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-lg group order-2 sm:order-1" aria-label="Previous card">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-1 transition-transform"><path d="m15 18-6-6 6-6"/></svg>
+                        </button>
+                        <button id="next-btn" class="p-3 sm:p-4 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-lg group order-3 sm:order-3" aria-label="Next card">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                        </button>
+                    </div>
                 </div>
-                <div id="rating-controls" class="flex flex-wrap gap-3 justify-center hidden">
-                    <button class="rating-btn px-5 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-colors" data-grade="0">Again</button>
-                    <button class="rating-btn px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold transition-colors" data-grade="1">Hard</button>
-                    <button class="rating-btn px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors" data-grade="2">Good</button>
-                    <button class="rating-btn px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors" data-grade="3">Easy</button>
+                <div id="rating-controls" class="hidden w-full max-w-xl grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center">
+                    <button class="rating-btn w-full sm:w-auto px-4 sm:px-5 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-colors" data-grade="0">Again</button>
+                    <button class="rating-btn w-full sm:w-auto px-4 sm:px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold transition-colors" data-grade="1">Hard</button>
+                    <button class="rating-btn w-full sm:w-auto px-4 sm:px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors" data-grade="2">Good</button>
+                    <button class="rating-btn w-full sm:w-auto px-4 sm:px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors" data-grade="3">Easy</button>
                 </div>
                 <div class="text-sm font-bold text-slate-400 uppercase tracking-widest text-center">
                     Card: <span id="card-index" class="text-slate-900 dark:text-white">0</span> / <span id="card-total">0</span>
@@ -157,7 +159,7 @@
                         <p class="text-xs text-slate-400 mt-1">Mastered after 3 straight correct reviews.</p>
                     </div>
                     <div class="w-full">
-                        <table class="min-w-full text-sm">
+                        <table class="progress-table min-w-full text-sm">
                             <thead class="bg-slate-50 dark:bg-slate-900/60 text-slate-500">
                                 <tr>
                                     <th class="text-left font-semibold px-6 py-3">
@@ -697,15 +699,15 @@
 
                 return `
                     <tr>
-                        <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100">#${row.position}</td>
-                        <td class="px-6 py-4 text-slate-700 dark:text-slate-200 max-w-[240px] truncate" title="${row.prompt}">${row.prompt}</td>
-                        <td class="px-6 py-4 text-slate-500">${streakLabel}</td>
-                        <td class="px-6 py-4 text-slate-500">${row.correct}</td>
-                        <td class="px-6 py-4 text-slate-500">${row.wrong}</td>
-                        <td class="px-6 py-4 ${masteryClass}">${masteryLabel}</td>
-                        <td class="px-6 py-4 ${dueClass}">${row.dueLabel}</td>
-                        <td class="px-6 py-4 text-slate-500">${row.ease.toFixed(2)}</td>
-                        <td class="px-6 py-4 text-slate-500">${formatInterval(row)}</td>
+                        <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100" data-label="Card">#${row.position}</td>
+                        <td class="px-6 py-4 text-slate-700 dark:text-slate-200 sm:max-w-[240px] sm:truncate break-words" title="${row.prompt}" data-label="Prompt">${row.prompt}</td>
+                        <td class="px-6 py-4 text-slate-500" data-label="Streak">${streakLabel}</td>
+                        <td class="px-6 py-4 text-slate-500" data-label="Correct">${row.correct}</td>
+                        <td class="px-6 py-4 text-slate-500" data-label="Wrong">${row.wrong}</td>
+                        <td class="px-6 py-4 ${masteryClass}" data-label="Need">${masteryLabel}</td>
+                        <td class="px-6 py-4 ${dueClass}" data-label="Due">${row.dueLabel}</td>
+                        <td class="px-6 py-4 text-slate-500" data-label="Ease">${row.ease.toFixed(2)}</td>
+                        <td class="px-6 py-4 text-slate-500" data-label="Interval">${formatInterval(row)}</td>
                     </tr>
                 `;
             }).join('');
