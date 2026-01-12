@@ -149,6 +149,80 @@
                 </div>
                 <div id="deck-message" class="text-xs text-slate-500 text-center"></div>
             </div>
+
+            <div id="progress-section" class="mt-8 hidden">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+                        <h2 class="text-lg font-bold">Anki Progress</h2>
+                        <p class="text-xs text-slate-400 mt-1">Mastered after 3 straight correct reviews.</p>
+                    </div>
+                    <div class="w-full">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-slate-50 dark:bg-slate-900/60 text-slate-500">
+                                <tr>
+                                    <th class="text-left font-semibold px-6 py-3">
+                                        <button type="button" class="progress-sort-btn flex items-center gap-1 text-left" data-sort="card">
+                                            <span>Card</span>
+                                            <span class="sort-indicator text-[9px] text-slate-400"></span>
+                                        </button>
+                                    </th>
+                                    <th class="text-left font-semibold px-6 py-3">
+                                        <button type="button" class="progress-sort-btn flex items-center gap-1 text-left" data-sort="prompt">
+                                            <span>Prompt</span>
+                                            <span class="sort-indicator text-[9px] text-slate-400"></span>
+                                        </button>
+                                    </th>
+                                    <th class="text-left font-semibold px-6 py-3">
+                                        <button type="button" class="progress-sort-btn flex items-center gap-1 text-left" data-sort="streak">
+                                            <span>Streak</span>
+                                            <span class="sort-indicator text-[9px] text-slate-400"></span>
+                                        </button>
+                                    </th>
+                                    <th class="text-left font-semibold px-6 py-3">
+                                        <button type="button" class="progress-sort-btn flex items-center gap-1 text-left" data-sort="correct">
+                                            <span>Correct</span>
+                                            <span class="sort-indicator text-[9px] text-slate-400"></span>
+                                        </button>
+                                    </th>
+                                    <th class="text-left font-semibold px-6 py-3">
+                                        <button type="button" class="progress-sort-btn flex items-center gap-1 text-left" data-sort="wrong">
+                                            <span>Wrong</span>
+                                            <span class="sort-indicator text-[9px] text-slate-400"></span>
+                                        </button>
+                                    </th>
+                                    <th class="text-left font-semibold px-6 py-3">
+                                        <button type="button" class="progress-sort-btn flex items-center gap-1 text-left" data-sort="need">
+                                            <span>Need</span>
+                                            <span class="sort-indicator text-[9px] text-slate-400"></span>
+                                        </button>
+                                    </th>
+                                    <th class="text-left font-semibold px-6 py-3">
+                                        <button type="button" class="progress-sort-btn flex items-center gap-1 text-left" data-sort="due">
+                                            <span>Due</span>
+                                            <span class="sort-indicator text-[9px] text-slate-400"></span>
+                                        </button>
+                                    </th>
+                                    <th class="text-left font-semibold px-6 py-3">
+                                        <button type="button" class="progress-sort-btn flex items-center gap-1 text-left" data-sort="ease">
+                                            <span>Ease</span>
+                                            <span class="sort-indicator text-[9px] text-slate-400"></span>
+                                        </button>
+                                    </th>
+                                    <th class="text-left font-semibold px-6 py-3">
+                                        <button type="button" class="progress-sort-btn flex items-center gap-1 text-left" data-sort="interval">
+                                            <span>Interval</span>
+                                            <span class="sort-indicator text-[9px] text-slate-400"></span>
+                                        </button>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="progress-table" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <!-- Rows injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -196,6 +270,7 @@
         let currentIndex = 0;
         let isFlipped = false;
         let studyMode = loadStudyMode();
+        const progressSortState = { key: null, direction: 0 };
 
         function normalizeDeckCards(rawCards) {
             if (!Array.isArray(rawCards)) return [];
@@ -470,6 +545,8 @@
             }
 
             updateFlipState();
+            updateSortIndicators();
+            renderProgressTable(loadReviewProgress());
         }
 
         function setStudyMode(mode) {
@@ -487,6 +564,153 @@
             updateDeckStatus(progress);
         }
 
+        function formatInterval(item) {
+            if (!item || typeof item.intervalMs !== 'number' || item.intervalMs <= 0) return '-';
+            return formatDuration(item.intervalMs);
+        }
+
+        function formatDueShort(item, nowMs) {
+            const dueAt = typeof item.dueAtMs === 'number' ? item.dueAtMs : 0;
+            if (!dueAt || dueAt <= nowMs) return 'Now';
+            return `In ${formatDuration(dueAt - nowMs)}`;
+        }
+
+        function getSortValue(row, key) {
+            switch (key) {
+                case 'card':
+                    return row.position;
+                case 'prompt':
+                    return row.prompt.toLowerCase();
+                case 'streak':
+                    return row.streak;
+                case 'correct':
+                    return row.correct;
+                case 'wrong':
+                    return row.wrong;
+                case 'need':
+                    return row.need;
+                case 'due':
+                    return row.dueAt;
+                case 'ease':
+                    return row.ease;
+                case 'interval':
+                    return row.intervalMs;
+                default:
+                    return row.position;
+            }
+        }
+
+        function compareSortRows(a, b, key, direction) {
+            const av = getSortValue(a, key);
+            const bv = getSortValue(b, key);
+            if (typeof av === 'string' || typeof bv === 'string') {
+                const aStr = String(av);
+                const bStr = String(bv);
+                if (aStr === bStr) return (a.position - b.position) * direction;
+                return aStr.localeCompare(bStr) * direction;
+            }
+            const aNum = Number.isFinite(av) ? av : 0;
+            const bNum = Number.isFinite(bv) ? bv : 0;
+            if (aNum === bNum) return (a.position - b.position) * direction;
+            return (aNum - bNum) * direction;
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.progress-sort-btn').forEach((btn) => {
+                const key = btn.dataset.sort;
+                const indicator = btn.querySelector('.sort-indicator');
+                let label = '';
+                let ariaSort = 'none';
+                if (progressSortState.key === key) {
+                    if (progressSortState.direction === 1) {
+                        label = '^';
+                        ariaSort = 'ascending';
+                    } else if (progressSortState.direction === -1) {
+                        label = 'v';
+                        ariaSort = 'descending';
+                    }
+                }
+                if (indicator) indicator.textContent = label;
+                btn.setAttribute('aria-sort', ariaSort);
+            });
+        }
+
+        function toggleProgressSort(key) {
+            if (progressSortState.key !== key) {
+                progressSortState.key = key;
+                progressSortState.direction = 1;
+            } else if (progressSortState.direction === 1) {
+                progressSortState.direction = -1;
+            } else {
+                progressSortState.key = null;
+                progressSortState.direction = 0;
+            }
+            updateSortIndicators();
+            renderProgressTable(loadReviewProgress());
+        }
+
+        function renderProgressTable(progress, nowMs) {
+            const section = document.getElementById('progress-section');
+            const tbody = document.getElementById('progress-table');
+            if (!section || !tbody) return;
+            if (studyMode !== STUDY_MODE_ANKI) {
+                section.classList.add('hidden');
+                return;
+            }
+            section.classList.remove('hidden');
+            const progressState = progress || loadReviewProgress();
+            const now = nowMs || Date.now();
+
+            if (!deckCards.length) {
+                tbody.innerHTML = '<tr><td class="px-6 py-6 text-slate-500" colspan="9">No cards loaded.</td></tr>';
+                return;
+            }
+
+            const rows = deckCards.map((card) => {
+                const key = getCardKey(card);
+                const item = normalizeReviewItem(progressState.items[key]);
+                return {
+                    position: card.position,
+                    prompt: card.front || '',
+                    streak: item.correctStreak,
+                    correct: item.totalCorrect,
+                    wrong: item.totalWrong,
+                    need: Math.max(0, MT1_MASTERY_STREAK - item.correctStreak),
+                    dueAt: typeof item.dueAtMs === 'number' ? item.dueAtMs : 0,
+                    dueLabel: formatDueShort(item, now),
+                    ease: typeof item.ease === 'number' ? item.ease : MT1_EASE_START,
+                    intervalMs: typeof item.intervalMs === 'number' ? item.intervalMs : 0,
+                    mastered: item.mastered
+                };
+            });
+
+            let renderRows = rows;
+            if (progressSortState.key && progressSortState.direction) {
+                renderRows = [...rows].sort((a, b) => compareSortRows(a, b, progressSortState.key, progressSortState.direction));
+            }
+
+            tbody.innerHTML = renderRows.map((row) => {
+                const masteryLabel = row.mastered ? 'Mastered' : `Need ${row.need}`;
+                const masteryClass = row.mastered ? 'text-emerald-600' : 'text-slate-500';
+                const dueClass = row.dueAt && row.dueAt > now ? 'text-slate-500' : 'text-emerald-600';
+                const streakLabel = `${row.streak}/${MT1_MASTERY_STREAK}`;
+
+                return `
+                    <tr>
+                        <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100">#${row.position}</td>
+                        <td class="px-6 py-4 text-slate-700 dark:text-slate-200 max-w-[240px] truncate" title="${row.prompt}">${row.prompt}</td>
+                        <td class="px-6 py-4 text-slate-500">${streakLabel}</td>
+                        <td class="px-6 py-4 text-slate-500">${row.correct}</td>
+                        <td class="px-6 py-4 text-slate-500">${row.wrong}</td>
+                        <td class="px-6 py-4 ${masteryClass}">${masteryLabel}</td>
+                        <td class="px-6 py-4 ${dueClass}">${row.dueLabel}</td>
+                        <td class="px-6 py-4 text-slate-500">${row.ease.toFixed(2)}</td>
+                        <td class="px-6 py-4 text-slate-500">${formatInterval(row)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         function updateDeckStatus(progress) {
             const message = document.getElementById('deck-message');
             if (studyMode === STUDY_MODE_FREE) {
@@ -494,6 +718,7 @@
                 document.getElementById('deck-new').textContent = '-';
                 document.getElementById('deck-total').textContent = String(deckCards.length);
                 if (message) message.textContent = 'Free mode: no scheduling or ratings.';
+                renderProgressTable(progress, Date.now());
                 return;
             }
             const progressState = progress || loadReviewProgress();
@@ -509,6 +734,7 @@
             } else {
                 message.textContent = '';
             }
+            renderProgressTable(progressState, nowMs);
         }
 
         function updateFlashcard(progress) {
@@ -669,6 +895,9 @@
             deckCards = normalizeDeckCards(rawDeck);
             document.getElementById('mode-anki-btn').addEventListener('click', () => setStudyMode(STUDY_MODE_ANKI));
             document.getElementById('mode-free-btn').addEventListener('click', () => setStudyMode(STUDY_MODE_FREE));
+            document.querySelectorAll('.progress-sort-btn').forEach((btn) => {
+                btn.addEventListener('click', () => toggleProgressSort(btn.dataset.sort));
+            });
             document.getElementById('prev-btn').addEventListener('click', prevCardManual);
             document.getElementById('show-answer-btn').addEventListener('click', flipCard);
             document.getElementById('next-btn').addEventListener('click', nextCardManual);

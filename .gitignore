@@ -1,1 +1,5 @@
 .DS_Store
+progress.json
+aa_progress*.json
+aa_draw_progress*.json
+midterm1_153b_progress*.json

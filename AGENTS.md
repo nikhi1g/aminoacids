@@ -6,6 +6,7 @@ Help users memorize all amino acids through repeated exposure and recall practic
 - Keep the core data source in `script.js` and treat it as the single source of truth.
 - Prefer small, pure helper functions for selection/scoring logic so behavior is easy to test and reason about.
 - Persist user progress only to local state, `localStorage`, or a downloadable JSON file; never assume server state.
+- Progress keys in `localStorage`: `aa_progress_v1`, `aa_draw_progress_v1`, `midterm1_153b_progress_v1`. 153B mode toggle uses `midterm1_153b_mode_v1`. Document new progress keys here.
 - When adding features, preserve existing UX flows in `index.html`, `learn.html`, and `recall.html` unless explicitly requested.
 - Validate JSON import/export and handle missing or malformed fields gracefully with safe defaults.
 - Avoid heavy dependencies; use existing Tailwind + inline JS patterns already in the project.
