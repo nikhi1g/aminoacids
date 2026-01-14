@@ -81,6 +81,9 @@
                         <button id="mode-anki-btn" class="mode-btn px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors">Anki</button>
                         <button id="mode-free-btn" class="mode-btn px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors">Free</button>
                     </div>
+                    <button id="sync-btn" class="px-4 py-2 rounded-xl border border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-900/40 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors font-semibold">
+                        Sync / Save
+                    </button>
                     <button id="clear-progress-btn" class="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors font-semibold">
                         Clear Progress
                     </button>
@@ -892,6 +895,147 @@
             updateFlipState();
         }
 
+        // --- Sync/Save Code Logic ---
+
+        function openSyncModal() {
+            const progress = loadReviewProgress();
+            const code = generateSaveCode(progress);
+            const textarea = document.getElementById('sync-export-text');
+            textarea.value = code;
+            document.getElementById('sync-import-text').value = '';
+            document.getElementById('sync-error').classList.add('hidden');
+            document.getElementById('sync-modal').classList.remove('hidden');
+        }
+
+        function closeSyncModal() {
+            document.getElementById('sync-modal').classList.add('hidden');
+        }
+
+        function copySaveCode() {
+            const textarea = document.getElementById('sync-export-text');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                const btn = document.getElementById('sync-copy-btn');
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        function loadSaveCode() {
+            const input = document.getElementById('sync-import-text').value.trim();
+            if (!input) return;
+            
+            const decoded = parseSaveCode(input);
+            if (!decoded) {
+                document.getElementById('sync-error').textContent = 'Invalid save code format.';
+                document.getElementById('sync-error').classList.remove('hidden');
+                return;
+            }
+
+            // Simple validation
+            if (!decoded.items || typeof decoded.items !== 'object') {
+                 document.getElementById('sync-error').textContent = 'Corrupted save data.';
+                 document.getElementById('sync-error').classList.remove('hidden');
+                 return;
+            }
+
+            if (confirm('This will overwrite your current progress with the loaded data. Are you sure?')) {
+                saveReviewProgress(decoded);
+                closeSyncModal();
+                window.location.reload();
+            }
+        }
+
+        // Minify: Convert object to dense array format [v1, itemsMap]
+        // Item: [streak, totalCorrect, totalWrong, lastSeen(ts), mastered(0/1), due(ts), interval, ease, learningStep, reps, lapses, lastGrade]
+        // Trailing defaults are removed.
+        function generateSaveCode(progress) {
+            const items = progress.items || {};
+            const packedItems = {};
+            
+            Object.keys(items).forEach(key => {
+                const item = items[key];
+                // Skip if purely default (no history)
+                if (!item.reps && !item.lastSeen && !item.correctStreak) return;
+
+                const packed = [
+                    item.correctStreak || 0,
+                    item.totalCorrect || 0,
+                    item.totalWrong || 0,
+                    item.lastSeen ? new Date(item.lastSeen).getTime() : 0,
+                    item.mastered ? 1 : 0,
+                    item.dueAtMs || 0,
+                    item.intervalMs || 0,
+                    Math.round((item.ease || 2.5) * 100), // Store as int
+                    item.learningStep === null ? -1 : (item.learningStep || 0),
+                    item.reps || 0,
+                    item.lapses || 0,
+                    item.lastGrade === null ? -1 : item.lastGrade
+                ];
+
+                // Trim trailing default-ish values to save space
+                // (Optimization: implement if space is critical, for now keep simple dense array)
+                packedItems[key] = packed;
+            });
+
+            const payload = {
+                v: 1,
+                d: packedItems,
+                ts: Date.now()
+            };
+
+            try {
+                return btoa(JSON.stringify(payload));
+            } catch (e) {
+                console.error("Encoding error", e);
+                return "Error generating code";
+            }
+        }
+
+        function parseSaveCode(code) {
+            try {
+                const json = atob(code);
+                const payload = JSON.parse(json);
+                
+                if (payload.v !== 1 || !payload.d) return null;
+
+                const restoredItems = {};
+                Object.keys(payload.d).forEach(key => {
+                    const p = payload.d[key];
+                    if (!Array.isArray(p)) return;
+
+                    restoredItems[key] = {
+                        correctStreak: p[0],
+                        totalCorrect: p[1],
+                        totalWrong: p[2],
+                        lastSeen: p[3] ? new Date(p[3]).toISOString() : null,
+                        mastered: !!p[4],
+                        dueAtMs: p[5],
+                        intervalMs: p[6],
+                        ease: p[7] / 100,
+                        learningStep: p[8] === -1 ? null : p[8],
+                        reps: p[9],
+                        lapses: p[10],
+                        lastGrade: p[11] === -1 ? null : p[11]
+                    };
+                });
+
+                return {
+                    version: 1,
+                    items: restoredItems
+                };
+            } catch (e) {
+                console.error("Decoding error", e);
+                return null;
+            }
+        }
+
         window.addEventListener('load', () => {
             const rawDeck = typeof midterm1Cards !== 'undefined' ? midterm1Cards : [];
             deckCards = normalizeDeckCards(rawDeck);
@@ -913,6 +1057,15 @@
             document.getElementById('clear-cancel').addEventListener('click', closeClearModal);
             document.getElementById('clear-confirm').addEventListener('click', clearProgress);
             document.getElementById('clear-backdrop').addEventListener('click', closeClearModal);
+            
+            // Sync Events
+            document.getElementById('sync-btn').addEventListener('click', openSyncModal);
+            document.getElementById('sync-close-x').addEventListener('click', closeSyncModal);
+            document.getElementById('sync-cancel').addEventListener('click', closeSyncModal);
+            document.getElementById('sync-backdrop').addEventListener('click', closeSyncModal);
+            document.getElementById('sync-copy-btn').addEventListener('click', copySaveCode);
+            document.getElementById('sync-load-btn').addEventListener('click', loadSaveCode);
+
             updateModeUI();
             if (studyMode === STUDY_MODE_ANKI) {
                 pickNextCard();
@@ -941,6 +1094,45 @@
         });
     </script>
 
+    <div id="sync-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div id="sync-backdrop" class="absolute inset-0 bg-slate-900/60"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 w-full max-w-lg mx-4 flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">Sync / Save Progress</h3>
+                <button id="sync-close-x" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto pr-2">
+                <div class="mb-6">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Current Save Code</label>
+                    <div class="relative">
+                        <textarea id="sync-export-text" readonly class="w-full h-24 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-600 dark:text-slate-300 resize-none focus:ring-2 focus:ring-blue-500 outline-none" onclick="this.select()"></textarea>
+                        <button id="sync-copy-btn" class="absolute top-2 right-2 p-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 shadow-sm transition-colors" title="Copy to clipboard">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1">Copy this code to save your progress or transfer it to another device.</p>
+                </div>
+
+                <div class="border-t border-slate-100 dark:border-slate-800 pt-6">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Load Save Code</label>
+                    <textarea id="sync-import-text" placeholder="Paste a save code here..." class="w-full h-24 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-800 dark:text-slate-100 resize-none focus:ring-2 focus:ring-blue-500 outline-none placeholder:text-slate-400"></textarea>
+                    <div id="sync-error" class="hidden mt-2 text-xs text-red-500 font-semibold">Invalid save code.</div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button id="sync-cancel" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors font-semibold">
+                    Close
+                </button>
+                <button id="sync-load-btn" class="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors shadow-lg shadow-blue-500/20">
+                    Load Code
+                </button>
+            </div>
+        </div>
+    </div>
     <div id="clear-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
         <div id="clear-backdrop" class="absolute inset-0 bg-slate-900/60"></div>
         <div class="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 w-full max-w-md mx-4">
