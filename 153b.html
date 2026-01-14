@@ -1217,8 +1217,35 @@
             }
         }
 
-        window.addEventListener('load', () => {
-            const rawDeck = typeof midterm1Cards !== 'undefined' ? midterm1Cards : [];
+        function updateUITitle(title) {
+            if (!title) return;
+            const pageTitle = document.getElementById('page-title');
+            const navTitle = document.getElementById('nav-title');
+            const mainTitle = document.getElementById('main-title');
+            
+            if (pageTitle) pageTitle.textContent = `${title} - Flashcards`;
+            if (navTitle) navTitle.textContent = title;
+            if (mainTitle) mainTitle.textContent = title;
+        }
+
+        window.addEventListener('load', async () => {
+            let rawDeck = [];
+            let title = "153B Midterm 1";
+            try {
+                const response = await fetch('json/midterm1.json');
+                const data = await response.json();
+                if (data && data.cards) {
+                    rawDeck = data.cards;
+                    if (data.title) title = data.title;
+                } else {
+                    rawDeck = data;
+                }
+            } catch (err) {
+                console.error("Failed to load flashcards:", err);
+                rawDeck = [];
+            }
+            
+            updateUITitle(title);
             deckCards = normalizeDeckCards(rawDeck);
             document.getElementById('mode-anki-btn').addEventListener('click', () => setStudyMode(STUDY_MODE_ANKI));
             document.getElementById('mode-free-btn').addEventListener('click', () => setStudyMode(STUDY_MODE_FREE));
