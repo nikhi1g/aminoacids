@@ -71,10 +71,20 @@
     <main class="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
         <section class="max-w-6xl mx-auto w-full flex flex-col">
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-                <div>
+                <div class="flex-grow">
                     <p class="text-xs uppercase tracking-[0.35em] text-slate-400 font-semibold">BioBioChem</p>
                     <h1 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">153B Midterm 1</h1>
-                    <p class="mt-2 text-sm sm:text-base text-slate-500 dark:text-slate-400">Toggle between Anki scheduling and free browsing. Flip to reveal the answer.</p>
+                    <div class="mt-3 flex items-center gap-2 max-w-sm">
+                        <div class="relative flex-grow group">
+                            <input id="compact-save-code" type="text" placeholder="Paste code to load..." 
+                                class="w-full pl-3 pr-8 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-400 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                                spellcheck="false" />
+                            <button id="compact-copy-btn" class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-blue-500 transition-colors" title="Copy Code">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                            </button>
+                        </div>
+                        <span id="compact-status" class="text-[9px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">Ready</span>
+                    </div>
                 </div>
                 <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3">
                     <div class="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1">
@@ -324,6 +334,7 @@
 
         function saveReviewProgress(progress) {
             localStorage.setItem(MT1_PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+            if (typeof updateCompactSaveCode === 'function') updateCompactSaveCode();
         }
 
         function normalizeReviewItem(item) {
@@ -976,6 +987,56 @@
             }
         }
 
+        function updateCompactSaveCode() {
+            const progress = loadReviewProgress();
+            const code = generateSaveCode(progress);
+            const input = document.getElementById('compact-save-code');
+            if (!input) return;
+            
+            if (document.activeElement !== input) {
+                input.value = code;
+            }
+        }
+
+        function setCompactStatus(msg, type = 'neutral') {
+            const el = document.getElementById('compact-status');
+            if (!el) return;
+            el.textContent = msg;
+            if (type === 'success') {
+                el.className = 'text-[9px] font-bold uppercase tracking-wider text-emerald-500 whitespace-nowrap';
+            } else if (type === 'error') {
+                el.className = 'text-[9px] font-bold uppercase tracking-wider text-red-500 whitespace-nowrap';
+            } else {
+                el.className = 'text-[9px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap';
+            }
+        }
+
+        function handleCompactDataInput(e) {
+            const input = e.target.value.trim();
+            if (!input) return;
+
+            const currentCode = generateSaveCode(loadReviewProgress());
+            if (input === currentCode) {
+                setCompactStatus('Ready');
+                return;
+            }
+
+            const decoded = parseSaveCode(input);
+            if (decoded && decoded.items) {
+                addToHistory(loadReviewProgress());
+                saveReviewProgress(decoded);
+                
+                if (studyMode === STUDY_MODE_ANKI) pickNextCard();
+                else updateFlashcard(decoded);
+                updateDeckStatus(decoded);
+                
+                setCompactStatus('Loaded!', 'success');
+                setTimeout(() => setCompactStatus('Ready'), 2000);
+            } else {
+                setCompactStatus('Invalid', 'error');
+            }
+        }
+
         function addToHistory(progress) {
             // Don't save empty states to history
             const code = generateSaveCode(progress);
@@ -1180,6 +1241,24 @@
             document.getElementById('copy-io-btn').addEventListener('click', copyDataToClipboard);
             document.getElementById('data-io').addEventListener('input', handleDataInput);
             document.getElementById('clear-history-btn').addEventListener('click', clearHistory);
+
+            // Compact Save Code Events
+            const compactInput = document.getElementById('compact-save-code');
+            if (compactInput) {
+                compactInput.addEventListener('input', handleCompactDataInput);
+                compactInput.addEventListener('focus', () => compactInput.select());
+            }
+            const compactCopyBtn = document.getElementById('compact-copy-btn');
+            if (compactCopyBtn) {
+                compactCopyBtn.addEventListener('click', () => {
+                    const val = document.getElementById('compact-save-code').value;
+                    navigator.clipboard.writeText(val).then(() => {
+                        setCompactStatus('Copied!', 'success');
+                        setTimeout(() => setCompactStatus('Ready'), 2000);
+                    });
+                });
+            }
+            updateCompactSaveCode();
 
             updateModeUI();
             if (studyMode === STUDY_MODE_ANKI) {
