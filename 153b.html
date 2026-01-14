@@ -77,11 +77,16 @@
                     <div class="mt-3 flex items-center gap-2 max-w-sm">
                         <div class="relative flex-grow group">
                             <input id="compact-save-code" type="text" placeholder="Paste code to load..." 
-                                class="w-full pl-3 pr-8 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-400 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                                class="w-full pl-3 pr-16 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-400 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
                                 spellcheck="false" />
-                            <button id="compact-copy-btn" class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-blue-500 transition-colors" title="Copy Code">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-                            </button>
+                            <div class="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                                <button id="compact-paste-btn" class="p-1 text-slate-400 hover:text-blue-500 transition-colors" title="Paste Code">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                </button>
+                                <button id="compact-copy-btn" class="p-1 text-slate-400 hover:text-blue-500 transition-colors" title="Copy Code">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                </button>
+                            </div>
                         </div>
                         <span id="compact-status" class="text-[9px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">Ready</span>
                     </div>
@@ -1247,6 +1252,18 @@
             if (compactInput) {
                 compactInput.addEventListener('input', handleCompactDataInput);
                 compactInput.addEventListener('focus', () => compactInput.select());
+            }
+            const compactPasteBtn = document.getElementById('compact-paste-btn');
+            if (compactPasteBtn) {
+                compactPasteBtn.addEventListener('click', () => {
+                    navigator.clipboard.readText().then(text => {
+                        const input = document.getElementById('compact-save-code');
+                        input.value = text;
+                        handleCompactDataInput({ target: input });
+                    }).catch(err => {
+                        setCompactStatus('Paste Error', 'error');
+                    });
+                });
             }
             const compactCopyBtn = document.getElementById('compact-copy-btn');
             if (compactCopyBtn) {
