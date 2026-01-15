@@ -39,7 +39,7 @@
                     </div>
                     
                     <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto">
-                        <nav class="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-8" aria-label="Biochemistry">
+                        <nav class="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-8" aria-label="153B Biochemistry">
                             <a href="index.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200" title="Home">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                             </a>
@@ -940,8 +940,7 @@
         }
 
         function refreshSettingsUI() {
-            const progress = loadReviewProgress();
-            const code = generateSaveCode(progress);
+            const code = generateSaveCode();
             const io = document.getElementById('data-io');
             
             // Only update value if not currently focused to avoid fighting the user
@@ -966,34 +965,26 @@
             const input = e.target.value.trim();
             if (!input) return;
 
-            // Don't react to the current code (no-op)
-            const currentCode = generateSaveCode(loadReviewProgress());
-            if (input === currentCode) {
-                setStatus('Ready');
-                return;
-            }
-
             const decoded = parseSaveCode(input);
-            if (decoded && decoded.error === 'set-mismatch') {
-                setStatus(`For ${decoded.set}`, 'error');
-                return;
-            }
-
-            if (decoded && decoded.items) {
+            if (decoded && decoded.sets) {
                 // Valid Data!
                 // 1. Save current state to history
-                addToHistory(loadReviewProgress());
+                addToHistory();
                 
-                // 2. Apply new state
-                saveReviewProgress(decoded);
+                // 2. Apply states for all sets provided
+                Object.keys(decoded.sets).forEach(setName => {
+                    const key = `${setName}_progress_v1`;
+                    localStorage.setItem(key, JSON.stringify(decoded.sets[setName]));
+                });
                 
-                // 3. Update App UI
+                // 3. Update App UI for current view
+                const currentProgress = loadReviewProgress();
                 if (studyMode === STUDY_MODE_ANKI) pickNextCard();
-                else updateFlashcard(decoded);
-                updateDeckStatus(decoded);
+                else updateFlashcard(currentProgress);
+                updateDeckStatus(currentProgress);
                 
                 // 4. Update Settings UI status
-                setStatus('Loaded!', 'success');
+                setStatus('Data Loaded!', 'success');
                 renderHistory();
                 
                 // Optional: Flash the border green
@@ -1006,8 +997,7 @@
         }
 
         function updateCompactSaveCode() {
-            const progress = loadReviewProgress();
-            const code = generateSaveCode(progress);
+            const code = generateSaveCode();
             const input = document.getElementById('compact-save-code');
             if (!input) return;
             
@@ -1033,39 +1023,34 @@
             const input = e.target.value.trim();
             if (!input) return;
 
-            const currentCode = generateSaveCode(loadReviewProgress());
-            if (input === currentCode) {
-                setCompactStatus('Ready');
-                return;
-            }
-
             const decoded = parseSaveCode(input);
-            
-            if (decoded && decoded.error === 'set-mismatch') {
-                setCompactStatus(`WRONG SET (${decoded.set})`, 'error');
-                return;
-            }
-
-            if (decoded && decoded.items) {
-                addToHistory(loadReviewProgress());
-                saveReviewProgress(decoded);
+            if (decoded && decoded.sets) {
+                addToHistory();
                 
+                Object.keys(decoded.sets).forEach(setName => {
+                    const key = `${setName}_progress_v1`;
+                    localStorage.setItem(key, JSON.stringify(decoded.sets[setName]));
+                });
+                
+                const currentProgress = loadReviewProgress();
                 if (studyMode === STUDY_MODE_ANKI) pickNextCard();
-                else updateFlashcard(decoded);
-                updateDeckStatus(decoded);
+                else updateFlashcard(currentProgress);
+                updateDeckStatus(currentProgress);
                 
-                setCompactStatus('Loaded!', 'success');
+                setCompactStatus('LOADED', 'success');
                 setTimeout(() => setCompactStatus('Ready'), 2000);
             } else {
                 setCompactStatus('Invalid', 'error');
             }
         }
 
-        function addToHistory(progress) {
-            // Don't save empty states to history
-            const code = generateSaveCode(progress);
-            const emptyCode = generateSaveCode({ version: 1, items: {} });
-            if (code === emptyCode) return;
+        const GLOBAL_HISTORY_KEY = 'biochem_course_history_v1';
+        const MAX_HISTORY_ITEMS = 8;
+
+        function addToHistory() {
+            const code = generateSaveCode();
+            // Don't save if it's just a bunch of empty sets
+            if (!code || code.split(';').every(h => !h)) return;
 
             let history = loadHistory();
             
@@ -1075,19 +1060,19 @@
             history.unshift({
                 code: code,
                 timestamp: Date.now(),
-                stats: getDeckStats(deckCards, progress, Date.now()) // Snapshot stats for label
+                stats: getDeckStats(deckCards, loadReviewProgress(), Date.now()) // Show current set stats in label
             });
 
             if (history.length > MAX_HISTORY_ITEMS) {
                 history = history.slice(0, MAX_HISTORY_ITEMS);
             }
 
-            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+            localStorage.setItem(GLOBAL_HISTORY_KEY, JSON.stringify(history));
         }
 
         function loadHistory() {
             try {
-                const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+                const raw = localStorage.getItem(GLOBAL_HISTORY_KEY);
                 return raw ? JSON.parse(raw) : [];
             } catch (e) {
                 return [];
@@ -1099,25 +1084,30 @@
             const item = history[index];
             if (!item) return;
 
-            // Current becomes history before we restore old history
-            addToHistory(loadReviewProgress());
+            // Backup current global state before restoring
+            addToHistory();
 
             const decoded = parseSaveCode(item.code);
-            if (decoded) {
-                saveReviewProgress(decoded);
+            if (decoded && decoded.sets) {
+                Object.keys(decoded.sets).forEach(setName => {
+                    const key = `${setName}_progress_v1`;
+                    localStorage.setItem(key, JSON.stringify(decoded.sets[setName]));
+                });
+
                 refreshSettingsUI();
                 
-                // Update App UI
+                // Update App UI for current set
+                const progress = loadReviewProgress();
                 if (studyMode === STUDY_MODE_ANKI) pickNextCard();
-                else updateFlashcard(decoded);
-                updateDeckStatus(decoded);
+                else updateFlashcard(progress);
+                updateDeckStatus(progress);
                 
-                setStatus('Restored', 'success');
+                setStatus('Restored All', 'success');
             }
         }
 
         function clearHistory() {
-            localStorage.removeItem(HISTORY_STORAGE_KEY);
+            localStorage.removeItem(GLOBAL_HISTORY_KEY);
             renderHistory();
         }
 
@@ -1163,7 +1153,10 @@
 
         // Minify: Convert object to dense array format [v1, itemsMap]
         // Item: [streak, totalCorrect, totalWrong, lastSeen(ts), mastered(0/1), due(ts), interval, ease, learningStep, reps, lapses, lastGrade]
-        function generateSaveCode(progress) {
+        const ALL_SETS = ['midterm1', 'chapter1'];
+
+        // Pack progress for a specific set
+        function packSetProgress(progress, setName) {
             const items = progress.items || {};
             const packedItems = {};
             
@@ -1190,7 +1183,7 @@
 
             const payload = {
                 v: 1,
-                s: currentSet, // Identify which set this belongs to
+                s: setName,
                 d: packedItems,
                 ts: Date.now()
             };
@@ -1198,51 +1191,71 @@
             try {
                 return btoa(JSON.stringify(payload));
             } catch (e) {
-                console.error("Encoding error", e);
                 return "";
             }
         }
 
-        function parseSaveCode(code) {
-            try {
-                const json = atob(code);
-                const payload = JSON.parse(json);
-                if (payload.v !== 1 || !payload.d) return null;
-
-                // Validate set if present
-                if (payload.s && payload.s !== currentSet) {
-                    console.warn(`Set mismatch: code is for ${payload.s}, current is ${currentSet}`);
-                    return { error: 'set-mismatch', set: payload.s };
+        // Generate a unified key for ALL sets
+        function generateSaveCode() {
+            const hashes = ALL_SETS.map(setName => {
+                // Get progress for this set from localStorage
+                const key = `${setName}_progress_v1`;
+                const raw = localStorage.getItem(key);
+                let progress = { version: 1, items: {} };
+                if (raw) {
+                    try { progress = JSON.parse(raw); } catch(e) {}
                 }
+                return packSetProgress(progress, setName);
+            });
+            return hashes.join(';');
+        }
 
-                const restoredItems = {};
-                Object.keys(payload.d).forEach(key => {
-                    const p = payload.d[key];
-                    if (!Array.isArray(p)) return;
+        function parseSaveCode(code) {
+            if (!code) return null;
+            
+            const hashes = code.split(';');
+            const results = {};
+            let hasValid = false;
 
-                    restoredItems[key] = {
-                        correctStreak: p[0],
-                        totalCorrect: p[1],
-                        totalWrong: p[2],
-                        lastSeen: p[3] ? new Date(p[3]).toISOString() : null,
-                        mastered: !!p[4],
-                        dueAtMs: p[5],
-                        intervalMs: p[6],
-                        ease: p[7] / 100,
-                        learningStep: p[8] === -1 ? null : p[8],
-                        reps: p[9],
-                        lapses: p[10],
-                        lastGrade: p[11] === -1 ? null : p[11]
-                    };
-                });
+            hashes.forEach((hash, index) => {
+                if (!hash) return;
+                try {
+                    const json = atob(hash);
+                    const payload = JSON.parse(json);
+                    if (payload.v !== 1 || !payload.d) return;
 
-                return {
-                    version: 1,
-                    items: restoredItems
-                };
-            } catch (e) {
-                return null;
-            }
+                    const restoredItems = {};
+                    Object.keys(payload.d).forEach(key => {
+                        const p = payload.d[key];
+                        if (!Array.isArray(p)) return;
+
+                        restoredItems[key] = {
+                            correctStreak: p[0],
+                            totalCorrect: p[1],
+                            totalWrong: p[2],
+                            lastSeen: p[3] ? new Date(p[3]).toISOString() : null,
+                            mastered: !!p[4],
+                            dueAtMs: p[5],
+                            intervalMs: p[6],
+                            ease: p[7] / 100,
+                            learningStep: p[8] === -1 ? null : p[8],
+                            reps: p[9],
+                            lapses: p[10],
+                            lastGrade: p[11] === -1 ? null : p[11]
+                        };
+                    });
+
+                    const targetSet = payload.s || ALL_SETS[index];
+                    if (targetSet) {
+                        results[targetSet] = { version: 1, items: restoredItems };
+                        hasValid = true;
+                    }
+                } catch (e) {
+                    console.error("Error parsing hash part", e);
+                }
+            });
+
+            return hasValid ? { type: 'unified', sets: results } : null;
         }
 
         function updateUITitle(title) {
@@ -1251,7 +1264,7 @@
             const navTitle = document.getElementById('nav-title');
             const mainTitle = document.getElementById('main-title');
             
-            if (pageTitle) pageTitle.textContent = `Biochemistry: ${title}`;
+            if (pageTitle) pageTitle.textContent = `153B: Biochemistry: ${title}`;
             if (navTitle) navTitle.textContent = title;
             if (mainTitle) mainTitle.textContent = title;
         }
