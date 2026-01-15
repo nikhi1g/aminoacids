@@ -974,6 +974,11 @@
             }
 
             const decoded = parseSaveCode(input);
+            if (decoded && decoded.error === 'set-mismatch') {
+                setStatus(`For ${decoded.set}`, 'error');
+                return;
+            }
+
             if (decoded && decoded.items) {
                 // Valid Data!
                 // 1. Save current state to history
@@ -1035,6 +1040,12 @@
             }
 
             const decoded = parseSaveCode(input);
+            
+            if (decoded && decoded.error === 'set-mismatch') {
+                setCompactStatus(`WRONG SET (${decoded.set})`, 'error');
+                return;
+            }
+
             if (decoded && decoded.items) {
                 addToHistory(loadReviewProgress());
                 saveReviewProgress(decoded);
@@ -1179,6 +1190,7 @@
 
             const payload = {
                 v: 1,
+                s: currentSet, // Identify which set this belongs to
                 d: packedItems,
                 ts: Date.now()
             };
@@ -1196,6 +1208,12 @@
                 const json = atob(code);
                 const payload = JSON.parse(json);
                 if (payload.v !== 1 || !payload.d) return null;
+
+                // Validate set if present
+                if (payload.s && payload.s !== currentSet) {
+                    console.warn(`Set mismatch: code is for ${payload.s}, current is ${currentSet}`);
+                    return { error: 'set-mismatch', set: payload.s };
+                }
 
                 const restoredItems = {};
                 Object.keys(payload.d).forEach(key => {
