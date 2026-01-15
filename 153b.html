@@ -70,6 +70,12 @@
 
     <main class="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
         <section class="max-w-6xl mx-auto w-full flex flex-col">
+            <!-- Set Navigation Tabs -->
+            <div class="flex items-center gap-1 mb-6 border-b dark:border-slate-800">
+                <button id="tab-midterm1" class="set-tab px-4 py-2 text-sm font-bold border-b-2 transition-all" data-set="midterm1">Midterm 1</button>
+                <button id="tab-chapter1" class="set-tab px-4 py-2 text-sm font-bold border-b-2 transition-all" data-set="chapter1">Chapter 1</button>
+            </div>
+
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                 <div class="flex-grow">
                     <p class="text-xs uppercase tracking-[0.35em] text-slate-400 font-semibold">BioBioChem</p>
@@ -249,7 +255,12 @@
 
     <script src="script.js"></script>
     <script>
-        const MT1_PROGRESS_STORAGE_KEY = 'midterm1_153b_progress_v1';
+        let currentSet = 'midterm1'; // default
+        
+        function getProgressKey() { return `${currentSet}_progress_v1`; }
+        function getModeKey() { return `${currentSet}_mode_v1`; }
+        function getHistoryKey() { return `${currentSet}_history_v1`; }
+
         const MT1_MASTERY_STREAK = 3;
         const MT1_EASE_START = 2.5;
         const MT1_EASE_MIN = 1.3;
@@ -277,7 +288,6 @@
             lapses: 0,
             lastGrade: null
         };
-        const MODE_STORAGE_KEY = 'midterm1_153b_mode_v1';
         const STUDY_MODE_ANKI = 'anki';
         const STUDY_MODE_FREE = 'free';
 
@@ -286,7 +296,7 @@
         let currentCardKey = null;
         let currentIndex = 0;
         let isFlipped = false;
-        let studyMode = loadStudyMode();
+        let studyMode = STUDY_MODE_ANKI; // default
         const progressSortState = { key: null, direction: 0 };
 
         function normalizeDeckCards(rawCards) {
@@ -319,13 +329,13 @@
         }
 
         function loadStudyMode() {
-            const stored = localStorage.getItem(MODE_STORAGE_KEY);
+            const stored = localStorage.getItem(getModeKey());
             return stored === STUDY_MODE_FREE ? STUDY_MODE_FREE : STUDY_MODE_ANKI;
         }
 
         function loadReviewProgress() {
             try {
-                const raw = localStorage.getItem(MT1_PROGRESS_STORAGE_KEY);
+                const raw = localStorage.getItem(getProgressKey());
                 if (!raw) return { version: 1, items: {} };
                 const parsed = JSON.parse(raw);
                 if (!parsed || typeof parsed !== 'object') return { version: 1, items: {} };
@@ -337,7 +347,7 @@
         }
 
         function saveReviewProgress(progress) {
-            localStorage.setItem(MT1_PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+            localStorage.setItem(getProgressKey(), JSON.stringify(progress));
             if (typeof updateCompactSaveCode === 'function') updateCompactSaveCode();
         }
 
@@ -570,7 +580,7 @@
             if (mode !== STUDY_MODE_ANKI && mode !== STUDY_MODE_FREE) return;
             if (studyMode === mode) return;
             studyMode = mode;
-            localStorage.setItem(MODE_STORAGE_KEY, studyMode);
+            localStorage.setItem(getModeKey(), studyMode);
             if (currentCardKey) {
                 const idx = deckCards.findIndex((card) => getCardKey(card) === currentCardKey);
                 if (idx >= 0) currentIndex = idx;
@@ -1229,10 +1239,26 @@
         }
 
         window.addEventListener('load', async () => {
+            // Check URL for set parameter
+            const params = new URLSearchParams(window.location.search);
+            const setParam = params.get('set');
+            if (setParam && (setParam === 'midterm1' || setParam === 'chapter1')) {
+                currentSet = setParam;
+            }
+
+            // Update active tab UI
+            document.querySelectorAll('.set-tab').forEach(tab => {
+                const isActive = tab.dataset.set === currentSet;
+                tab.classList.toggle('border-blue-600', isActive);
+                tab.classList.toggle('text-blue-600', isActive);
+                tab.classList.toggle('border-transparent', !isActive);
+                tab.classList.toggle('text-slate-500', !isActive);
+            });
+
             let rawDeck = [];
-            let title = "153B Midterm 1";
+            let title = currentSet === 'midterm1' ? "153B Midterm 1" : "Chapter 1";
             try {
-                const response = await fetch('json/midterm1.json');
+                const response = await fetch(`json/${currentSet}.json`);
                 const data = await response.json();
                 if (data && data.cards) {
                     rawDeck = data.cards;
@@ -1247,6 +1273,7 @@
             
             updateUITitle(title);
             deckCards = normalizeDeckCards(rawDeck);
+            studyMode = loadStudyMode(); // Load mode for THIS set
             document.getElementById('mode-anki-btn').addEventListener('click', () => setStudyMode(STUDY_MODE_ANKI));
             document.getElementById('mode-free-btn').addEventListener('click', () => setStudyMode(STUDY_MODE_FREE));
             document.querySelectorAll('.progress-sort-btn').forEach((btn) => {
@@ -1262,6 +1289,16 @@
                 });
             });
             
+            // Set Tab Events
+            document.querySelectorAll('.set-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const set = tab.dataset.set;
+                    if (set !== currentSet) {
+                        window.location.search = `?set=${set}`;
+                    }
+                });
+            });
+
             // Settings / Data Events
             document.getElementById('settings-btn').addEventListener('click', openSettings);
             document.getElementById('settings-close-x').addEventListener('click', closeSettings);
