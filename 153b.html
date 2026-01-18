@@ -810,7 +810,7 @@
             const card = document.getElementById('flashcard');
             if (!card) return;
             card.classList.toggle('flipped', isFlipped);
-            document.getElementById('rating-controls').classList.toggle('hidden', !isFlipped || studyMode !== STUDY_MODE_ANKI);
+            document.getElementById('rating-controls').classList.toggle('hidden', studyMode !== STUDY_MODE_ANKI);
             const showBtn = document.getElementById('show-answer-btn');
             showBtn.textContent = isFlipped ? 'Hide Answer' : 'Show Answer';
         }
@@ -902,7 +902,11 @@
         }
 
         function rateCard(grade) {
-            if (studyMode !== STUDY_MODE_ANKI || !currentCard || !isFlipped) return;
+            if (studyMode !== STUDY_MODE_ANKI || !currentCard) return;
+            if (!isFlipped) {
+                flipCard();
+                return;
+            }
             const progress = loadReviewProgress();
             const key = getCardKey(currentCard);
             const item = ensureReviewItem(progress, key);
