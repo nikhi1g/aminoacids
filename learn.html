@@ -198,10 +198,20 @@
                 flashcardList.sort(() => Math.random() - 0.5);
             }
             currentCardIndex = 0;
-            isFlipped = false;
-            const card = document.getElementById('flashcard');
-            if(card) card.classList.remove('flipped');
-            updateFlashcard();
+            
+            const cardEl = document.getElementById('flashcard');
+            if (cardEl) {
+                cardEl.style.transition = 'none';
+                isFlipped = false;
+                cardEl.classList.remove('flipped');
+                updateFlashcard();
+                void cardEl.offsetWidth;
+                cardEl.style.transition = '';
+            } else {
+                isFlipped = false;
+                if(cardEl) cardEl.classList.remove('flipped');
+                updateFlashcard();
+            }
         }
 
         function flipCard() {
@@ -216,17 +226,39 @@
         function nextCard() {
             if (flashcardList.length === 0) return;
             currentCardIndex = (currentCardIndex + 1) % flashcardList.length;
-            isFlipped = false;
-            document.getElementById('flashcard').classList.remove('flipped');
-            updateFlashcard();
+            
+            const cardEl = document.getElementById('flashcard');
+            if (cardEl) {
+                cardEl.style.transition = 'none';
+                isFlipped = false;
+                cardEl.classList.remove('flipped');
+                updateFlashcard();
+                void cardEl.offsetWidth;
+                cardEl.style.transition = '';
+            } else {
+                isFlipped = false;
+                if(cardEl) cardEl.classList.remove('flipped');
+                updateFlashcard();
+            }
         }
 
         function prevCard() {
             if (flashcardList.length === 0) return;
             currentCardIndex = (currentCardIndex - 1 + flashcardList.length) % flashcardList.length;
-            isFlipped = false;
-            document.getElementById('flashcard').classList.remove('flipped');
-            updateFlashcard();
+            
+            const cardEl = document.getElementById('flashcard');
+            if (cardEl) {
+                cardEl.style.transition = 'none';
+                isFlipped = false;
+                cardEl.classList.remove('flipped');
+                updateFlashcard();
+                void cardEl.offsetWidth;
+                cardEl.style.transition = '';
+            } else {
+                isFlipped = false;
+                if(cardEl) cardEl.classList.remove('flipped');
+                updateFlashcard();
+            }
         }
 
         function updateFlashcard() {
