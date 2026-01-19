@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>153B - BioBioChem Flashcards</title>
+    <title id="page-title">Biochemistry - Flashcards</title>
     <link rel="preconnect" href="https://api.github.com" crossorigin>
     <link rel="dns-prefetch" href="https://api.github.com">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -39,11 +39,11 @@
                     </div>
                     
                     <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto">
-                        <nav class="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-8" aria-label="153B">
+                        <nav class="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-8" aria-label="Biochemistry">
                             <a href="index.html" class="nav-link py-2 sm:py-5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200" title="Home">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                             </a>
-                            <a href="153b.html" class="nav-link active py-2 sm:py-5 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Flashcards</a>
+                            <a href="153b.html" id="nav-title" class="nav-link active py-2 sm:py-5 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Flashcards</a>
                         </nav>
 
                         <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0" title="Toggle Dark/Light Mode">
@@ -80,7 +80,7 @@
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                 <div class="flex-grow">
                     <p class="text-xs uppercase tracking-[0.35em] text-slate-400 font-semibold">BioBioChem</p>
-                    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">153B Midterm 1</h1>
+                    <h1 id="main-title" class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">Molecules</h1>
                     <div class="mt-3 flex items-center gap-2 max-w-sm">
                         <div class="relative flex-grow group">
                             <input id="compact-save-code" type="text" placeholder="Paste code to load..." 
@@ -258,7 +258,7 @@
 
     <script src="script.js"></script>
     <script>
-        let currentSet = 'chapter1'; // default
+        let currentSet = 'molecules'; // default
         
         function getProgressKey() { return `${currentSet}_progress_v1`; }
         function getModeKey() { return `${currentSet}_mode_v1`; }
@@ -291,7 +291,6 @@
             lapses: 0,
             lastGrade: null
         };
-        const MODE_STORAGE_KEY = 'chapter1_mode_v1';
         const STUDY_MODE_ANKI = 'anki';
         const STUDY_MODE_FREE = 'free';
 
@@ -300,7 +299,7 @@
         let currentCardKey = null;
         let currentIndex = 0;
         let isFlipped = false;
-        let studyMode = loadStudyMode();
+        let studyMode = STUDY_MODE_ANKI; // default
         const progressSortState = { key: null, direction: 0 };
 
         function normalizeDeckCards(rawCards) {
@@ -938,13 +937,13 @@
             document.getElementById('clear-modal').classList.add('hidden');
         }
 
-        const HISTORY_STORAGE_KEY = 'chapter1_history_v1';
+        const HISTORY_STORAGE_KEY = 'midterm1_153b_history_v1';
         const MAX_HISTORY_ITEMS = 8;
 
         function clearProgress() {
             // Backup before clearing
             addToHistory(loadReviewProgress());
-            localStorage.removeItem(getProgressKey());
+            localStorage.removeItem(MT1_PROGRESS_STORAGE_KEY);
             
             // UI Update
             if (studyMode === STUDY_MODE_ANKI) {
@@ -1007,6 +1006,11 @@
             }
 
             const decoded = parseSaveCode(input);
+            if (decoded && decoded.error === 'set-mismatch') {
+                setStatus(`For ${decoded.set}`, 'error');
+                return;
+            }
+
             if (decoded && decoded.items) {
                 // Valid Data!
                 // 1. Save current state to history
@@ -1068,6 +1072,12 @@
             }
 
             const decoded = parseSaveCode(input);
+            
+            if (decoded && decoded.error === 'set-mismatch') {
+                setCompactStatus(`WRONG SET (${decoded.set})`, 'error');
+                return;
+            }
+
             if (decoded && decoded.items) {
                 addToHistory(loadReviewProgress());
                 saveReviewProgress(decoded);
@@ -1212,6 +1222,7 @@
 
             const payload = {
                 v: 1,
+                s: currentSet, // Identify which set this belongs to
                 d: packedItems,
                 ts: Date.now()
             };
@@ -1229,6 +1240,12 @@
                 const json = atob(code);
                 const payload = JSON.parse(json);
                 if (payload.v !== 1 || !payload.d) return null;
+
+                // Validate set if present
+                if (payload.s && payload.s !== currentSet) {
+                    console.warn(`Set mismatch: code is for ${payload.s}, current is ${currentSet}`);
+                    return { error: 'set-mismatch', set: payload.s };
+                }
 
                 const restoredItems = {};
                 Object.keys(payload.d).forEach(key => {
@@ -1266,7 +1283,7 @@
             const navTitle = document.getElementById('nav-title');
             const mainTitle = document.getElementById('main-title');
             
-            if (pageTitle) pageTitle.textContent = `${title} - Flashcards`;
+            if (pageTitle) pageTitle.textContent = `Biochemistry: ${title}`;
             if (navTitle) navTitle.textContent = title;
             if (mainTitle) mainTitle.textContent = title;
         }
@@ -1309,6 +1326,7 @@
             
             updateUITitle(title);
             deckCards = normalizeDeckCards(rawDeck);
+            studyMode = loadStudyMode(); // Load mode for THIS set
             document.getElementById('mode-anki-btn').addEventListener('click', () => setStudyMode(STUDY_MODE_ANKI));
             document.getElementById('mode-free-btn').addEventListener('click', () => setStudyMode(STUDY_MODE_FREE));
             document.querySelectorAll('.progress-sort-btn').forEach((btn) => {
@@ -1324,6 +1342,16 @@
                 });
             });
             
+            // Set Tab Events
+            document.querySelectorAll('.set-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const set = tab.dataset.set;
+                    if (set !== currentSet) {
+                        window.location.search = `?set=${set}`;
+                    }
+                });
+            });
+
             // Settings / Data Events
             document.getElementById('settings-btn').addEventListener('click', openSettings);
             document.getElementById('settings-close-x').addEventListener('click', closeSettings);
