@@ -7,5 +7,19 @@ const moleculesData = [
     { name: "Guanine", abbr: "Gua", smiles: "Nc1nc2[nH]cnc2c(=O)[nH]1", tags: ["purine", "base"] },
     { name: "Cytosine", abbr: "Cyt", smiles: "Nc1cc(=O)[nH]cn1", tags: ["pyrimidine", "base"] },
     { name: "Thymine", abbr: "Thy", smiles: "Cc1c[nH]c(=O)[nH]c1=O", tags: ["pyrimidine", "base"] },
-    { name: "Uracil", abbr: "Ura", smiles: "O=c1cc[nH]c(=O)[nH]1", tags: ["pyrimidine", "base"] }
+    { name: "Uracil", abbr: "Ura", smiles: "O=c1cc[nH]c(=O)[nH]1", tags: ["pyrimidine", "base"] },
+    { name: "Pyrophosphate", abbr: "PPi", smiles: "O=P(O)(O)OP(=O)(O)O", tags: ["ion", "energy"] },
+    { name: "Ribose", abbr: "Rib", smiles: "OC[C@H]1OC(O)[C@H](O)[C@@H]1O", tags: ["sugar", "carbohydrate"] },
+    { name: "Deoxyribose", abbr: "Deoxy", smiles: "OC[C@H]1OC(O)C[C@@H]1O", tags: ["sugar", "carbohydrate"] },
+    { name: "Adenosine", abbr: "A", smiles: "Nc1ncnc2n(cnc12)[C@@H]3O[C@H](CO)[C@@H](O)[C@H]3O", tags: ["nucleoside"] },
+    { name: "Guanosine", abbr: "G", smiles: "Nc1nc2n(cnc2c(=O)[nH]1)[C@@H]3O[C@H](CO)[C@@H](O)[C@H]3O", tags: ["nucleoside"] },
+    { name: "Cytidine", abbr: "C", smiles: "Nc1cc(=O)n(c(=O)n1)[C@@H]2O[C@H](CO)[C@@H](O)[C@H]2O", tags: ["nucleoside"] },
+    { name: "Uridine", abbr: "U", smiles: "O=c1ccn(c(=O)[nH]1)[C@@H]2O[C@H](CO)[C@@H](O)[C@H]2O", tags: ["nucleoside"] },
+    { name: "Thymidine", abbr: "dT", smiles: "Cc1cn(c(=O)[nH]c1=O)[C@H]2C[C@@H](O)[C@H](CO)O2", tags: ["nucleoside", "dna"] },
+    { name: "Adenosine Monophosphate", abbr: "AMP", smiles: "Nc1ncnc2n(cnc12)[C@@H]3O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]3O", tags: ["nucleotide"] },
+    { name: "Guanosine Monophosphate", abbr: "GMP", smiles: "Nc1nc2n(cnc2c(=O)[nH]1)[C@@H]3O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]3O", tags: ["nucleotide"] },
+    { name: "Cytidine Monophosphate", abbr: "CMP", smiles: "Nc1cc(=O)n(c(=O)n1)[C@@H]2O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]2O", tags: ["nucleotide"] },
+    { name: "Uridine Monophosphate", abbr: "UMP", smiles: "O=c1ccn(c(=O)[nH]1)[C@@H]2O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]2O", tags: ["nucleotide"] },
+    { name: "Thymidine Monophosphate", abbr: "dTMP", smiles: "Cc1cn(c(=O)[nH]c1=O)[C@H]2C[C@@H](O)[C@H](COP(=O)(O)O)O2", tags: ["nucleotide", "dna"] },
+    { name: "Adenosine Triphosphate", abbr: "ATP", smiles: "Nc1ncnc2n(cnc12)[C@@H]3O[C@H](COP(=O)(O)OP(=O)(O)OP(=O)(O)O)[C@@H](O)[C@H]3O", tags: ["nucleotide", "energy"] }
 ];
