@@ -11,15 +11,12 @@ const moleculesData = [
     { name: "Pyrophosphate", abbr: "PPi", smiles: "O=P(O)(O)OP(=O)(O)O", tags: ["ion", "energy"] },
     { name: "Ribose", abbr: "Rib", smiles: "OC[C@H]1OC(O)[C@H](O)[C@@H]1O", tags: ["sugar", "carbohydrate"] },
     { name: "Deoxyribose", abbr: "Deoxy", smiles: "OC[C@H]1OC(O)C[C@@H]1O", tags: ["sugar", "carbohydrate"] },
-    { name: "Adenosine", abbr: "A", smiles: "Nc1ncnc2n(cnc12)[C@@H]3O[C@H](CO)[C@@H](O)[C@H]3O", tags: ["nucleoside"] },
-    { name: "Guanosine", abbr: "G", smiles: "Nc1nc2n(cnc2c(=O)[nH]1)[C@@H]3O[C@H](CO)[C@@H](O)[C@H]3O", tags: ["nucleoside"] },
-    { name: "Cytidine", abbr: "C", smiles: "Nc1cc(=O)n(c(=O)n1)[C@@H]2O[C@H](CO)[C@@H](O)[C@H]2O", tags: ["nucleoside"] },
-    { name: "Uridine", abbr: "U", smiles: "O=c1ccn(c(=O)[nH]1)[C@@H]2O[C@H](CO)[C@@H](O)[C@H]2O", tags: ["nucleoside"] },
-    { name: "Thymidine", abbr: "dT", smiles: "Cc1cn(c(=O)[nH]c1=O)[C@H]2C[C@@H](O)[C@H](CO)O2", tags: ["nucleoside", "dna"] },
-    { name: "Adenosine Monophosphate", abbr: "AMP", smiles: "Nc1ncnc2n(cnc12)[C@@H]3O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]3O", tags: ["nucleotide"] },
-    { name: "Guanosine Monophosphate", abbr: "GMP", smiles: "Nc1nc2n(cnc2c(=O)[nH]1)[C@@H]3O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]3O", tags: ["nucleotide"] },
-    { name: "Cytidine Monophosphate", abbr: "CMP", smiles: "Nc1cc(=O)n(c(=O)n1)[C@@H]2O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]2O", tags: ["nucleotide"] },
-    { name: "Uridine Monophosphate", abbr: "UMP", smiles: "O=c1ccn(c(=O)[nH]1)[C@@H]2O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]2O", tags: ["nucleotide"] },
-    { name: "Thymidine Monophosphate", abbr: "dTMP", smiles: "Cc1cn(c(=O)[nH]c1=O)[C@H]2C[C@@H](O)[C@H](COP(=O)(O)O)O2", tags: ["nucleotide", "dna"] },
-    { name: "Adenosine Triphosphate", abbr: "ATP", smiles: "Nc1ncnc2n(cnc12)[C@@H]3O[C@H](COP(=O)(O)OP(=O)(O)OP(=O)(O)O)[C@@H](O)[C@H]3O", tags: ["nucleotide", "energy"] }
+    { name: "Inosine", abbr: "I", smiles: "O=c1[nH]cnc2nc[nH]c12", tags: ["purine", "modified-base"] },
+    { name: "Dihydrouridine", abbr: "D", smiles: "O=C1CCNC(=O)N1", tags: ["pyrimidine", "modified-base"] },
+    { name: "Lysidine", abbr: "k2C", smiles: "O=C1N(CCCC[C@@H](N)C(=O)O)C(N)=CC1", tags: ["pyrimidine", "modified-base", "amino-acid-conjugate"] },
+    { name: "3-methylcytidine", abbr: "m3C", smiles: "CN1C=CC(=O)NC1=N", tags: ["pyrimidine", "modified-base"] },
+    { name: "N(2)-dimethylguanosine", abbr: "m22G", smiles: "CN(C)C1=Nc2[nH]cnc2C(=O)N1", tags: ["purine", "modified-base"] },
+    { name: "7-methylguanosine", abbr: "m7G", smiles: "C[n+]1cnc2c1nc(N)[nH]c2=O", tags: ["purine", "modified-base"] },
+    { name: "Pseudouridine", abbr: "Psi", smiles: "O=c1[nH]cc(C2OC(CO)C(O)C2O)c(=O)[nH]1", tags: ["pyrimidine", "modified-base", "isomer"] },
+    { name: "1-methyladenosine", abbr: "m1A", smiles: "CN1C=NC2=C1N=CN=C2N", tags: ["purine", "modified-base"] }
 ];
